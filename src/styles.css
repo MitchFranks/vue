@@ -2730,6 +2730,116 @@ button:disabled {
 }
 
 /* ==========================================================================
+   REVISION PASS 3 — say what this is before showing the work
+   --------------------------------------------------------------------------
+   The landing screen used to open with a personal greeting and a queue of
+   work. That tells a first-time viewer nothing about what the product does.
+   The hero headline now carries the promise, and a three-card strip explains
+   the shape of the product while doubling as the main navigation.
+   ========================================================================== */
+
+.phero {
+  min-height: 356px;
+}
+
+.phero__title {
+  max-width: 17ch;
+  font-size: 40px;
+  line-height: 1.12;
+}
+
+.phero__lead {
+  max-width: 52ch;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.phero__byline {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+/* --- the three explanation cards --------------------------------------- */
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 18px 18px 16px;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.14s ease, box-shadow 0.14s ease, transform 0.08s ease;
+}
+
+.step:hover {
+  border-color: var(--brand-line);
+  box-shadow: var(--shadow-md);
+}
+
+.step:active {
+  transform: translateY(1px);
+}
+
+.step__num {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  border: 1px solid var(--brand-line);
+  color: var(--brand-deep);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.step__title {
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.step__text {
+  flex: 1;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* Labelled action, visible without hovering. */
+.step__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.step:hover .step__cta .icon {
+  transform: translateX(2px);
+}
+
+.step__cta .icon {
+  transition: transform 0.14s ease;
+}
+
+/* ==========================================================================
    Responsive
    ========================================================================== */
 
@@ -2762,6 +2872,15 @@ button:disabled {
 
   .eventhead__overlay {
     max-width: 80%;
+  }
+
+  .steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .phero__title {
+    font-size: 34px;
+    max-width: 22ch;
   }
 }
 
@@ -2855,19 +2974,29 @@ button:disabled {
   }
 
   .phero {
-    min-height: 268px;
+    min-height: 0;
   }
 
   .phero__content {
-    padding: 24px 20px;
+    padding: 26px 20px;
   }
 
   .phero__title {
     font-size: 27px;
+    max-width: none;
   }
 
   .phero__lead {
-    font-size: 14.5px;
+    font-size: 14px;
+  }
+
+  .phero__byline {
+    margin-top: 14px;
+    padding-top: 12px;
+  }
+
+  .step {
+    padding: 16px;
   }
 
   .eventhead {
