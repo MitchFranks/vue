@@ -27,33 +27,67 @@ export function Dashboard({ attention, eventAttention, onOpenEvent, onOpenMessag
 
   return (
     <div className="stack-lg">
-      {/* ------------------------- WELCOME BAND -------------------------- */}
+      {/* ------------------------- WELCOME BAND --------------------------
+          The headline states what the product IS, not who is signed in.
+          A first-time viewer used to land on "Good morning, Dana" and a queue
+          of work items, which tells them nothing about what they are looking
+          at. The promise now comes first; the personal status line is demoted
+          to a quiet byline underneath it. */}
       <section className="phero">
         <img className="phero__img" src={heroImage} alt="" />
         <div className="phero__scrim" aria-hidden="true" />
         <div className="phero__content">
-          <p className="phero__eyebrow">{venue.today}</p>
-          <h1 className="phero__title">Good morning, {venue.manager.split(' ')[0]}</h1>
+          <p className="phero__eyebrow">{venue.name} · Venue operations</p>
+          <h1 className="phero__title">Know what needs your attention across every event.</h1>
           <p className="phero__lead">
-            One event is on site today, and{' '}
-            <strong>
-              {open.length} {open.length === 1 ? 'item needs' : 'items need'} your attention
-            </strong>{' '}
-            across {eventsWithAttention} {eventsWithAttention === 1 ? 'event' : 'events'}.
+            One place to run every wedding and event you are hosting — timeline, vendors, staff,
+            payments, contracts and client email — instead of switching between five separate systems.
           </p>
           <div className="phero__actions">
             <button
-              className="btn btn--onDark"
+              className="btn btn--onDark btn--lg"
               onClick={() => attentionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
             >
               See what needs attention
               <Icon name="arrowRight" size={15} />
             </button>
             <Pill tone="onDark" icon="circle">
-              Alvarez &amp; Reed on site
+              Alvarez &amp; Reed on site today
             </Pill>
           </div>
+          <p className="phero__byline">
+            Signed in as {venue.manager}, {venue.managerRole} · {venue.today}
+          </p>
         </div>
+      </section>
+
+      {/* --------------------------- HOW IT WORKS -------------------------
+          Three cards that double as the product explanation and as the main
+          navigation. Someone who reads nothing else still learns the shape of
+          the product in about five seconds, and each card is the way into the
+          screen it describes. */}
+      <section className="steps" aria-label="What this does">
+        <Step
+          n="1"
+          title="See what needs attention"
+          text={`${open.length} open ${open.length === 1 ? 'item' : 'items'} across ${eventsWithAttention} events, sorted by what is due first.`}
+          cta="Jump to the queue"
+          onClick={() => attentionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+        />
+        <Step
+          n="2"
+          title="Open one event, see everything"
+          text="Timeline, tasks, vendors, staff, payments, documents and client email on a single event."
+          cta="Open the Johnson Wedding"
+          onClick={() => onOpenEvent('johnson')}
+        />
+        <Step
+          n="3"
+          title="Act without leaving"
+          text="Reply to a client with a draft written from the event's own data. You review and send it."
+          cta="Open the bride's message"
+          onClick={onOpenMessage}
+        />
       </section>
 
       {/* ---------------------- NEEDS ATTENTION -------------------------- */}
@@ -160,6 +194,24 @@ export function Dashboard({ attention, eventAttention, onOpenEvent, onOpenMessag
         </div>
       </div>
     </div>
+  )
+}
+
+// One of the three "how it works" cards. The whole card is the control, and it
+// carries an explicit labelled action so the affordance is visible at rest.
+function Step({ n, title, text, cta, onClick }) {
+  return (
+    <button className="step" onClick={onClick}>
+      <span className="step__num" aria-hidden="true">
+        {n}
+      </span>
+      <span className="step__title">{title}</span>
+      <span className="step__text">{text}</span>
+      <span className="step__cta">
+        {cta}
+        <Icon name="arrowRight" size={13} />
+      </span>
+    </button>
   )
 }
 

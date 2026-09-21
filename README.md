@@ -103,9 +103,18 @@ other way when you resolve something.
 **Primary job:** answer "what needs my attention?" before answering anything else.
 
 **What's actually on it:** the page opens on a photographic welcome band — a wedding reception
-under Edison bulbs — carrying the date, "Good morning, Dana," and the one sentence that matters:
-*"One event is on site today, and 5 items need your attention across 3 events."* One button,
-**"See what needs attention,"** scrolls to the queue.
+under Edison bulbs — whose headline says what the product is rather than who is signed in:
+**"Know what needs your attention across every event."** Under it, one sentence explains the
+mechanism: *"One place to run every wedding and event you are hosting — timeline, vendors, staff,
+payments, contracts and client email — instead of switching between five separate systems."* Then
+one button, **"See what needs attention,"** and a quiet byline showing who's signed in and today's
+date.
+
+Directly below sit three numbered cards that explain the product and double as its main
+navigation: **1. See what needs attention** (scrolls to the queue), **2. Open one event, see
+everything** (opens the Johnson Wedding workspace), and **3. Act without leaving** (opens the
+bride's message). Someone who reads nothing else still learns the shape of the product in about
+five seconds.
 
 Below that, the red-bordered **Needs attention** panel. Each of the five items is a single line
 — due date, title, and which event it belongs to — that expands on click to reveal the detail
@@ -284,6 +293,8 @@ Where it falls short: the page never says what the product *is*. The top bar say
 Events / Venue Operations," which is the venue's name, not a description. Someone who's never
 seen it might understand "these are things I need to do" without understanding "this pulls
 together email, payments, and vendors." The value (control) comes across; the mechanism doesn't.
+**→ Fixed in the revision** — the hero headline now states the promise, and three numbered cards
+explain the product directly beneath it.
 
 ### 2. Does every element on the landing screen earn its place?
 
@@ -475,6 +486,29 @@ a straight vertical gradient because the angled one gets cropped.
 
 **Collapsed rails.** "Today's schedule" and "Recent activity" are both collapsible cards now, each
 with a count badge.
+
+#### Pass 3 — say what this is before showing the work
+
+Even after pass 2 the landing screen opened with "Good morning, Dana" and a queue of work items.
+That is fine for Dana, who already knows what she is looking at — but a first-time viewer learns
+nothing about what the product actually does. The top bar says "Willow & Stone Events / Venue
+Operations," which is a venue's name, not a description. I had flagged exactly this in my own
+first-read evaluation and then not acted on it.
+
+**The headline now carries the promise.** The `<h1>` changed from a greeting to
+*"Know what needs your attention across every event"* — close to the sentence the brief says a
+first-time user must walk away understanding. A supporting line names the mechanism: one place
+instead of five systems. "Signed in as Dana Whitcomb" moved to a quiet byline under a divider,
+because who is signed in is not the first thing a stranger needs.
+
+**Three numbered cards explain the product and navigate it.** A strip of three cards — see what
+needs attention / open one event and see everything / act without leaving — sits directly under
+the hero. Each states what that part of the product does, carries a live number where it has one,
+and is itself the way into that screen. It does the work of an onboarding page without being a
+fourth screen, which the brief rules out.
+
+This also fixes the last of the navigation complaints: there are now three labelled doors into the
+product on the landing screen, so no one has to guess that a table row is clickable.
 
 ### Why I changed it
 
