@@ -1,0 +1,114 @@
+/* ==========================================================================
+   Willow & Stone Events — global styles
+   --------------------------------------------------------------------------
+   Tailwind v4. The design tokens below are the whole visual system; every
+   component composes them as utilities. The palette and type come from the
+   Figma "hero design variation": cream, parchment and bark, Cormorant
+   Garamond for the few large headlines, Instrument Sans for everything else.
+
+   Design rules the tokens enforce:
+
+   NO INTERFERENCE  Colour carries exactly one meaning. Red-clay = act now,
+                    amber = due soon, green = settled. Everything else is
+                    bark ink on cream, so ordinary information never competes
+                    with a signal that needs action.
+   HIERARCHY        Two typefaces, three weights, and a small set of sizes.
+   ========================================================================== */
+
+@import 'tailwindcss';
+
+@theme {
+  /* Neutrals — cream and parchment, lifted from the landing hero */
+  --color-bg: #f4f0e8;
+  --color-surface: #fdfcf9;
+  --color-surface-2: #f8f5ee;
+  --color-line: #e3d9c7;
+  --color-line-soft: #ede6d8;
+  --color-ink: #2a2421;
+  --color-ink-2: #4a423d;
+  --color-muted: #7a6f66;
+  --color-faint: #a0958a;
+
+  /* House colours */
+  --color-cream: #faf9f6;
+  --color-parchment: #eadecc;
+  --color-parchment-line: #d8cbb3;
+  --color-bark: #2a2421;
+  --color-night: #120f0e;
+
+  /* Signal colours — one meaning each, used nowhere decorative */
+  --color-urgent: #b0402c;
+  --color-urgent-soft: #fdeee9;
+  --color-urgent-line: #f0cabc;
+  --color-warn: #8f5d11;
+  --color-warn-soft: #fbf2e1;
+  --color-warn-line: #ecd9b0;
+  --color-ok: #2f6d50;
+  --color-ok-soft: #e8f2ec;
+  --color-ok-line: #c9e0d3;
+
+  /* Type — the font variables are set on <html> by next/font */
+  --font-display: var(--font-cormorant), 'Iowan Old Style', Georgia, serif;
+  --font-body: var(--font-instrument), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --shadow-card: 0 1px 2px rgba(42, 36, 33, 0.05);
+  --shadow-lift: 0 8px 20px -10px rgba(42, 36, 33, 0.2);
+  --shadow-attention: 0 12px 28px -14px rgba(176, 64, 44, 0.3);
+
+  --animate-panel-in: panel-in 0.16s ease-out;
+  --animate-rise: rise 0.25s ease-out;
+
+  @keyframes panel-in {
+    from {
+      opacity: 0;
+      transform: translateY(3px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+@layer base {
+  html {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: default;
+  }
+
+  /* Keyboard focus is always visible; on photographs it flips to cream. */
+  :focus-visible {
+    outline: 2px solid var(--color-bark);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  .on-photo :focus-visible {
+    outline-color: var(--color-cream);
+  }
+}

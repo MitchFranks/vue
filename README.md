@@ -29,7 +29,8 @@ Anything that didn't help test that idea got left out on purpose.
 
 ## Running Locally
 
-Built with **React 18** and **Vite 5**, plain CSS, no UI framework. You need Node.js 18+.
+Built with **Next.js 16** (App Router, static export), **React 19** and **Tailwind CSS 4**. You need
+Node.js 20+.
 
 ```bash
 cd willow-stone-events
@@ -37,21 +38,31 @@ npm install
 npm run dev
 ```
 
-Vite prints a local URL (usually http://localhost:5173) and opens it in your browser. `Ctrl + C`
-stops it.
+Next prints a local URL (usually http://localhost:3000). `Ctrl + C` stops it.
 
 To check the production build:
 
 ```bash
-npm run build     # builds into dist/
-npm run preview   # serves the built version locally
+npm run build     # static export into out/
+npx serve out     # serves the built version locally
 ```
+
+**Note on the landing screen:** the prototype opens on a full-screen welcome page (the Figma
+"hero design variation" — villa photograph, serif headline, transparent nav). It is not one of the
+three product screens; "Open dashboard" or any nav link takes you into the product, and the
+wordmark in the product's top bar brings you back. The product screens share its palette
+(cream, parchment, bark) and typefaces (Cormorant Garamond for large headlines, Instrument Sans
+for everything else) so the two halves read as one product.
 
 **Note on resetting:** sending the reply on Screen 3 changes the prototype's state for the rest
 of that session. Just refresh the page to put everything back to the starting state.
 
 All the fake content — event names, dates, vendors, payments, the bride's email, the AI draft —
-lives in one file, `src/data.js`, so it's easy to change without digging through components.
+lives in one file, `lib/data.js`, so it's easy to change without digging through components.
+
+**Routes:** `/` (landing), `/dashboard`, `/events/johnson`, `/events/johnson/messages/decor-time`.
+The resolved-item state lives in a context provider in the root layout, so it survives navigation
+between routes; a hard refresh resets it.
 
 ---
 
@@ -479,7 +490,7 @@ attention item is open by default so the screen's job still gets done without an
 
 **Real photography.** Two photographs from Pixabay replaced the SVG illustrations I drew in pass
 1: a reception under Edison bulbs for the dashboard, and estate grounds with a ceremony set up on
-the lawn for the event header. They're downsized, compressed and committed into `src/assets/`
+the lawn for the event header. They're downsized, compressed and committed into `public/images/`
 rather than hot-linked, so the prototype can't break if the source host changes. Both sit under
 an angled dark scrim so the overlaid text keeps its contrast; on narrow screens the scrim becomes
 a straight vertical gradient because the angled one gets cropped.
@@ -583,27 +594,38 @@ same height, but the page no longer hands you all of it before you've asked.
 
 ```
 willow-stone-events/
-├── index.html                 page shell, font, favicon
 ├── package.json               scripts and dependencies
-├── vite.config.js             dev server + build settings
+├── next.config.mjs            static export + GitHub Pages base path
+├── postcss.config.mjs         Tailwind CSS 4
 ├── README.md                  this file
 ├── DESIGN-PRINCIPLES.md       longer notes on grouping, signifiers, and Gall's Law
 ├── docs/                      before & after screenshots for the revision write-up
-└── src/
-    ├── main.jsx               React entry point
-    ├── App.jsx                all app state and navigation between the three screens
-    ├── data.js                every piece of mock content in the prototype
-    ├── styles.css             the whole design system in one file
-    ├── assets/
-    │   ├── hero-reception.jpg dashboard welcome band
-    │   └── event-estate.jpg   event workspace header
-    └── components/
-        ├── AppShell.jsx       top bar, breadcrumbs, footer — wraps all three screens
-        ├── Dashboard.jsx      Screen 1
-        ├── EventWorkspace.jsx Screen 2
-        ├── Communication.jsx  Screen 3
-        └── ui.jsx             shared pieces: Card, Pill, Avatar, Icon, Field,
-                               Tabs, Collapsible, DisclosureRow
+├── public/images/
+│   ├── villa-hero.jpg         landing screen
+│   ├── hero-reception.jpg     dashboard welcome band
+│   └── event-estate.jpg       event workspace header
+├── app/
+│   ├── layout.jsx             fonts, favicon, prototype state provider
+│   ├── globals.css            Tailwind theme — the whole design system as tokens
+│   ├── page.jsx               / — landing screen
+│   └── (product)/
+│       ├── layout.jsx         wraps every product screen in the AppShell
+│       ├── dashboard/         /dashboard — Screen 1
+│       └── events/[id]/       /events/johnson — Screen 2
+│           └── messages/[messageId]/   /events/johnson/messages/decor-time — Screen 3
+├── lib/
+│   ├── data.js                every piece of mock content in the prototype
+│   ├── prototype.jsx          the one piece of app state (which items are resolved)
+│   ├── asset.js               base-path helper for images
+│   └── cx.js                  class-name joiner
+└── components/
+    ├── Landing.jsx            Screen 0
+    ├── AppShell.jsx           top bar, breadcrumbs, footer — derived from the URL
+    ├── Dashboard.jsx          Screen 1
+    ├── EventWorkspace.jsx     Screen 2
+    ├── Communication.jsx      Screen 3
+    └── ui.jsx                 shared pieces: Button, Card, Pill, Avatar, Icon, Field,
+                               Tabs, Collapsible, DisclosureRow, Row, PanelHead
 ```
 
 There's no router and no server. `App.jsx` holds two pieces of state — which screen is showing,
@@ -618,7 +640,7 @@ badge on Screen 2 and the counter on Screen 1 without any of them being hardcode
 Photography from [Pixabay](https://pixabay.com), used under the
 [Pixabay Content License](https://pixabay.com/service/license-summary/) (free to use, attribution
 not required — included here anyway). Images were downsized and compressed, and are committed
-into `src/assets/` rather than hot-linked so the prototype doesn't depend on an external host.
+into `public/images/` rather than hot-linked so the prototype doesn't depend on an external host.
 
 Everything else — the venue, the events, the people, the emails, the payments — is invented for
 this assignment. Any resemblance to a real venue or client is coincidental.
