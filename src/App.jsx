@@ -6,19 +6,21 @@
 // later, but the prototype has to work first before it is allowed to get
 // complicated.
 //
-//   screen        which of the three screens is showing
+//   screen        which screen is showing — the landing page or one of the
+//                 three product screens
 //   resolvedIds   which "needs attention" items have been cleared
 // ---------------------------------------------------------------------------
 
 import { useEffect, useState } from 'react'
 import { AppShell } from './components/AppShell.jsx'
+import { Landing } from './components/Landing.jsx'
 import { Dashboard } from './components/Dashboard.jsx'
 import { EventWorkspace } from './components/EventWorkspace.jsx'
 import { Communication } from './components/Communication.jsx'
 import { attentionQueue, events } from './data.js'
 
 export default function App() {
-  const [screen, setScreen] = useState('dashboard')
+  const [screen, setScreen] = useState('landing')
   const [resolvedIds, setResolvedIds] = useState([])
 
   // Each screen starts at the top, the way a page navigation would.
@@ -57,6 +59,12 @@ export default function App() {
             { label: 'Decorating time request' }
           ]
         : []
+
+  // The landing screen is full-bleed and carries its own nav, so it is the one
+  // screen that does not sit inside the product shell.
+  if (screen === 'landing') {
+    return <Landing onNavigate={navigate} />
+  }
 
   return (
     <AppShell crumbs={crumbs} onNavigate={navigate}>

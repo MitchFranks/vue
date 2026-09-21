@@ -47,6 +47,13 @@ npm run build     # builds into dist/
 npm run preview   # serves the built version locally
 ```
 
+**Note on the landing screen:** the prototype opens on a full-screen welcome page (the Figma
+"hero design variation" — villa photograph, serif headline, transparent nav). It is not one of the
+three product screens; "Open dashboard" or any nav link takes you into the product, and the
+wordmark in the product's top bar brings you back. The product screens share its palette
+(cream, parchment, bark) and typefaces (Cormorant Garamond for large headlines, Instrument Sans
+for everything else) so the two halves read as one product.
+
 **Note on resetting:** sending the reply on Screen 3 changes the prototype's state for the rest
 of that session. Just refresh the page to put everything back to the starting state.
 

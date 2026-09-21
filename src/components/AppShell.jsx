@@ -14,14 +14,11 @@ export function AppShell({ crumbs = [], onNavigate, children }) {
     <div className="shell">
       <header className="topbar">
         <div className="topbar__inner">
-          <button className="brand" onClick={() => onNavigate('dashboard')} title="Back to venue dashboard">
-            <span className="brand__mark" aria-hidden="true">
-              W
-            </span>
-            <span className="brand__text">
-              <span className="brand__name">{venue.name}</span>
-              <span className="brand__sub">Venue Operations</span>
-            </span>
+          {/* Wordmark goes home to the landing screen; "Dashboard" in the nav
+              is the way back to the work. */}
+          <button className="brand" onClick={() => onNavigate('landing')} title="Back to the welcome screen">
+            <span className="brand__name">{venue.name}</span>
+            <span className="brand__sub">Venue Operations</span>
           </button>
 
           {/* REVISION — SIGNIFIER / NO FALSE AFFORDANCE:
