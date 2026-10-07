@@ -1,4 +1,4 @@
-# Willow & Stone Events — Venue Management Prototype
+# Vue — Venue Management Prototype
 
 IS 551 · Interactive prototype + written analysis
 
@@ -7,7 +7,7 @@ IS 551 · Interactive prototype + written analysis
 ## About this project
 
 This is a working three-screen prototype of an event venue management platform. The fictional
-venue is called Willow & Stone Events, and the prototype follows one real scenario: a wedding
+venue is called Vue, and the prototype follows one real scenario: a wedding
 coming up in seven days that has three loose ends the manager hasn't dealt with yet.
 
 **What it is:** a clickable React prototype with realistic fake data. Three screens, no backend,
@@ -33,7 +33,7 @@ Built with **Next.js 16** (App Router, static export), **React 19** and **Tailwi
 Node.js 20+.
 
 ```bash
-cd willow-stone-events
+cd vue
 npm install
 npm run dev
 ```
@@ -587,13 +587,13 @@ same height, but the page no longer hands you all of it before you've asked.
 - [x] Create a branch for revisions (`revision`)
 - [x] Make the revision and commit it
 - [ ] Open a pull request and merge it into `main`
-- [x] Deploy to a public URL — <https://mitchfranks.github.io/willow-stone-events/>
+- [x] Deploy to a public URL — <https://mitchfranks.github.io/vue/>
 ---
 
 ## Project Structure
 
 ```
-willow-stone-events/
+vue/
 ├── package.json               scripts and dependencies
 ├── next.config.mjs            static export + GitHub Pages base path
 ├── postcss.config.mjs         Tailwind CSS 4

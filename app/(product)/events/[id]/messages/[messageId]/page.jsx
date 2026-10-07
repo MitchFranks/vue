@@ -8,7 +8,7 @@ export function generateStaticParams() {
 
 export const dynamicParams = false
 
-export const metadata = { title: `${thread.subject} — Willow & Stone Events` }
+export const metadata = { title: `${thread.subject} — Vue` }
 
 export default async function MessagePage({ params }) {
   const { id, messageId } = await params

@@ -10,7 +10,7 @@ export function generateStaticParams() {
 
 export const dynamicParams = false
 
-export const metadata = { title: `${johnson.name} — Willow & Stone Events` }
+export const metadata = { title: `${johnson.name} — Vue` }
 
 export default async function EventPage({ params }) {
   const { id } = await params

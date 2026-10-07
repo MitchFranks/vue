@@ -1,8 +1,8 @@
 {
-  "name": "willow-stone-events",
+  "name": "vue",
   "private": true,
   "version": "2.0.0",
-  "description": "Prototype venue management platform for Willow & Stone Events (IS 551)",
+  "description": "Prototype venue management platform for Vue (IS 551)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
