@@ -1,84 +1,74 @@
 /* ==========================================================================
-   Willow & Stone Events — global styles
+   Vue — low-fidelity prototype design tokens
    --------------------------------------------------------------------------
-   Tailwind v4. The design tokens below are the whole visual system; every
-   component composes them as utilities. The palette and type come from the
-   Figma "hero design variation": cream, parchment and bark, Cormorant
-   Garamond for the few large headlines, Instrument Sans for everything else.
+   This is a LOW-FIDELITY prototype. The visual language is deliberately plain:
+   a greyscale neutral ramp, ONE accent colour, system sans-serif, visible
+   1px borders, almost no radius, no shadows, no gradients, no photography.
+   It should read as an early wireframe, not a finished product.
 
-   Design rules the tokens enforce:
+   Rules the tokens enforce:
 
-   NO INTERFERENCE  Colour carries exactly one meaning. Red-clay = act now,
-                    amber = due soon, green = settled. Everything else is
-                    bark ink on cream, so ordinary information never competes
-                    with a signal that needs action.
-   HIERARCHY        Two typefaces, three weights, and a small set of sizes.
+   STATUS, NOT DECORATION  Colour carries exactly one meaning. Urgent = red,
+                           due-soon = amber, pending = blue, done = green.
+                           Nothing else is ever tinted, so a status signal can
+                           never be drowned out by decoration.
+   NEVER COLOUR ALONE      Every status pairs colour with an icon glyph AND a
+                           text label (see StatusBadge), so the meaning
+                           survives greyscale and colour-blindness.
+   ONE ACCENT              --accent is the only "brand" colour. It marks the
+                           primary action on a screen and the active nav item.
+   FLAT HIERARCHY          Four type sizes, three weights. Hierarchy comes from
+                           size, weight and spacing — not from colour or effects.
    ========================================================================== */
 
 @import 'tailwindcss';
 
 @theme {
-  /* Neutrals — cream and parchment, lifted from the landing hero */
-  --color-bg: #f4f0e8;
-  --color-surface: #fdfcf9;
-  --color-surface-2: #f8f5ee;
-  --color-line: #e3d9c7;
-  --color-line-soft: #ede6d8;
-  --color-ink: #2a2421;
-  --color-ink-2: #4a423d;
-  --color-muted: #7a6f66;
-  --color-faint: #a0958a;
+  /* ---- Neutral ramp (the whole palette, basically) ---- */
+  --color-paper: #ffffff;
+  --color-bg: #f4f4f5;
+  --color-sunken: #ebebed;
+  --color-line: #d2d2d6;
+  --color-line-soft: #e4e4e7;
+  --color-ink: #1c1c1f;
+  --color-ink-2: #46464c;
+  --color-muted: #6c6c75;
+  --color-faint: #9a9aa3;
 
-  /* House colours */
-  --color-cream: #faf9f6;
-  --color-parchment: #eadecc;
-  --color-parchment-line: #d8cbb3;
-  --color-bark: #2a2421;
-  --color-night: #120f0e;
+  /* ---- The single accent ---- */
+  --color-accent: #2d5bd7;
+  --color-accent-dark: #1f44a8;
+  --color-accent-soft: #e8eefb;
+  --color-accent-line: #bcccf2;
 
-  /* Signal colours — one meaning each, used nowhere decorative */
-  --color-urgent: #b0402c;
-  --color-urgent-soft: #fdeee9;
-  --color-urgent-line: #f0cabc;
-  --color-warn: #8f5d11;
-  --color-warn-soft: #fbf2e1;
-  --color-warn-line: #ecd9b0;
-  --color-ok: #2f6d50;
-  --color-ok-soft: #e8f2ec;
-  --color-ok-line: #c9e0d3;
+  /* ---- Status ramp: one meaning each, never decorative ---- */
+  --color-urgent: #b22222;
+  --color-urgent-soft: #fbeaea;
+  --color-urgent-line: #eec4c4;
 
-  /* Type — the font variables are set on <html> by next/font */
-  --font-display: var(--font-cormorant), 'Iowan Old Style', Georgia, serif;
-  --font-body: var(--font-instrument), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --color-warn: #8a5a00;
+  --color-warn-soft: #fdf3e0;
+  --color-warn-line: #ebd6ab;
 
-  --shadow-card: 0 1px 2px rgba(42, 36, 33, 0.05);
-  --shadow-lift: 0 8px 20px -10px rgba(42, 36, 33, 0.2);
-  --shadow-attention: 0 12px 28px -14px rgba(176, 64, 44, 0.3);
+  --color-pending: #2d5bd7;
+  --color-pending-soft: #e8eefb;
+  --color-pending-line: #bcccf2;
 
-  --animate-panel-in: panel-in 0.16s ease-out;
-  --animate-rise: rise 0.25s ease-out;
+  --color-done: #1f6b43;
+  --color-done-soft: #e6f2eb;
+  --color-done-line: #bcdcc9;
 
-  @keyframes panel-in {
-    from {
-      opacity: 0;
-      transform: translateY(3px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
+  --color-info: #46464c;
+  --color-info-soft: #eeeef0;
+  --color-info-line: #d8d8dd;
 
-  @keyframes rise {
-    from {
-      opacity: 0;
-      transform: translateY(-4px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
+  /* ---- Type: system sans only. No display face, no serif. ---- */
+  --font-body: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* ---- Radius: nearly square, like a wireframe ---- */
+  --radius-box: 3px;
+  --radius-pill: 2px;
 }
 
 @layer base {
@@ -86,9 +76,13 @@
     background: var(--color-bg);
     color: var(--color-ink);
     font-family: var(--font-body);
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    margin: 0;
   }
 
   button {
@@ -98,17 +92,38 @@
   }
 
   button:disabled {
-    cursor: default;
+    cursor: not-allowed;
   }
 
-  /* Keyboard focus is always visible; on photographs it flips to cream. */
+  /* SIGNIFIER: keyboard focus is always visible and high-contrast. */
   :focus-visible {
-    outline: 2px solid var(--color-bark);
+    outline: 2px solid var(--color-accent);
     outline-offset: 2px;
-    border-radius: 4px;
   }
 
-  .on-photo :focus-visible {
-    outline-color: var(--color-cream);
+  /* Honour reduced-motion; there is barely any motion to begin with. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
+}
+
+@layer utilities {
+  /* Screen-reader-only text, used for icon-only controls. */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
 }

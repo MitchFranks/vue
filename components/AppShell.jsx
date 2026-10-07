@@ -1,127 +1,202 @@
 'use client'
 
 // ---------------------------------------------------------------------------
-// The frame that wraps every product screen: top bar + breadcrumb trail.
+// The frame around every screen.
 //
-// Keeping one shell around all the screens is what makes them read as the
-// same product, and the breadcrumb is a persistent SIGNIFIER for "you are here
-// / here is the way back". Both are derived from the URL, so they can never
-// disagree with the page that is showing.
+// NON-LINEAR NAVIGATION: a persistent sidebar is always on screen (a slide-over
+// on mobile), grouped into the four product areas. Every area is reachable from
+// everywhere — there is no wizard, no forced order, and no dead ends.
+//
+// CONVENTIONS: left sidebar + top bar + breadcrumbs is the layout people
+// already know from every admin tool they have used.
 // ---------------------------------------------------------------------------
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Icon } from './ui'
 import { cx } from '@/lib/cx'
-import { johnson, venue } from '@/lib/data'
+import { useStore } from '@/lib/store'
+import { venue } from '@/lib/mock/events'
+import { Button, Icon } from './ui/primitives'
+import { ToastHost } from './ui/domain'
+import { IntroModal } from './IntroModal'
 
-function crumbsFor(pathname) {
-  if (pathname.startsWith('/events/johnson/messages/')) {
-    return [
-      { label: johnson.name, href: '/events/johnson' },
-      { label: 'Decorating time request' }
+const NAV = [
+  {
+    heading: 'Overview',
+    items: [
+      { href: '/', label: 'Dashboard', icon: 'home', exact: true },
+      { href: '/attention', label: 'Needs Attention', icon: 'alert', badge: 'attention' },
+      { href: '/calendar', label: 'Calendar', icon: 'calendar' },
+      { href: '/events', label: 'Upcoming Events', icon: 'list' }
+    ]
+  },
+  {
+    heading: 'Staffing',
+    items: [
+      { href: '/schedule', label: 'Weekly Schedule', icon: 'grid' },
+      { href: '/schedule/gaps', label: 'Coverage Gaps', icon: 'alert', badge: 'gaps' },
+      { href: '/schedule/planner', label: 'Staffing Planner', icon: 'users' },
+      { href: '/schedule/publish', label: 'Publish Schedule', icon: 'send' },
+      { href: '/staff', label: 'Staff Directory', icon: 'user' },
+      { href: '/staff/availability', label: 'Availability', icon: 'clock' }
+    ]
+  },
+  {
+    heading: 'People & Comms',
+    items: [
+      { href: '/messages', label: 'Messages', icon: 'mail', badge: 'messages' },
+      { href: '/clients', label: 'Clients', icon: 'users' },
+      { href: '/vendors', label: 'Vendors', icon: 'truck' }
     ]
   }
-  if (pathname.startsWith('/events/')) {
-    return [{ label: johnson.name }]
-  }
-  return []
-}
+]
 
 export function AppShell({ children }) {
   const pathname = usePathname()
-  const crumbs = crumbsFor(pathname)
-  const onDashboard = crumbs.length === 0
+  const [navOpen, setNavOpen] = useState(false)
+  const { attention, gaps, messageList, toasts, dismissToast, reset } = useStore()
+
+  const unreplied = messageList.filter((m) => m.needsReply && !m.replied).length
+  const counts = { attention: attention.length, gaps: gaps.length, messages: unreplied }
+
+  // Close the mobile nav whenever the route changes.
+  useEffect(() => {
+    setNavOpen(false)
+  }, [pathname])
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-20 border-b border-line bg-cream">
-        <div className="mx-auto flex h-16 max-w-[1320px] items-center gap-3.5 px-4 md:gap-7 md:px-6">
-          {/* Wordmark goes home to the landing screen; "Dashboard" in the nav
-              is the way back to the work. */}
-          <Link
-            href="/"
-            className="flex flex-col items-start rounded-lg py-1.5 pr-2 text-left leading-none"
-            title="Back to the welcome screen"
+    <div className="min-h-screen">
+      {/* ---- Top bar ---- */}
+      <header className="sticky top-0 z-30 border-b border-line bg-paper">
+        <div className="flex h-14 items-center gap-3 px-3 sm:px-4">
+          <button
+            type="button"
+            onClick={() => setNavOpen((v) => !v)}
+            aria-expanded={navOpen}
+            aria-controls="main-nav"
+            className="rounded-box border border-line px-2 py-1.5 text-ink-2 hover:bg-sunken lg:hidden"
           >
-            <span className="font-display text-[21px] font-semibold tracking-[0.02em]">{venue.name}</span>
-            <span className="mt-[3px] text-[10px] uppercase tracking-[0.16em] text-faint">Venue Operations</span>
+            <Icon name="list" size={16} />
+            <span className="sr-only">Toggle navigation</span>
+          </button>
+
+          <Link href="/" className="flex items-baseline gap-2">
+            <span className="text-base font-semibold tracking-tight text-ink">Vue</span>
+            <span className="hidden text-[11px] uppercase tracking-wider text-faint sm:inline">
+              Venue Operations
+            </span>
           </Link>
 
-          {/* SIGNIFIER / NO FALSE AFFORDANCE: only sections that exist are
-              listed. Nav items that look like navigation but aren't cost the
-              user time. */}
-          <nav className="mr-auto hidden items-center gap-0.5 md:flex" aria-label="Primary">
-            <NavItem href="/dashboard" active={onDashboard}>
-              Dashboard
-            </NavItem>
-            <NavItem href="/events/johnson" active={!onDashboard}>
-              Events
-            </NavItem>
-          </nav>
+          {/* VISIBILITY OF SYSTEM STATUS: the prototype never pretends to be real. */}
+          <span className="ml-1 hidden rounded-pill border border-warn-line bg-warn-soft px-2 py-0.5 text-[11px] font-medium text-warn sm:inline">
+            Low-fidelity prototype
+          </span>
 
-          <div className="ml-auto flex items-center gap-2.5 md:ml-0">
-            <span className="hidden flex-col items-end leading-tight md:flex">
-              <span className="text-[13px] font-medium">{venue.manager}</span>
-              <span className="text-[11px] text-faint">{venue.managerRole}</span>
-            </span>
-            <span className="inline-grid h-8 w-8 place-items-center rounded-full border border-parchment-line bg-parchment text-[11.5px] font-semibold text-night">
+          <div className="ml-auto flex items-center gap-2">
+            <Button href="/attention" variant="secondary" size="sm" className="hidden sm:inline-flex">
+              <Icon name="alert" size={13} />
+              {attention.length} need{attention.length === 1 ? 's' : ''} attention
+            </Button>
+            <div className="hidden text-right leading-tight sm:block">
+              <div className="text-xs font-medium text-ink">{venue.manager}</div>
+              <div className="text-[11px] text-faint">{venue.managerRole}</div>
+            </div>
+            <span className="grid h-8 w-8 place-items-center rounded-box border border-line bg-sunken text-[11px] font-semibold text-ink-2">
               {venue.managerInitials}
             </span>
           </div>
         </div>
       </header>
 
-      {crumbs.length > 0 && (
-        <div className="border-b border-line bg-cream">
-          <nav className="mx-auto flex max-w-[1320px] items-center gap-1 px-4 py-2.5 text-[12.5px] md:px-6" aria-label="Breadcrumb">
-            <Crumb href="/dashboard">
-              <Icon name="arrowLeft" size={14} />
-              Dashboard
-            </Crumb>
-            {crumbs.map((crumb, i) => (
-              <span className="flex items-center gap-1" key={crumb.label}>
-                <Icon name="chevronRight" size={13} className="text-line" />
-                {crumb.href && i < crumbs.length - 1 ? (
-                  <Crumb href={crumb.href}>{crumb.label}</Crumb>
-                ) : (
-                  <span className="px-1.5 py-[3px] text-muted" aria-current="page">
-                    {crumb.label}
-                  </span>
-                )}
-              </span>
+      <div className="flex">
+        {/* ---- Sidebar ---- */}
+        <aside
+          id="main-nav"
+          className={cx(
+            'fixed inset-y-0 left-0 z-40 w-60 shrink-0 overflow-y-auto border-r border-line bg-paper pt-14 transition-transform lg:sticky lg:top-14 lg:z-0 lg:h-[calc(100vh-3.5rem)] lg:translate-x-0 lg:pt-0',
+            navOpen ? 'translate-x-0' : '-translate-x-full'
+          )}
+        >
+          <nav className="p-3" aria-label="Main">
+            {NAV.map((group) => (
+              <div key={group.heading} className="mb-4">
+                <div className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-faint">
+                  {group.heading}
+                </div>
+                <ul className="space-y-0.5">
+                  {group.items.map((item) => {
+                    const active = item.exact ? pathname === item.href : pathname.startsWith(item.href)
+                    const count = item.badge ? counts[item.badge] : 0
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          aria-current={active ? 'page' : undefined}
+                          className={cx(
+                            'flex items-center gap-2 rounded-box border px-2 py-1.5 text-sm',
+                            active
+                              ? 'border-accent-line bg-accent-soft font-semibold text-accent'
+                              : 'border-transparent text-ink-2 hover:bg-sunken'
+                          )}
+                        >
+                          <Icon name={item.icon} size={15} className={active ? 'text-accent' : 'text-faint'} />
+                          <span className="flex-1 truncate">{item.label}</span>
+                          {count > 0 && (
+                            <span
+                              className={cx(
+                                'rounded-pill border px-1.5 text-[11px] font-semibold',
+                                item.badge === 'attention' || item.badge === 'gaps'
+                                  ? 'border-urgent-line bg-urgent-soft text-urgent'
+                                  : 'border-line bg-sunken text-muted'
+                              )}
+                            >
+                              {count}
+                            </span>
+                          )}
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
             ))}
+
+            <div className="mt-6 border-t border-line-soft pt-3">
+              <Button href="/events/new" variant="secondary" size="sm" className="w-full">
+                <Icon name="plus" size={13} />
+                New event
+              </Button>
+              <button
+                type="button"
+                onClick={reset}
+                className="mt-2 w-full rounded-box border border-line px-2 py-1.5 text-xs text-muted hover:bg-sunken"
+              >
+                Reset prototype data
+              </button>
+              <p className="mt-2 px-1 text-[11px] leading-relaxed text-faint">
+                Simulated data. Nothing here is saved to a real system.
+              </p>
+            </div>
           </nav>
-        </div>
-      )}
+        </aside>
 
-      <main className="mx-auto w-full max-w-[1320px] flex-1 px-4 pt-5 pb-10 md:px-6 md:pt-[26px] md:pb-14">{children}</main>
+        {navOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-ink/30 lg:hidden"
+            onClick={() => setNavOpen(false)}
+            aria-hidden="true"
+          />
+        )}
 
-      <footer className="border-t border-line bg-cream px-6 py-4 text-center text-xs text-faint">
-        Prototype · {venue.name} · IS 551. Mock data only — no live email, payments or integrations.
-      </footer>
+        {/* ---- Page ---- */}
+        <main className="min-w-0 flex-1 px-3 py-5 sm:px-5 sm:py-6">
+          <div className="mx-auto w-full max-w-[1100px]">{children}</div>
+        </main>
+      </div>
+
+      <IntroModal />
+      <ToastHost toasts={toasts} onDismiss={dismissToast} />
     </div>
-  )
-}
-
-function NavItem({ href, active, children }) {
-  return (
-    <Link
-      href={href}
-      className={cx(
-        'rounded-full px-3 py-[7px] text-[13px] font-medium transition-colors',
-        active ? 'bg-parchment text-bark' : 'text-muted hover:bg-surface-2 hover:text-ink'
-      )}
-    >
-      {children}
-    </Link>
-  )
-}
-
-function Crumb({ href, children }) {
-  return (
-    <Link href={href} className="inline-flex items-center gap-1.5 rounded-full px-1.5 py-[3px] font-medium text-bark hover:bg-parchment">
-      {children}
-    </Link>
   )
 }
