@@ -1,92 +1,102 @@
 /* ==========================================================================
-   Vue — low-fidelity prototype design tokens
+   Vue — design tokens
    --------------------------------------------------------------------------
-   This is a LOW-FIDELITY prototype. The visual language is deliberately plain:
-   a greyscale neutral ramp, ONE accent colour, system sans-serif, visible
-   1px borders, almost no radius, no shadows, no gradients, no photography.
-   It should read as an early wireframe, not a finished product.
+   The visual language is taken from the Figma reference ("The Atrium" event
+   house site) and translated for a dense operations app:
 
-   Rules the tokens enforce:
+     cream / sand / ink      the neutral ground, warm rather than grey
+     brass                   the single interactive accent — primary actions,
+                             active navigation, focus rings. Nothing else.
+     moss                    links and secondary emphasis
+     Playfair Display        page titles, section headings, large figures
+     DM Sans                 all UI text
 
-   STATUS, NOT DECORATION  Colour carries exactly one meaning. Urgent = red,
-                           due-soon = amber, pending = blue, done = green.
-                           Nothing else is ever tinted, so a status signal can
-                           never be drowned out by decoration.
-   NEVER COLOUR ALONE      Every status pairs colour with an icon glyph AND a
-                           text label (see StatusBadge), so the meaning
-                           survives greyscale and colour-blindness.
-   ONE ACCENT              --accent is the only "brand" colour. It marks the
-                           primary action on a screen and the active nav item.
-   FLAT HIERARCHY          Four type sizes, three weights. Hierarchy comes from
-                           size, weight and spacing — not from colour or effects.
+   Carried over verbatim from the reference: square corners (no radius), 1px
+   hairline borders, wide-tracked uppercase eyebrows, bottom-border-only
+   inputs, the brass focus ring, and the -2px hover lift.
+
+   What had to change: the reference is a marketing site with 7rem headlines
+   and full-bleed photography. An operations screen cannot carry that, so the
+   type scale is compressed and photography is confined to the welcome screen.
+
+   STATUS COLOURS are deliberately distinct in hue from brass, because brass
+   is an *interaction* colour and must never be mistaken for a status. Every
+   status also carries an icon and a word — never colour alone.
    ========================================================================== */
 
 @import 'tailwindcss';
 
 @theme {
-  /* ---- Neutral ramp (the whole palette, basically) ---- */
-  --color-paper: #ffffff;
-  --color-bg: #f4f4f5;
-  --color-sunken: #ebebed;
-  --color-line: #d2d2d6;
-  --color-line-soft: #e4e4e7;
-  --color-ink: #1c1c1f;
-  --color-ink-2: #46464c;
-  --color-muted: #6c6c75;
-  --color-faint: #9a9aa3;
+  /* ---- Neutral ground ---- */
+  --color-cream: #f8f6f0;
+  --color-paper: #fffefb;
+  --color-sand: #eee9df;
+  --color-sunken: #e7e2d7;
+  --color-line: #dcded8;
+  --color-line-soft: #e8e7e0;
+  --color-ink: #17231f;
+  --color-ink-2: #3a4a44;
+  --color-moss: #314a41;
+  --color-stone: #66716c;
+  --color-muted: #66716c;
+  --color-faint: #929a95;
+  --color-sage-light: #c7d4c6;
 
-  /* ---- The single accent ---- */
-  --color-accent: #2d5bd7;
-  --color-accent-dark: #1f44a8;
-  --color-accent-soft: #e8eefb;
-  --color-accent-line: #bcccf2;
+  /* ---- The single interactive accent ---- */
+  --color-brass: #ae7950;
+  --color-brass-dark: #956441;
+  --color-brass-soft: #f3e9df;
+  --color-brass-line: #e0c8b0;
 
-  /* ---- Status ramp: one meaning each, never decorative ---- */
-  --color-urgent: #b22222;
-  --color-urgent-soft: #fbeaea;
-  --color-urgent-line: #eec4c4;
+  /* Aliases so component code can say "accent" and stay palette-agnostic */
+  --color-accent: #ae7950;
+  --color-accent-dark: #956441;
+  --color-accent-soft: #f3e9df;
+  --color-accent-line: #e0c8b0;
 
-  --color-warn: #8a5a00;
-  --color-warn-soft: #fdf3e0;
-  --color-warn-line: #ebd6ab;
+  /* ---- Status: distinct hues, none of them brass ---- */
+  --color-urgent: #9b2c20;
+  --color-urgent-soft: #f8e9e6;
+  --color-urgent-line: #e8c4bd;
 
-  --color-pending: #2d5bd7;
-  --color-pending-soft: #e8eefb;
-  --color-pending-line: #bcccf2;
+  --color-warn: #7d6412;
+  --color-warn-soft: #f6f0dc;
+  --color-warn-line: #ded3a9;
 
-  --color-done: #1f6b43;
-  --color-done-soft: #e6f2eb;
-  --color-done-line: #bcdcc9;
+  --color-pending: #3f5e78;
+  --color-pending-soft: #e9eff4;
+  --color-pending-line: #c3d3df;
 
-  --color-info: #46464c;
-  --color-info-soft: #eeeef0;
-  --color-info-line: #d8d8dd;
+  --color-done: #35624a;
+  --color-done-soft: #e7efe9;
+  --color-done-line: #c2d6c8;
 
-  /* ---- Type: system sans only. No display face, no serif. ---- */
-  --font-body: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --color-info: #66716c;
+  --color-info-soft: #eceae4;
+  --color-info-line: #d8d8d2;
 
-  /* ---- Welcome-screen only ------------------------------------------
-     The product UI is greyscale + one accent. These three tokens and the
-     display serif exist solely for the full-bleed welcome screen at "/",
-     which is the single place in the prototype that uses a photograph. ---- */
-  --color-night: #1b1a17;
-  --color-cream: #faf9f6;
+  /* ---- Welcome screen only ---- */
+  --color-night: #131d1a;
   --color-parchment: #e3dbcd;
-  --font-display: var(--font-display-src), 'Iowan Old Style', Georgia, serif;
 
-  /* ---- Radius: nearly square, like a wireframe ---- */
-  --radius-box: 3px;
-  --radius-pill: 2px;
+  /* ---- Type ---- */
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-playfair), 'Iowan Old Style', Georgia, serif;
+  --font-body: var(--font-sans);
+  --font-display: var(--font-serif);
+
+  /* ---- Square, like the reference ---- */
+  --radius-box: 0px;
+  --radius-pill: 0px;
 }
 
 @layer base {
   html {
-    background: var(--color-bg);
+    background: var(--color-cream);
     color: var(--color-ink);
-    font-family: var(--font-body);
+    font-family: var(--font-sans);
     font-size: 15px;
-    line-height: 1.5;
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -94,24 +104,35 @@
     margin: 0;
   }
 
+  button,
+  a,
+  select {
+    cursor: pointer;
+  }
+
   button {
     font: inherit;
     color: inherit;
-    cursor: pointer;
   }
 
   button:disabled {
     cursor: not-allowed;
   }
 
-  /* SIGNIFIER: keyboard focus is always visible and high-contrast. */
-  :focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 2px;
+  a {
+    text-decoration: none;
   }
 
-  /* Honour reduced-motion; there is barely any motion to begin with. */
+  /* Brass focus ring, offset — straight from the reference. */
+  :focus-visible {
+    outline: 2px solid var(--color-brass);
+    outline-offset: 3px;
+  }
+
   @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
     *,
     *::before,
     *::after {
@@ -121,8 +142,49 @@
   }
 }
 
+@layer components {
+  /* The wide-tracked uppercase label used for eyebrows and field labels. */
+  .eyebrow {
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  /* Serif display heading. */
+  .display {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+  }
+
+  /* Underline that grows from the left — the reference's nav treatment. */
+  .nav-underline {
+    position: relative;
+  }
+
+  .nav-underline::after {
+    position: absolute;
+    right: 0;
+    bottom: -2px;
+    left: 0;
+    height: 1px;
+    background: currentColor;
+    content: '';
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.3s ease;
+  }
+
+  .nav-underline:hover::after,
+  .nav-underline.is-active::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+
 @layer utilities {
-  /* Screen-reader-only text, used for icon-only controls. */
   .sr-only {
     position: absolute;
     width: 1px;
@@ -135,4 +197,12 @@
     border: 0;
   }
 
+  /* The -2px lift the reference uses on every interactive surface. */
+  .lift {
+    transition: transform 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+  }
+
+  .lift:hover {
+    transform: translateY(-2px);
+  }
 }

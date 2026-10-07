@@ -83,7 +83,7 @@ export function EventHeader({ event }) {
         }
       >
         {/* The four facts that are true no matter which tab you are on. */}
-        <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 rounded-box border border-line bg-paper px-3 py-2.5 sm:grid-cols-4">
+        <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 border-y border-line bg-paper px-5 py-4 sm:grid-cols-4">
           <Field label="Date" value={event.date} />
           <Field label="Schedule" value={event.headline} />
           <Field label="Guests" value={`${event.guests} confirmed`} />

@@ -68,41 +68,49 @@ export function AppShell({ children }) {
   return (
     <div className="min-h-screen">
       {/* ---- Top bar ---- */}
-      <header className="sticky top-0 z-30 border-b border-line bg-paper">
-        <div className="flex h-14 items-center gap-3 px-3 sm:px-4">
+      <header className="sticky top-0 z-30 border-b border-ink/15 bg-ink text-cream">
+        <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
           <button
             type="button"
             onClick={() => setNavOpen((v) => !v)}
             aria-expanded={navOpen}
             aria-controls="main-nav"
-            className="rounded-box border border-line px-2 py-1.5 text-ink-2 hover:bg-sunken lg:hidden"
+            className="border border-cream/30 px-2 py-1.5 text-cream transition-colors hover:bg-cream/10 lg:hidden"
           >
             <Icon name="list" size={16} />
             <span className="sr-only">Toggle navigation</span>
           </button>
 
-          <Link href="/" className="flex items-baseline gap-2" title="Back to the welcome screen">
-            <span className="text-base font-semibold tracking-tight text-ink">Vue</span>
-            <span className="hidden text-[11px] uppercase tracking-wider text-faint sm:inline">
-              Venue Operations
+          <Link href="/" className="flex items-center gap-2.5" title="Back to the welcome screen">
+            <span className="grid h-9 w-9 place-items-center rounded-full border border-cream/45 font-serif text-[15px] text-cream">
+              V
+            </span>
+            <span className="leading-none">
+              <span className="block text-[13px] font-semibold tracking-[0.16em] text-cream">VUE</span>
+              <span className="mt-1 hidden text-[9px] tracking-[0.18em] text-cream/60 sm:block">
+                VENUE OPERATIONS
+              </span>
             </span>
           </Link>
 
           {/* VISIBILITY OF SYSTEM STATUS: the prototype never pretends to be real. */}
-          <span className="ml-1 hidden rounded-pill border border-warn-line bg-warn-soft px-2 py-0.5 text-[11px] font-medium text-warn sm:inline">
-            Low-fidelity prototype
+          <span className="ml-2 hidden border border-cream/30 px-2 py-0.5 text-[9px] font-semibold tracking-[0.16em] text-cream/75 sm:inline">
+            PROTOTYPE
           </span>
 
           <div className="ml-auto flex items-center gap-2">
-            <Button href="/attention" variant="secondary" size="sm" className="hidden sm:inline-flex">
+            <Link
+              href="/attention"
+              className="hidden items-center gap-2 border border-cream/35 px-3 py-2 text-[12px] font-semibold tracking-[0.04em] text-cream transition-colors hover:bg-cream hover:text-ink sm:inline-flex"
+            >
               <Icon name="alert" size={13} />
               {attention.length} need{attention.length === 1 ? 's' : ''} attention
-            </Button>
+            </Link>
             <div className="hidden text-right leading-tight sm:block">
-              <div className="text-xs font-medium text-ink">{venue.manager}</div>
-              <div className="text-[11px] text-faint">{venue.managerRole}</div>
+              <div className="text-xs font-medium text-cream">{venue.manager}</div>
+              <div className="text-[10px] tracking-[0.08em] text-cream/55">{venue.managerRole}</div>
             </div>
-            <span className="grid h-8 w-8 place-items-center rounded-box border border-line bg-sunken text-[11px] font-semibold text-ink-2">
+            <span className="grid h-9 w-9 place-items-center rounded-full border border-cream/40 font-serif text-[12px] text-cream">
               {venue.managerInitials}
             </span>
           </div>
@@ -114,16 +122,14 @@ export function AppShell({ children }) {
         <aside
           id="main-nav"
           className={cx(
-            'fixed inset-y-0 left-0 z-40 w-60 shrink-0 overflow-y-auto border-r border-line bg-paper pt-14 transition-transform lg:sticky lg:top-14 lg:z-0 lg:h-[calc(100vh-3.5rem)] lg:translate-x-0 lg:pt-0',
+            'fixed inset-y-0 left-0 z-40 w-64 shrink-0 overflow-y-auto border-r border-line bg-paper pt-16 transition-transform lg:sticky lg:top-16 lg:z-0 lg:h-[calc(100vh-4rem)] lg:translate-x-0 lg:pt-0',
             navOpen ? 'translate-x-0' : '-translate-x-full'
           )}
         >
           <nav className="p-3" aria-label="Main">
             {NAV.map((group) => (
               <div key={group.heading} className="mb-4">
-                <div className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-faint">
-                  {group.heading}
-                </div>
+                <div className="eyebrow mb-2 px-2 text-faint">{group.heading}</div>
                 <ul className="space-y-0.5">
                   {group.items.map((item) => {
                     const active = item.exact ? pathname === item.href : pathname.startsWith(item.href)
@@ -134,21 +140,21 @@ export function AppShell({ children }) {
                           href={item.href}
                           aria-current={active ? 'page' : undefined}
                           className={cx(
-                            'flex items-center gap-2 rounded-box border px-2 py-1.5 text-sm',
+                            'flex items-center gap-2.5 border-l-2 py-2 pl-3 pr-2 text-[13px] transition-colors',
                             active
-                              ? 'border-accent-line bg-accent-soft font-semibold text-accent'
-                              : 'border-transparent text-ink-2 hover:bg-sunken'
+                              ? 'border-l-brass bg-brass-soft/60 font-semibold text-ink'
+                              : 'border-l-transparent text-stone hover:border-l-line hover:bg-sand/50 hover:text-ink'
                           )}
                         >
-                          <Icon name={item.icon} size={15} className={active ? 'text-accent' : 'text-faint'} />
+                          <Icon name={item.icon} size={15} className={active ? 'text-brass' : 'text-faint'} />
                           <span className="flex-1 truncate">{item.label}</span>
                           {count > 0 && (
                             <span
                               className={cx(
-                                'rounded-pill border px-1.5 text-[11px] font-semibold',
+                                'border px-1.5 text-[10px] font-semibold',
                                 item.badge === 'attention' || item.badge === 'gaps'
                                   ? 'border-urgent-line bg-urgent-soft text-urgent'
-                                  : 'border-line bg-sunken text-muted'
+                                  : 'border-line bg-sand text-stone'
                               )}
                             >
                               {count}
@@ -170,11 +176,11 @@ export function AppShell({ children }) {
               <button
                 type="button"
                 onClick={reset}
-                className="mt-2 w-full rounded-box border border-line px-2 py-1.5 text-xs text-muted hover:bg-sunken"
+                className="mt-2 w-full border border-line px-2 py-2 text-[11px] uppercase tracking-[0.1em] text-stone transition-colors hover:border-ink hover:text-ink"
               >
                 Reset prototype data
               </button>
-              <p className="mt-2 px-1 text-[11px] leading-relaxed text-faint">
+              <p className="mt-3 px-1 text-[11px] leading-relaxed text-faint">
                 Simulated data. Nothing here is saved to a real system.
               </p>
             </div>
@@ -190,8 +196,8 @@ export function AppShell({ children }) {
         )}
 
         {/* ---- Page ---- */}
-        <main className="min-w-0 flex-1 px-3 py-5 sm:px-5 sm:py-6">
-          <div className="mx-auto w-full max-w-[1100px]">{children}</div>
+        <main className="min-w-0 flex-1 px-4 py-7 sm:px-8 sm:py-10">
+          <div className="mx-auto w-full max-w-[1120px]">{children}</div>
         </main>
       </div>
 

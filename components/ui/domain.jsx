@@ -28,9 +28,9 @@ export function AttentionItem({ item, compact = false }) {
   return (
     <article
       className={cx(
-        'border-l-4 bg-paper',
+        'border-l-[3px] bg-paper transition-colors',
         urgent ? 'border-l-urgent' : item.tone === 'warn' ? 'border-l-warn' : 'border-l-line',
-        'border-y border-r border-line-soft'
+        'border-y border-r border-line-soft hover:bg-sand/40'
       )}
     >
       <div className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-start sm:gap-4">
@@ -41,24 +41,26 @@ export function AttentionItem({ item, compact = false }) {
             </StatusBadge>
             <Link
               href={`/events/${item.eventId}`}
-              className="rounded border border-line bg-sunken px-1.5 py-0.5 text-[11px] text-ink-2 hover:bg-line-soft"
+              className="border border-line bg-sand px-2 py-0.5 text-[10px] uppercase tracking-[0.08em] text-moss transition-colors hover:border-brass hover:text-brass"
             >
               {item.eventName}
             </Link>
             <span className="text-[11px] text-faint">{item.meta}</span>
           </div>
 
-          <h3 className={cx('text-sm font-semibold text-ink', urgent && 'sm:text-[15px]')}>{item.title}</h3>
+          <h3 className={cx('font-serif text-[18px] font-medium leading-snug text-ink', urgent && 'sm:text-[20px]')}>
+            {item.title}
+          </h3>
 
           {!compact && (
             <dl className="mt-1.5 space-y-1">
-              <div className="flex gap-2 text-xs">
-                <dt className="w-24 shrink-0 font-semibold uppercase tracking-wide text-faint">What</dt>
-                <dd className="text-ink-2">{item.what}</dd>
+              <div className="flex gap-3 text-xs">
+                <dt className="eyebrow w-28 shrink-0 text-faint">What</dt>
+                <dd className="leading-relaxed text-stone">{item.what}</dd>
               </div>
-              <div className="flex gap-2 text-xs">
-                <dt className="w-24 shrink-0 font-semibold uppercase tracking-wide text-faint">Why it matters</dt>
-                <dd className="text-ink-2">{item.why}</dd>
+              <div className="flex gap-3 text-xs">
+                <dt className="eyebrow w-28 shrink-0 text-faint">Why it matters</dt>
+                <dd className="leading-relaxed text-stone">{item.why}</dd>
               </div>
             </dl>
           )}
@@ -81,13 +83,13 @@ export function EventCard({ event, coverage, attentionCount = 0 }) {
   return (
     <Link
       href={`/events/${event.id}`}
-      className="block rounded-box border border-line bg-paper px-3 py-3 hover:bg-sunken"
+      className="block border border-line bg-paper px-4 py-4 transition-all duration-200 hover:-translate-y-[2px] hover:border-brass"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-semibold text-ink">{event.name}</h3>
-            <span className="rounded border border-line bg-sunken px-1.5 py-0.5 text-[11px] text-muted">
+            <h3 className="font-serif text-[20px] font-medium text-ink">{event.name}</h3>
+            <span className="border border-line bg-sand px-2 py-0.5 text-[10px] uppercase tracking-[0.08em] text-stone">
               {event.type}
             </span>
           </div>
@@ -252,10 +254,10 @@ export function EventSegment({ event, segment, assignments, gaps, children }) {
       }
       bodyClassName="px-0 py-0"
     >
-      <p className="border-b border-line-soft px-4 py-2 text-xs text-muted">{segment.note}</p>
+      <p className="border-b border-line-soft px-4 py-2.5 text-xs leading-relaxed text-stone">{segment.note}</p>
 
       <div className="border-b border-line-soft px-4 py-2">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-faint">Requires</div>
+        <div className="eyebrow text-faint">Requires</div>
         <div className="mt-1 flex flex-wrap gap-1.5">
           {segment.needs.map((need) => {
             const filled = assignments.filter((a) => a.role === need.role && a.status === 'accepted').length
@@ -264,7 +266,7 @@ export function EventSegment({ event, segment, assignments, gaps, children }) {
               <span
                 key={need.role}
                 className={cx(
-                  'rounded border px-1.5 py-0.5 text-[11px]',
+                  'border px-2 py-0.5 text-[11px] font-medium',
                   ok ? 'border-done-line bg-done-soft text-done' : 'border-urgent-line bg-urgent-soft text-urgent'
                 )}
               >
@@ -324,7 +326,7 @@ export function AvailabilityGrid({ person, highlight }) {
                     className={cx(
                       'border border-line p-0',
                       free ? 'bg-done-soft' : 'bg-paper',
-                      isHighlight && 'outline-2 outline-offset-[-2px] outline-accent'
+                      isHighlight && 'outline-2 outline-offset-[-2px] outline-brass'
                     )}
                   >
                     <span className="sr-only">
@@ -347,7 +349,7 @@ export function AvailabilityGrid({ person, highlight }) {
         </span>
         {highlight && (
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 border-2 border-accent" /> Shift being filled
+            <span className="inline-block h-3 w-3 border-2 border-brass" /> Shift being filled
           </span>
         )}
       </p>
@@ -365,12 +367,12 @@ export function TaskRow({ task, onToggle }) {
         id={`task-${task.id}`}
         checked={task.done}
         onChange={onToggle}
-        className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--color-accent)]"
+        className="mt-1 h-4 w-4 shrink-0 accent-[var(--color-brass)]"
       />
       <div className="min-w-0 flex-1">
         <label
           htmlFor={`task-${task.id}`}
-          className={cx('block cursor-pointer text-sm', task.done ? 'text-muted line-through' : 'text-ink')}
+          className={cx('block cursor-pointer text-[14px]', task.done ? 'text-faint line-through' : 'text-ink')}
         >
           {task.title}
         </label>
@@ -422,17 +424,17 @@ export function Modal({ open, onClose, title, children, footer, labelledBy = 'mo
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-box border border-line bg-paper sm:rounded-box"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto border border-line bg-paper shadow-[0_24px_60px_rgba(12,21,18,.22)]"
         onClick={(e) => e.stopPropagation()}
       >
         <header className="flex items-start justify-between gap-3 border-b border-line px-4 py-3">
-          <h2 id={labelledBy} className="text-base font-semibold text-ink">
+          <h2 id={labelledBy} className="font-serif text-[22px] font-medium text-ink">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-box border border-line px-1.5 py-1 text-muted hover:bg-sunken"
+            className="border border-line px-2 py-1.5 text-stone transition-colors hover:border-ink hover:text-ink"
           >
             <Icon name="x" size={14} />
             <span className="sr-only">Close</span>
@@ -460,7 +462,7 @@ export function ToastHost({ toasts, onDismiss }) {
         <div
           key={t.id}
           className={cx(
-            'pointer-events-auto flex w-full max-w-md items-start gap-2 rounded-box border px-3 py-2 text-sm shadow-sm',
+            'pointer-events-auto flex w-full max-w-md items-start gap-2.5 border px-4 py-3 text-sm shadow-[0_12px_35px_rgba(12,21,18,.18)]',
             t.tone === 'urgent'
               ? 'border-urgent-line bg-urgent-soft text-urgent'
               : 'border-done-line bg-done-soft text-done'

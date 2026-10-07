@@ -128,17 +128,19 @@ export function Icon({ name, size = 16, className = '' }) {
 
 /* ---------------------------------------------------------------- Button -- */
 
+// Square, hairline-bordered, brass for the primary action - the reference
+// button language, tightened so it still works at app density.
 const BUTTON_VARIANTS = {
-  primary: 'bg-accent text-white border-accent hover:bg-accent-dark',
-  secondary: 'bg-paper text-ink border-line hover:bg-sunken',
-  danger: 'bg-paper text-urgent border-urgent-line hover:bg-urgent-soft',
-  ghost: 'bg-transparent text-ink-2 border-transparent hover:bg-sunken'
+  primary: 'bg-brass text-white border-brass hover:bg-brass-dark',
+  secondary: 'bg-transparent text-ink border-line hover:border-ink hover:bg-sand/60',
+  danger: 'bg-transparent text-urgent border-urgent-line hover:bg-urgent-soft',
+  ghost: 'bg-transparent text-moss border-transparent hover:bg-sand/70'
 }
 
 const BUTTON_SIZES = {
-  sm: 'px-2.5 py-1 text-[13px] gap-1.5',
-  md: 'px-3 py-1.5 text-sm gap-2',
-  lg: 'px-4 py-2.5 text-[15px] gap-2'
+  sm: 'px-3 py-1.5 text-[12px] tracking-[0.04em] gap-1.5',
+  md: 'px-4 py-2 text-[13px] tracking-[0.04em] gap-2',
+  lg: 'px-6 py-3 text-[14px] tracking-[0.04em] gap-2.5'
 }
 
 export function Button({
@@ -152,8 +154,9 @@ export function Button({
   ...rest
 }) {
   const cls = cx(
-    'inline-flex items-center justify-center rounded-box border font-medium',
-    'transition-colors disabled:opacity-45',
+    'inline-flex items-center justify-center border font-semibold',
+    'transition-all duration-200 hover:-translate-y-[2px] active:translate-y-0',
+    'disabled:opacity-40 disabled:hover:translate-y-0',
     BUTTON_VARIANTS[variant],
     BUTTON_SIZES[size],
     className
@@ -191,8 +194,8 @@ export function StatusBadge({ tone = 'info', children, size = 'md', className = 
   return (
     <span
       className={cx(
-        'inline-flex items-center gap-1 rounded-pill border font-medium whitespace-nowrap',
-        size === 'sm' ? 'px-1.5 py-0.5 text-[11px]' : 'px-2 py-0.5 text-xs',
+        'inline-flex items-center gap-1.5 border font-semibold whitespace-nowrap uppercase tracking-[0.06em]',
+        size === 'sm' ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-[11px]',
         t.cls,
         className
       )}
@@ -210,19 +213,19 @@ export function Card({ title, subtitle, icon, action, children, tone, className 
   return (
     <section
       className={cx(
-        'rounded-box border bg-paper',
+        'border bg-paper',
         tone === 'urgent' ? 'border-urgent-line' : 'border-line',
         className
       )}
     >
       {(title || action) && (
-        <header className="flex items-start justify-between gap-3 border-b border-line-soft px-4 py-3">
+        <header className="flex items-start justify-between gap-3 border-b border-line-soft bg-sand/40 px-4 py-3">
           <div className="min-w-0">
-            <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
-              {icon && <Icon name={icon} size={15} className="text-muted" />}
+            <h2 className="flex items-center gap-2 text-[13px] font-semibold tracking-[0.02em] text-ink">
+              {icon && <Icon name={icon} size={14} className="text-brass" />}
               {title}
             </h2>
-            {subtitle && <p className="mt-0.5 text-xs text-muted">{subtitle}</p>}
+            {subtitle && <p className="mt-1 text-xs text-stone">{subtitle}</p>}
           </div>
           {action}
         </header>
@@ -236,11 +239,11 @@ export function Card({ title, subtitle, icon, action, children, tone, className 
 
 export function PageHeader({ title, lead, actions, children }) {
   return (
-    <header className="mb-5">
+    <header className="mb-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-xl font-semibold tracking-tight text-ink sm:text-2xl">{title}</h1>
-          {lead && <p className="mt-1 max-w-[70ch] text-sm text-muted">{lead}</p>}
+          <h1 className="display text-[28px] text-ink sm:text-[34px]">{title}</h1>
+          {lead && <p className="mt-2.5 max-w-[68ch] text-[14px] leading-relaxed text-stone">{lead}</p>}
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
@@ -254,12 +257,12 @@ export function PageHeader({ title, lead, actions, children }) {
 export function Breadcrumbs({ items = [] }) {
   if (!items.length) return null
   return (
-    <nav aria-label="Breadcrumb" className="mb-3 flex flex-wrap items-center gap-1 text-xs text-muted">
+    <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1 text-[11px] tracking-[0.04em] text-stone">
       {items.map((item, i) => (
         <span key={`${item.label}-${i}`} className="flex items-center gap-1">
           {i > 0 && <Icon name="chevronRight" size={12} className="text-faint" />}
           {item.href ? (
-            <Link href={item.href} className="rounded px-1 py-0.5 text-accent underline-offset-2 hover:underline">
+            <Link href={item.href} className="px-1 py-0.5 font-medium text-moss underline-offset-4 hover:underline">
               {item.label}
             </Link>
           ) : (
@@ -290,20 +293,20 @@ export function Tabs({ tabs, active }) {
             aria-selected={isActive}
             aria-current={isActive ? 'page' : undefined}
             className={cx(
-              'flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2 text-sm',
+              'flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px]',
               isActive
-                ? 'border-accent font-semibold text-accent'
-                : 'border-transparent text-muted hover:text-ink'
+                ? 'border-brass font-semibold text-ink'
+                : 'border-transparent text-stone hover:text-ink'
             )}
           >
             {tab.label}
             {tab.count != null && (
               <span
                 className={cx(
-                  'rounded-pill border px-1.5 text-[11px] font-semibold',
+                  'border px-1.5 text-[10px] font-semibold',
                   tab.tone === 'urgent'
                     ? 'border-urgent-line bg-urgent-soft text-urgent'
-                    : 'border-line bg-sunken text-muted'
+                    : 'border-line bg-sand text-stone'
                 )}
               >
                 {tab.count}
@@ -320,9 +323,9 @@ export function Tabs({ tabs, active }) {
 
 export function EmptyState({ title, body, action, icon = 'check' }) {
   return (
-    <div className="rounded-box border border-dashed border-line bg-sunken/40 px-4 py-8 text-center">
-      <Icon name={icon} size={20} className="mx-auto mb-2 text-faint" />
-      <p className="text-sm font-medium text-ink">{title}</p>
+    <div className="border border-dashed border-line bg-sand/50 px-4 py-10 text-center">
+      <Icon name={icon} size={20} className="mx-auto mb-3 text-brass" />
+      <p className="display text-[19px] text-ink">{title}</p>
       {body && <p className="mx-auto mt-1 max-w-[46ch] text-xs text-muted">{body}</p>}
       {action && <div className="mt-3 flex justify-center">{action}</div>}
     </div>
@@ -334,10 +337,10 @@ export function EmptyState({ title, body, action, icon = 'check' }) {
 export function Alert({ tone = 'info', title, children, action }) {
   const t = TONES[tone] || TONES.info
   return (
-    <div className={cx('flex items-start gap-2.5 rounded-box border px-3 py-2.5', t.cls)}>
+    <div className={cx('flex items-start gap-3 border px-4 py-3', t.cls)}>
       <Icon name={t.icon} size={16} className="mt-0.5" />
       <div className="min-w-0 flex-1">
-        {title && <p className="text-sm font-semibold">{title}</p>}
+        {title && <p className="text-[14px] font-semibold tracking-[0.01em]">{title}</p>}
         {children && <div className="text-xs leading-relaxed opacity-90">{children}</div>}
       </div>
       {action}
@@ -353,8 +356,8 @@ export function ListRow({ href, leading, title, sub, meta, trailing, onClick, cl
     <>
       {leading && <div className="shrink-0">{leading}</div>}
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-medium text-ink">{title}</div>
-        {sub && <div className="mt-0.5 truncate text-xs text-muted">{sub}</div>}
+        <div className="truncate text-[14px] font-medium text-ink">{title}</div>
+        {sub && <div className="mt-0.5 truncate text-xs text-stone">{sub}</div>}
         {meta && <div className="mt-1 text-[11px] text-faint">{meta}</div>}
       </div>
       {trailing && <div className="flex shrink-0 items-center gap-2">{trailing}</div>}
@@ -363,8 +366,8 @@ export function ListRow({ href, leading, title, sub, meta, trailing, onClick, cl
   )
 
   const cls = cx(
-    'flex w-full items-center gap-3 border-b border-line-soft px-3 py-2.5 text-left last:border-b-0',
-    (href || onClick) && 'hover:bg-sunken',
+    'flex w-full items-center gap-3 border-b border-line-soft px-4 py-3 text-left last:border-b-0',
+    (href || onClick) && 'transition-colors hover:bg-sand/60',
     className
   )
 
@@ -390,8 +393,8 @@ export function ListRow({ href, leading, title, sub, meta, trailing, onClick, cl
 export function Field({ label, value, children, className = '' }) {
   return (
     <div className={className}>
-      <dt className="text-[11px] font-semibold uppercase tracking-wide text-faint">{label}</dt>
-      <dd className="mt-0.5 text-sm text-ink">{children || value}</dd>
+      <dt className="eyebrow text-stone">{label}</dt>
+      <dd className="mt-1.5 text-[14px] text-ink">{children || value}</dd>
     </div>
   )
 }
@@ -402,8 +405,8 @@ export function Avatar({ initials, size = 'md' }) {
   return (
     <span
       className={cx(
-        'inline-grid shrink-0 place-items-center rounded-box border border-line bg-sunken font-semibold text-ink-2',
-        size === 'sm' ? 'h-6 w-6 text-[10px]' : 'h-8 w-8 text-[11px]'
+        'inline-grid shrink-0 place-items-center rounded-full border border-line bg-sand font-serif text-ink',
+        size === 'sm' ? 'h-7 w-7 text-[11px]' : 'h-9 w-9 text-[12px]'
       )}
     >
       {initials}
@@ -416,12 +419,12 @@ export function Avatar({ initials, size = 'md' }) {
 export function TextInput({ label, id, hint, className = '', ...rest }) {
   return (
     <div className={className}>
-      <label htmlFor={id} className="mb-1 block text-xs font-semibold text-ink-2">
+      <label htmlFor={id} className="eyebrow block text-moss">
         {label}
       </label>
       <input
         id={id}
-        className="w-full rounded-box border border-line bg-paper px-2.5 py-1.5 text-sm text-ink placeholder:text-faint focus:border-accent focus:outline-none"
+        className="mt-2 block w-full border-0 border-b border-line bg-transparent px-0 pb-2 pt-1 text-[15px] text-ink placeholder:text-faint focus:border-brass focus:outline-none"
         {...rest}
       />
       {hint && <p className="mt-1 text-[11px] text-muted">{hint}</p>}
@@ -432,12 +435,12 @@ export function TextInput({ label, id, hint, className = '', ...rest }) {
 export function Select({ label, id, options = [], hint, className = '', ...rest }) {
   return (
     <div className={className}>
-      <label htmlFor={id} className="mb-1 block text-xs font-semibold text-ink-2">
+      <label htmlFor={id} className="eyebrow block text-moss">
         {label}
       </label>
       <select
         id={id}
-        className="w-full rounded-box border border-line bg-paper px-2.5 py-1.5 text-sm text-ink focus:border-accent focus:outline-none"
+        className="mt-2 block w-full border-0 border-b border-line bg-transparent px-0 pb-2 pt-1 text-[15px] text-ink focus:border-brass focus:outline-none"
         {...rest}
       >
         {options.map((o) => (
@@ -454,12 +457,12 @@ export function Select({ label, id, options = [], hint, className = '', ...rest 
 export function Textarea({ label, id, hint, className = '', ...rest }) {
   return (
     <div className={className}>
-      <label htmlFor={id} className="mb-1 block text-xs font-semibold text-ink-2">
+      <label htmlFor={id} className="eyebrow block text-moss">
         {label}
       </label>
       <textarea
         id={id}
-        className="w-full rounded-box border border-line bg-paper px-2.5 py-1.5 text-sm leading-relaxed text-ink placeholder:text-faint focus:border-accent focus:outline-none"
+        className="mt-2 block w-full border border-line bg-paper px-3 py-2.5 text-[15px] leading-relaxed text-ink placeholder:text-faint focus:border-brass focus:outline-none"
         {...rest}
       />
       {hint && <p className="mt-1 text-[11px] text-muted">{hint}</p>}
@@ -478,22 +481,22 @@ export function SectionNote({ children }) {
 export function MetricTile({ label, value, tone, sub, href }) {
   const body = (
     <>
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-faint">{label}</div>
+      <div className="eyebrow text-stone">{label}</div>
       <div
         className={cx(
-          'mt-1 text-2xl font-semibold tabular-nums',
+          'mt-2 font-serif text-[34px] font-medium leading-none tabular-nums',
           tone === 'urgent' ? 'text-urgent' : tone === 'done' ? 'text-done' : 'text-ink'
         )}
       >
         {value}
       </div>
-      {sub && <div className="mt-0.5 text-xs text-muted">{sub}</div>}
+      {sub && <div className="mt-2 text-xs text-stone">{sub}</div>}
     </>
   )
   const cls = cx(
-    'block rounded-box border bg-paper px-3 py-2.5',
+    'block border bg-paper px-4 py-4 transition-all duration-200',
     tone === 'urgent' ? 'border-urgent-line' : 'border-line',
-    href && 'hover:bg-sunken'
+    href && 'hover:-translate-y-[2px] hover:border-brass'
   )
   return href ? (
     <Link href={href} className={cls}>
