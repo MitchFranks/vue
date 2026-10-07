@@ -56,7 +56,7 @@ export function EventHeader({ event }) {
     <>
       <Breadcrumbs
         items={[
-          { label: 'Dashboard', href: '/' },
+          { label: 'Dashboard', href: '/dashboard' },
           { label: 'Events', href: '/events' },
           { label: event.name }
         ]}

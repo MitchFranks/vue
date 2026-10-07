@@ -25,7 +25,7 @@ const NAV = [
   {
     heading: 'Overview',
     items: [
-      { href: '/', label: 'Dashboard', icon: 'home', exact: true },
+      { href: '/dashboard', label: 'Dashboard', icon: 'home', exact: true },
       { href: '/attention', label: 'Needs Attention', icon: 'alert', badge: 'attention' },
       { href: '/calendar', label: 'Calendar', icon: 'calendar' },
       { href: '/events', label: 'Upcoming Events', icon: 'list' }
@@ -81,7 +81,7 @@ export function AppShell({ children }) {
             <span className="sr-only">Toggle navigation</span>
           </button>
 
-          <Link href="/" className="flex items-baseline gap-2">
+          <Link href="/" className="flex items-baseline gap-2" title="Back to the welcome screen">
             <span className="text-base font-semibold tracking-tight text-ink">Vue</span>
             <span className="hidden text-[11px] uppercase tracking-wider text-faint sm:inline">
               Venue Operations

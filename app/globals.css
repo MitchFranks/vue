@@ -66,6 +66,15 @@
   --font-body: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
+  /* ---- Welcome-screen only ------------------------------------------
+     The product UI is greyscale + one accent. These three tokens and the
+     display serif exist solely for the full-bleed welcome screen at "/",
+     which is the single place in the prototype that uses a photograph. ---- */
+  --color-night: #1b1a17;
+  --color-cream: #faf9f6;
+  --color-parchment: #e3dbcd;
+  --font-display: var(--font-display-src), 'Iowan Old Style', Georgia, serif;
+
   /* ---- Radius: nearly square, like a wireframe ---- */
   --radius-box: 3px;
   --radius-pill: 2px;
