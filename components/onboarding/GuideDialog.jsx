@@ -19,7 +19,7 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), [tabi
 /** "1/2" pill plus dots. Tells the user the guide is short and where they are. */
 export function StepPill({ n, total = 2 }) {
   return (
-    <span className="inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-[12px] font-bold text-accent">
+    <span className="inline-flex items-center gap-2 rounded-full bg-surface-sunken px-3 py-1 text-label font-medium text-accent">
       <span aria-hidden="true">
         {n}/{total}
       </span>
@@ -28,7 +28,7 @@ export function StepPill({ n, total = 2 }) {
       </span>
       <span className="flex gap-1" aria-hidden="true">
         {Array.from({ length: total }, (_, i) => (
-          <span key={i} className={cx('h-1.5 rounded-full', i < n ? 'w-3 bg-accent' : 'w-1.5 bg-accent-line')} />
+          <span key={i} className={cx('h-1.5 rounded-full', i < n ? 'w-3 bg-ink' : 'w-1.5 bg-line-strong')} />
         ))}
       </span>
     </span>
@@ -86,14 +86,14 @@ export function GuideDialog({ step, onNext, onBack, onChoose, onSkip }) {
         aria-modal="false"
         aria-labelledby={titleId}
         aria-describedby={bodyId}
-        className="pointer-events-auto max-h-[92vh] w-full max-w-md overflow-y-auto rounded-3xl border border-accent-line bg-surface shadow-pop motion-safe:animate-[vue-rise_.28s_ease-out]"
+        className="pointer-events-auto max-h-[92vh] w-full max-w-md overflow-y-auto rounded-md border border-line-strong bg-surface motion-safe:animate-[vue-rise_.28s_ease-out]"
       >
         <header className="flex items-start justify-between gap-3 px-6 pt-6">
           <StepPill n={n} />
           <button
             type="button"
             onClick={onSkip}
-            className="rounded-full border border-line p-2 text-muted transition-colors hover:border-accent-line hover:bg-accent-soft hover:text-accent"
+            className="rounded-full border border-line p-2 text-ink-muted transition-colors hover:border-line-strong hover:bg-surface-sunken hover:text-accent"
           >
             <Icon name="x" size={14} />
             <span className="sr-only">Close the guide</span>
@@ -102,18 +102,18 @@ export function GuideDialog({ step, onNext, onBack, onChoose, onSkip }) {
 
         {step === 'welcome' ? (
           <div className="px-6 pb-2 pt-4">
-            <h2 id={titleId} tabIndex={-1} data-autofocus className="display text-[28px] text-ink outline-none">
+            <h2 id={titleId} tabIndex={-1} data-autofocus className="display text-title text-ink outline-none">
               Welcome to Vue
             </h2>
-            <div id={bodyId} className="mt-3 space-y-3 text-[15px] leading-relaxed text-ink-2">
+            <div id={bodyId} className="mt-3 space-y-3 text-body leading-relaxed text-ink">
               <p>
                 Two quick steps. Tell us what you want to do first, and we will walk you straight to it.
               </p>
               <p>Ask your team, see who said yes, and fill gaps.</p>
-              <p className="text-[13px] text-muted">You can leave the guide at any time.</p>
+              <p className="text-small text-ink-muted">You can leave the guide at any time.</p>
             </div>
-            <p className="mt-4 rounded-2xl bg-wash px-4 py-3 text-[12px] leading-relaxed text-muted">
-              <span className="font-semibold text-ink-2">This is a prototype.</span> Everything in it is simulated.
+            <p className="mt-4 rounded-md bg-surface-sunken px-4 py-3 text-label leading-relaxed text-ink-muted">
+              <span className="font-medium text-ink">This is a prototype.</span> Everything in it is simulated.
               Nothing is saved to a real system and no real messages are sent.
             </p>
           </div>
@@ -152,26 +152,26 @@ function ChooseStep({ titleId, bodyId, onChoose }) {
       type="button"
       onClick={() => onChoose(c.id)}
       className={cx(
-        'flex w-full items-center gap-3 rounded-2xl border border-line bg-surface text-left transition-colors hover:border-accent hover:bg-accent-soft focus-visible:border-accent',
+        'flex w-full items-center gap-3 rounded-md border border-line bg-surface text-left transition-colors hover:border-accent hover:bg-surface-sunken focus-visible:border-accent',
         small ? 'px-3 py-2.5' : 'px-4 py-3.5'
       )}
     >
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface-sunken text-accent">
         <Icon name={c.icon} size={16} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[15px] font-semibold text-ink">{c.title}</span>
-        <span className="block text-[12px] text-muted">{c.hint}</span>
+        <span className="block text-body font-medium text-ink">{c.title}</span>
+        <span className="block text-label text-ink-muted">{c.hint}</span>
       </span>
-      <Icon name="arrowRight" size={14} className="text-faint" />
+      <Icon name="arrowRight" size={14} className="text-ink-muted" />
     </button>
   )
   return (
     <div className="px-6 pb-2 pt-4">
-      <h2 id={titleId} tabIndex={-1} data-autofocus className="display text-[28px] text-ink outline-none">
+      <h2 id={titleId} tabIndex={-1} data-autofocus className="display text-title text-ink outline-none">
         What would you like to do first?
       </h2>
-      <p id={bodyId} className="mt-3 text-[15px] leading-relaxed text-ink-2">
+      <p id={bodyId} className="mt-3 text-body leading-relaxed text-ink">
         Pick one and we will walk you there. You can do the rest whenever you like.
       </p>
       <div className="mt-4 space-y-2">{FIRST_CHOICES.map((c) => row(c, false))}</div>
@@ -179,7 +179,7 @@ function ChooseStep({ titleId, bodyId, onChoose }) {
         type="button"
         onClick={() => setMore((v) => !v)}
         aria-expanded={more}
-        className="mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-semibold text-accent transition-colors hover:bg-accent-soft"
+        className="mt-3 inline-flex h-8 items-center gap-1.5 rounded-sm px-3 text-small font-medium text-ink transition-colors hover:bg-surface-sunken"
       >
         {more ? 'Fewer options' : 'More options'}
         <Icon name="chevronDown" size={13} className={more ? 'rotate-180' : undefined} />

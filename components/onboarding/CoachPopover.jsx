@@ -127,8 +127,8 @@ export function CoachPopover({ target, n, total, title, body, onBack, onSkip, on
       style={pos ? { left: pos.left, top: pos.top, width: POPOVER_W } : undefined}
       className={
         pos
-          ? 'fixed z-[60] rounded-3xl bg-surface p-5 shadow-pop motion-safe:animate-[vue-rise_.28s_ease-out]'
-          : 'fixed inset-x-3 bottom-3 z-[60] mx-auto max-w-md rounded-3xl bg-surface p-5 shadow-pop motion-safe:animate-[vue-rise_.28s_ease-out]'
+          ? 'fixed z-[60] rounded-md bg-surface p-5 motion-safe:animate-[vue-rise_.28s_ease-out]'
+          : 'fixed inset-x-3 bottom-3 z-[60] mx-auto max-w-md rounded-md bg-surface p-5 motion-safe:animate-[vue-rise_.28s_ease-out]'
       }
     >
       {pos && (
@@ -151,20 +151,20 @@ export function CoachPopover({ target, n, total, title, body, onBack, onSkip, on
         <button
           type="button"
           onClick={onSkip}
-          className="rounded-full border border-line p-1.5 text-muted transition-colors hover:border-accent-line hover:bg-accent-soft hover:text-accent"
+          className="rounded-full border border-line p-1.5 text-ink-muted transition-colors hover:border-line-strong hover:bg-surface-sunken hover:text-accent"
         >
           <Icon name="x" size={12} />
           <span className="sr-only">Close the guide</span>
         </button>
       </div>
-      <h2 id="coach-title" className="mt-3 text-[18px] font-bold leading-snug text-ink">
+      <h2 id="coach-title" className="mt-3 text-heading font-medium leading-snug text-ink">
         {title}
       </h2>
-      <p id="coach-body" className="mt-1.5 text-[13px] leading-relaxed text-ink-2">
+      <p id="coach-body" className="mt-1.5 text-small leading-relaxed text-ink">
         {body}
       </p>
       {!rect && hint && (
-        <p className="mt-3 flex items-center gap-2 rounded-2xl bg-accent-soft px-3 py-2 text-[12px] font-semibold text-accent">
+        <p className="mt-3 flex items-center gap-2 rounded-md bg-surface-sunken px-3 py-2 text-label font-medium text-accent">
           <Icon name="chevronDown" size={14} className={hint === 'down' ? 'motion-safe:animate-bounce' : 'rotate-180 motion-safe:animate-bounce'} />
           Scroll {hint} to find the button
         </p>

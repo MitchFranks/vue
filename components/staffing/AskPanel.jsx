@@ -123,15 +123,15 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
   const footer = (
     <div className="space-y-2.5">
       {n > 0 && n + alreadyAsked > openSpots && (
-        <p className="text-[12px] text-muted">
+        <p className="text-label text-ink-muted">
           {openSpots > 0
             ? `${n + alreadyAsked} asked for ${openSpots} spot${openSpots === 1 ? '' : 's'}. The first to say yes gets it; the other${n + alreadyAsked - openSpots === 1 ? '' : 's'} go${n + alreadyAsked - openSpots === 1 ? 'es' : ''} on the backup list.`
             : 'These blocks have no open spot right now, so anyone who says yes goes on the backup list.'}
         </p>
       )}
       {needReason.length > 0 && (
-        <div className="space-y-2 rounded-2xl border border-warn-line bg-warn-soft/50 p-3">
-          <label htmlFor="ask-reason" className="block text-[12px] font-semibold text-ink">
+        <div className="space-y-2 rounded-md border border-status-soon-soft bg-status-soon-soft/50 p-3">
+          <label htmlFor="ask-reason" className="block text-label font-medium text-ink">
             Why is this OK for {needReason.map((x) => firstName(x.person.id)).join(' and ')}?
           </label>
           <PickChips options={['Checked with them', 'Times can flex']} value={reason} onChange={setReason} label="Quick reasons" />
@@ -140,7 +140,7 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="Or type a reason"
-            className="block w-full rounded-2xl border border-line bg-surface px-3 py-2 text-[14px] text-ink focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft"
+            className="block w-full rounded-sm border border-line-strong bg-surface px-3 py-2 text-body text-ink focus:border-accent"
           />
         </div>
       )}
@@ -176,18 +176,18 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
     >
       <div className="space-y-4">
         {backupsMode && config.dropped && (
-          <p className="rounded-2xl bg-info-soft px-3 py-2 text-[12px] text-info">
+          <p className="rounded-md bg-surface-sunken px-3 py-2 text-label text-ink-muted">
             Replacing {firstName(config.dropped.staffId)}. Texts go out marked &quot;Short notice&quot; and ask for a reply within {SETTINGS.shortReplyByHours} hours.
           </p>
         )}
         <div>
-          <span className="eyebrow mb-1.5 block text-ink-2">Working</span>
+          <span className="eyebrow mb-1.5 block text-ink">Working</span>
           <BlockToggles blocks={blocks} selected={selBlocks} onChange={setSelBlocks} gaps={gapMap} />
         </div>
         <CallTimeSelect id="ask-call" startH={startH} value={offset} onChange={setOffset} />
         <div className="flex flex-wrap items-end gap-3">
           <div className="min-w-[180px] flex-1">
-            <label htmlFor="ask-pick" className="eyebrow block text-ink-2">
+            <label htmlFor="ask-pick" className="eyebrow block text-ink">
               Who should we ask?
             </label>
             <select
@@ -197,7 +197,7 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
               onChange={(e) => {
                 if (e.target.value) setTicked((t) => (t.includes(e.target.value) ? t : [...t, e.target.value]))
               }}
-              className="mt-1.5 block w-full rounded-2xl border border-line bg-surface px-4 py-2.5 text-[15px] text-ink focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft"
+              className="mt-1.5 block w-full rounded-sm border border-line-strong bg-surface px-3 py-2 text-body text-ink focus:border-accent"
             >
               <option value="">{pickable.length ? `Choose a ${allRoles ? 'person' : role}…` : 'Nobody left to pick'}</option>
               {pickable.map(([g, label, list]) => (
@@ -212,7 +212,7 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
               ))}
             </select>
           </div>
-          <label className="flex items-center gap-2 pb-2.5 text-[13px] text-ink-2">
+          <label className="flex items-center gap-2 pb-2.5 text-small text-ink">
             <input type="checkbox" checked={allRoles} onChange={(e) => setAllRoles(e.target.checked)} className="h-4 w-4 accent-[var(--color-accent)]" />
             Show other roles
           </label>
@@ -220,7 +220,7 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
 
         {!pickable.length && (
           <div>
-            <label htmlFor="ask-typed" className="eyebrow block text-ink-2">
+            <label htmlFor="ask-typed" className="eyebrow block text-ink">
               Add a name
             </label>
             <div className="mt-1.5 flex gap-2">
@@ -235,26 +235,26 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
                   }
                 }}
                 placeholder={`Type the ${role}'s name`}
-                className="block min-w-0 flex-1 rounded-2xl border border-line bg-surface px-4 py-2.5 text-[15px] text-ink placeholder:text-faint focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft"
+                className="block min-w-0 flex-1 rounded-sm border border-line-strong bg-surface px-3 py-2 text-body text-ink placeholder:text-ink-muted focus:border-accent"
               />
               <Button variant="secondary" disabled={!typedName.trim()} onClick={addTyped}>
                 Add
               </Button>
             </div>
-            <p className="mt-1.5 text-[12px] text-muted">Nobody else in the pool is free for this. Their availability is not known, so check with them.</p>
+            <p className="mt-1.5 text-label text-ink-muted">Nobody else in the pool is free for this. Their availability is not known, so check with them.</p>
           </div>
         )}
 
         {tickedRows.length > 0 && (
           <section>
-            <h3 className="text-[13px] font-bold text-ink">To ask ({tickedRows.length})</h3>
-            <ul className="mt-1.5 overflow-hidden rounded-2xl border border-line-soft">
+            <h3 className="text-small font-medium text-ink">To ask ({tickedRows.length})</h3>
+            <ul className="mt-1.5 overflow-hidden rounded-md border border-line">
               {tickedRows.map((x) => (
-                <li key={x.person.id} className="flex min-h-[44px] items-start gap-3 border-b border-line-soft bg-accent-soft/40 px-3 py-2.5 last:border-b-0">
+                <li key={x.person.id} className="flex min-h-[44px] items-start gap-3 border-b border-line bg-surface-sunken/40 px-3 py-2.5 last:border-b-0">
                   <Avatar initials={x.person.initials} size="sm" />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[14px] font-medium text-ink">{x.person.name}</span>
-                    <span className={cx('mt-0.5 block text-xs', x.group === 'good' ? 'text-muted' : 'text-ink-2')}>{describe(x)}</span>
+                    <span className="block text-body font-medium text-ink">{x.person.name}</span>
+                    <span className={cx('mt-0.5 block text-label', x.group === 'good' ? 'text-ink-muted' : 'text-ink')}>{describe(x)}</span>
                   </span>
                   <Button size="sm" variant="ghost" onClick={() => toggle(x.person.id)} aria-label={`Don't ask ${x.person.name}`}>
                     Remove
@@ -266,8 +266,8 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
         )}
 
         {nothingFits && (
-          <div className="rounded-2xl border border-dashed border-line px-4 py-4 text-center">
-            <p className="text-[13px] font-semibold text-ink">
+          <div className="rounded-md border border-dashed border-line px-4 py-4 text-center">
+            <p className="text-small font-medium text-ink">
               No {role} fits {ev.dateShort}.
             </p>
             <div className="mt-2 flex flex-wrap justify-center gap-2">
@@ -284,20 +284,20 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
           const list = byGroup[g]
           if (!list.length) return null
           const body = (
-            <ul className="mt-1.5 overflow-hidden rounded-2xl border border-line-soft">
+            <ul className="mt-1.5 overflow-hidden rounded-md border border-line">
               {list.map((x) => {
                 const id = x.person.id
                 const on = ticked.includes(id)
-                const rowCls = cx('flex min-h-[44px] items-start gap-3 border-b border-line-soft px-3 py-2.5 last:border-b-0', on && 'bg-accent-soft/60')
+                const rowCls = cx('flex min-h-[44px] items-start gap-3 border-b border-line px-3 py-2.5 last:border-b-0', on && 'bg-surface-sunken/60')
                 const inner = (
                   <>
                     <Avatar initials={x.person.initials} size="sm" />
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[14px] font-medium text-ink">
+                      <span className="block text-body font-medium text-ink">
                         {x.person.name}
-                        {!x.person.roles.includes(role) && <span className="ml-1.5 text-[11px] font-normal text-faint">{x.person.roles.join(' · ')}</span>}
+                        {!x.person.roles.includes(role) && <span className="ml-1.5 text-label font-normal text-ink-muted">{x.person.roles.join(' · ')}</span>}
                       </span>
-                      <span className={cx('mt-0.5 block text-xs', g === 'good' || g === 'backup' ? 'text-muted' : 'text-ink-2')}>{describe(x)}</span>
+                      <span className={cx('mt-0.5 block text-label', g === 'good' || g === 'backup' ? 'text-ink-muted' : 'text-ink')}>{describe(x)}</span>
                     </span>
                   </>
                 )
@@ -314,7 +314,7 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
                 }
                 return (
                   <li key={id}>
-                    <label className={cx(rowCls, 'cursor-pointer hover:bg-accent-soft/40')}>
+                    <label className={cx(rowCls, 'cursor-pointer hover:bg-surface-sunken/40')}>
                       <input
                         type="checkbox"
                         checked={on}
@@ -332,7 +332,7 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
           if (g === 'cant') {
             return (
               <details key={g} open={showCant} onToggle={(e) => setShowCant(e.currentTarget.open)}>
-                <summary className="cursor-pointer text-[13px] font-semibold text-muted">
+                <summary className="cursor-pointer text-small font-medium text-ink-muted">
                   {label} ({list.length})
                 </summary>
                 {body}
@@ -341,7 +341,7 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
           }
           return (
             <section key={g} id={`group-${g}`}>
-              <h3 className="text-[13px] font-bold text-ink">
+              <h3 className="text-small font-medium text-ink">
                 {label} ({list.length})
               </h3>
               {body}

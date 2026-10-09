@@ -77,8 +77,8 @@ export function AccountMenu() {
         aria-controls={open ? menuId : undefined}
         onClick={() => setOpen((v) => !v)}
         className={cx(
-          'grid h-9 w-9 place-items-center rounded-full bg-blush font-bold text-[12px] text-ink transition-shadow',
-          'hover:shadow-pop focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent-line',
+          'grid h-9 w-9 place-items-center rounded-full bg-surface-sunken font-medium text-label text-ink transition-shadow',
+          'hover: focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-line-strong',
           open && 'ring-2 ring-accent'
         )}
       >
@@ -91,11 +91,11 @@ export function AccountMenu() {
           id={menuId}
           role="menu"
           aria-label="Account"
-          className="absolute right-0 top-[calc(100%+8px)] z-50 w-60 max-w-[calc(100vw-2rem)] overflow-hidden rounded-3xl border border-line bg-surface shadow-pop motion-safe:animate-[vue-rise_.18s_ease-out]"
+          className="absolute right-0 top-[calc(100%+8px)] z-50 w-60 max-w-[calc(100vw-2rem)] overflow-hidden rounded-md border border-line bg-surface motion-safe:animate-[vue-rise_.18s_ease-out]"
         >
-          <div role="presentation" className="border-b border-line-soft bg-wash/60 px-4 py-3">
-            <div className="text-[13px] font-bold text-ink">{venue.manager}</div>
-            <div className="text-[12px] text-muted">{venue.managerRole}</div>
+          <div role="presentation" className="border-b border-line bg-surface-sunken/60 px-4 py-3">
+            <div className="text-small font-medium text-ink">{venue.manager}</div>
+            <div className="text-label text-ink-muted">{venue.managerRole}</div>
           </div>
           <ul role="none" className="p-1.5">
             {ITEMS.map((item) => (
@@ -104,9 +104,9 @@ export function AccountMenu() {
                   href={item.href}
                   role="menuitem"
                   onClick={() => close()}
-                  className="flex items-center gap-2.5 rounded-full px-3.5 py-2 text-[13px] font-medium text-ink-2 transition-colors hover:bg-accent-soft hover:text-accent focus-visible:bg-accent-soft focus-visible:text-accent focus-visible:outline-none"
+                  className="flex h-9 items-center gap-3 rounded-sm px-3 text-small font-medium text-ink transition-colors hover:bg-surface-sunken focus-visible:bg-surface-sunken focus-visible:outline-offset-0"
                 >
-                  <Icon name={item.icon} size={15} className="text-faint" />
+                  <Icon name={item.icon} size={15} className="text-ink-muted" />
                   {item.label}
                 </Link>
               </li>

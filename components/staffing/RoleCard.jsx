@@ -82,7 +82,7 @@ function RowMenu({ label, items }) {
         aria-expanded={open}
         aria-label={label}
         onClick={toggle}
-        className="grid h-9 w-9 place-items-center rounded-full border border-line bg-surface text-[16px] leading-none text-ink-2 transition-colors hover:border-accent-line hover:bg-accent-soft"
+        className="grid h-9 w-9 place-items-center rounded-full border border-line bg-surface text-heading leading-none text-ink transition-colors hover:border-line-strong hover:bg-surface-sunken"
       >
         ⋯
       </button>
@@ -94,7 +94,7 @@ function RowMenu({ label, items }) {
             style={pos || undefined}
             className={cx(
               'fixed z-50 border border-line bg-surface p-2 shadow-[0_12px_35px_rgba(12,21,18,.18)]',
-              pos ? 'w-60 rounded-2xl' : 'inset-x-0 bottom-0 rounded-t-3xl'
+              pos ? 'w-60 rounded-md' : 'inset-x-0 bottom-0 rounded-t-3xl'
             )}
           >
             {items.map((it) => (
@@ -107,8 +107,8 @@ function RowMenu({ label, items }) {
                   it.onClick()
                 }}
                 className={cx(
-                  'block w-full rounded-xl px-3 py-2.5 text-left text-[13px] transition-colors hover:bg-accent-soft focus:bg-accent-soft focus:outline-none',
-                  it.quiet ? 'text-muted' : 'text-ink'
+                  'block w-full rounded-md px-3 py-2.5 text-left text-small transition-colors hover:bg-surface-sunken focus:bg-surface-sunken',
+                  it.quiet ? 'text-ink-muted' : 'text-ink'
                 )}
               >
                 {it.label}
@@ -153,26 +153,26 @@ function PersonRow({ r, st, highlight, act }) {
       ref={ref}
       data-request={r.id}
       className={cx(
-        'flex min-h-[44px] items-start gap-3 border-b border-line-soft px-5 py-3 transition-colors last:border-b-0',
-        highlight && 'bg-warn-soft/60',
+        'flex min-h-[44px] items-start gap-3 border-b border-line px-5 py-3 transition-colors last:border-b-0',
+        highlight && 'bg-status-soon-soft/60',
         r.status === 'cancelled' && 'opacity-70'
       )}
     >
       <Avatar initials={p.initials} size="sm" />
       <div className="min-w-0 flex-1">
-        <p className="text-[14px] font-medium text-ink">
+        <p className="text-body font-medium text-ink">
           {p.name}
-          {p.roles.length > 1 && <span className="ml-1.5 text-[11px] font-normal text-faint">{p.roles.join(' · ')}</span>}
+          {p.roles.length > 1 && <span className="ml-1.5 text-label font-normal text-ink-muted">{p.roles.join(' · ')}</span>}
         </p>
-        <p className="mt-0.5 text-xs text-muted">{dayLine(r)}</p>
+        <p className="mt-0.5 text-label text-ink-muted">{dayLine(r)}</p>
         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
           <RequestStatus request={r} st={st} />
           {waitingFor.length > 0 && (
-            <span className="text-[11px] text-muted">
+            <span className="text-label text-ink-muted">
               for {waitingFor.map((id) => blockById(id)?.name).join(' + ')}; still confirmed for {r.confirmedBlockIds.map((id) => blockById(id)?.name).join(' + ')}
             </span>
           )}
-          {s.label === 'Removal not sent' && <span className="text-[11px] text-muted">Send to let {firstName(r.staffId)} know</span>}
+          {s.label === 'Removal not sent' && <span className="text-label text-ink-muted">Send to let {firstName(r.staffId)} know</span>}
           <CheckMark issues={issues} />
           <OkdMark overrides={okd} />
         </div>
@@ -217,12 +217,12 @@ export function BlockCard({ eventId, block, st, primaryRole, guideRole, highligh
             const done = c.confirmed >= c.need
             return (
               <div key={role} className="border-b border-line last:border-b-0">
-                <div className="flex flex-wrap items-center gap-2 bg-wash/50 px-5 py-2.5">
-                  <Icon name={done ? 'check' : 'plus'} size={13} className={done ? 'text-done' : 'text-muted'} />
-                  <span className="text-[13px] font-bold text-ink">{role}</span>
-                  <span className="flex-1 text-xs text-muted">
+                <div className="flex flex-wrap items-center gap-2 bg-surface-sunken/50 px-5 py-2.5">
+                  <Icon name={done ? 'check' : 'plus'} size={13} className={done ? 'text-status-clear' : 'text-ink-muted'} />
+                  <span className="text-small font-medium text-ink">{role}</span>
+                  <span className="flex-1 text-label text-ink-muted">
                     {c.filled} of {c.need}
-                    {c.extra > 0 && <span className="text-faint"> · {c.extra} extra</span>}
+                    {c.extra > 0 && <span className="text-ink-muted"> · {c.extra} extra</span>}
                   </span>
                   <span className="inline-flex" data-guide={guideRole === role ? 'planner-ask' : undefined}>
                     <Button size="sm" variant={primaryRole === role && c.toFind ? 'primary' : 'secondary'} onClick={() => act.ask(role, [block.id])}>
@@ -236,8 +236,8 @@ export function BlockCard({ eventId, block, st, primaryRole, guideRole, highligh
                 ))}
 
                 {covering.map((r) => (
-                  <div key={`c-${r.id}`} className="flex min-h-[44px] items-center gap-3 border-b border-dashed border-line px-5 py-2.5 text-xs text-muted">
-                    <Icon name="clock" size={14} className="text-pending" />
+                  <div key={`c-${r.id}`} className="flex min-h-[44px] items-center gap-3 border-b border-dashed border-line px-5 py-2.5 text-label text-ink-muted">
+                    <Icon name="clock" size={14} className="text-ink-muted" />
                     <span>
                       {r.status === 'pending' ? 'Waiting on' : 'Not sent yet:'} {firstName(r.staffId)} for this spot
                     </span>
@@ -245,18 +245,18 @@ export function BlockCard({ eventId, block, st, primaryRole, guideRole, highligh
                 ))}
 
                 {c.toFind > 0 && (
-                  <div className="flex min-h-[44px] flex-wrap items-center gap-3 border-b border-dashed border-line bg-wash/40 px-5 py-2.5">
+                  <div className="flex min-h-[44px] flex-wrap items-center gap-3 border-b border-dashed border-line bg-surface-sunken/40 px-5 py-2.5">
                     <OpenSpotChip count={c.toFind} />
-                    <span className="flex-1 text-xs text-muted">Nobody asked yet</span>
+                    <span className="flex-1 text-label text-ink-muted">Nobody asked yet</span>
                   </div>
                 )}
 
                 {backups.length > 0 && (
-                  <div className="border-t border-line-soft px-5 py-3">
-                    <p className="mb-1.5 text-xs font-semibold text-ink-2">Backups ({backups.length})</p>
+                  <div className="border-t border-line px-5 py-3">
+                    <p className="mb-1.5 text-label font-medium text-ink">Backups ({backups.length})</p>
                     <ul className="space-y-1.5">
                       {backups.map((r) => (
-                        <li key={r.id} className="flex flex-wrap items-center gap-2 text-xs text-muted">
+                        <li key={r.id} className="flex flex-wrap items-center gap-2 text-label text-ink-muted">
                           <StatusBadge tone="info" size="sm">
                             Backup
                           </StatusBadge>
@@ -273,12 +273,12 @@ export function BlockCard({ eventId, block, st, primaryRole, guideRole, highligh
                 )}
 
                 {saidNo.length > 0 && (
-                  <details className="border-t border-line-soft px-5 py-3">
-                    <summary className="cursor-pointer text-xs font-semibold text-muted">Said no ({saidNo.length})</summary>
+                  <details className="border-t border-line px-5 py-3">
+                    <summary className="cursor-pointer text-label font-medium text-ink-muted">Said no ({saidNo.length})</summary>
                     <ul className="mt-2 space-y-1.5">
                       {saidNo.map((r) => (
-                        <li key={r.id} className="flex flex-wrap items-center gap-2 text-xs text-muted">
-                          <span className="font-medium text-ink-2">{staffById(r.staffId).name}</span>
+                        <li key={r.id} className="flex flex-wrap items-center gap-2 text-label text-ink-muted">
+                          <span className="font-medium text-ink">{staffById(r.staffId).name}</span>
                           <StatusBadge tone="declined" size="sm">
                             {r.droppedOut ? 'Dropped out' : "Can't make it"}
                           </StatusBadge>
@@ -292,18 +292,18 @@ export function BlockCard({ eventId, block, st, primaryRole, guideRole, highligh
                 {sugg
                   .filter((x) => x.role === role)
                   .map((x) => (
-                    <div key={`${x.blockId}-${x.role}`} className="border-t border-line-soft bg-info-soft/50 px-5 py-2.5 text-xs text-info">
+                    <div key={`${x.blockId}-${x.role}`} className="border-t border-line bg-surface-sunken/50 px-5 py-2.5 text-label text-ink-muted">
                       <span className="inline-flex items-start gap-1.5">
                         <Icon name="info" size={12} className="mt-[2px]" />
                         <span>
                           {suggestionText(x)} ·{' '}
-                          <button type="button" className="font-semibold text-accent hover:underline" onClick={() => act.applySuggestion(x)}>
+                          <button type="button" className="font-medium text-accent hover:underline" onClick={() => act.applySuggestion(x)}>
                             Use {x.suggested}
                           </button>{' '}
                           ·{' '}
                           <button
                             type="button"
-                            className="font-semibold text-accent hover:underline"
+                            className="font-medium text-accent hover:underline"
                             aria-expanded={why === role}
                             onClick={() => setWhy(why === role ? null : role)}
                           >

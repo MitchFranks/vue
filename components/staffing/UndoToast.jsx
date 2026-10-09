@@ -20,11 +20,11 @@ export function UndoToast() {
   if (!toast) return null
   return (
     <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex justify-center p-3">
-      <div className="pointer-events-auto flex w-full max-w-md items-start gap-2.5 rounded-2xl border border-done-line bg-done-soft px-4 py-3 text-sm text-done shadow-[0_12px_35px_rgba(12,21,18,.18)]">
+      <div className="pointer-events-auto flex w-full max-w-md items-start gap-2.5 rounded-md border border-status-clear-soft bg-status-clear-soft px-4 py-3 text-body text-status-clear shadow-[0_12px_35px_rgba(12,21,18,.18)]">
         <Icon name="check" size={15} className="mt-0.5" />
         <div className="min-w-0 flex-1">
           <p>{toast.message}</p>
-          {toast.small && <p className="mt-1 text-[11px] opacity-80">{toast.small}</p>}
+          {toast.small && <p className="mt-1 text-label opacity-80">{toast.small}</p>}
           {toast.phone && (
             <button
               type="button"
@@ -32,7 +32,7 @@ export function UndoToast() {
                 openPhone(toast.phone)
                 dismissToast()
               }}
-              className="mt-1 text-[12px] font-semibold underline underline-offset-2"
+              className="mt-1 text-label font-medium underline underline-offset-2"
             >
               Open {firstName(toast.phone)}&apos;s phone
             </button>
@@ -42,7 +42,7 @@ export function UndoToast() {
           <button
             type="button"
             onClick={undo}
-            className="rounded-full border border-done-line bg-surface px-3 py-1 text-[12px] font-semibold text-done hover:bg-done-soft"
+            className="h-8 rounded-sm border border-line-strong bg-surface px-3 text-small font-medium text-ink transition-colors hover:bg-surface-sunken"
           >
             Undo
           </button>

@@ -43,11 +43,11 @@ export function ChangeTimes({ requestId, onClose }) {
       }
     >
       <div className="space-y-4">
-        <p className="text-[13px] text-muted">
+        <p className="text-small text-ink-muted">
           {r.role} at the {ev.name}. {sent ? 'They have already been texted, so this becomes a change to send.' : 'Nothing has been sent yet.'}
         </p>
         <div>
-          <span className="eyebrow mb-1.5 block text-ink-2">Working</span>
+          <span className="eyebrow mb-1.5 block text-ink">Working</span>
           <BlockToggles blocks={options} selected={blocks} onChange={setBlocks} />
         </div>
         <CallTimeSelect id="change-call" startH={startH} value={offset} onChange={setOffset} />
@@ -85,20 +85,20 @@ export function MarkOkDialog({ requestId, onClose }) {
         </>
       }
     >
-      <ul className="mb-3 list-disc space-y-1 pl-5 text-[13px] text-ink-2">
+      <ul className="mb-3 list-disc space-y-1 pl-5 text-small text-ink">
         {issues.map((i) => (
           <li key={i.ruleId + i.message}>{i.message}</li>
         ))}
       </ul>
       <PickChips options={['Checked with them', 'Times can flex', 'Renewal in progress']} value={reason} onChange={setReason} label="Quick reasons" />
-      <label htmlFor="ok-reason" className="eyebrow mt-3 block text-ink-2">
+      <label htmlFor="ok-reason" className="eyebrow mt-3 block text-ink">
         Reason
       </label>
       <input
         id="ok-reason"
         value={reason}
         onChange={(e) => setReason(e.target.value)}
-        className="mt-1.5 block w-full rounded-2xl border border-line bg-surface px-4 py-2.5 text-[15px] text-ink focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft"
+        className="mt-1.5 block w-full rounded-sm border border-line-strong bg-surface px-3 py-2 text-body text-ink focus:border-accent"
       />
     </Modal>
   )

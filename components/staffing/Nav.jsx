@@ -28,11 +28,11 @@ export function SkeletonCards({ count = 3 }) {
     <div className="space-y-4" aria-busy="true" aria-label="Loading">
       {Array.from({ length: count }, (_, i) => (
         <div key={i} className="surface-card px-5 py-5">
-          <div className="h-4 w-48 rounded-full bg-wash-deep" />
-          <div className="mt-3 h-3 w-72 max-w-full rounded-full bg-wash" />
+          <div className="h-4 w-48 rounded-full bg-surface-sunken" />
+          <div className="mt-3 h-3 w-72 max-w-full rounded-full bg-surface-sunken" />
           <div className="mt-4 flex gap-2">
-            <div className="h-5 w-24 rounded-full bg-wash" />
-            <div className="h-5 w-20 rounded-full bg-wash" />
+            <div className="h-5 w-24 rounded-full bg-surface-sunken" />
+            <div className="h-5 w-20 rounded-full bg-surface-sunken" />
           </div>
         </div>
       ))}

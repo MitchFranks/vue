@@ -61,7 +61,7 @@ export function EventHeader({ event }) {
         actions={
           <div className="flex flex-wrap gap-2">
             {attention.length > 0 ? (
-              <StatusBadge tone="pending">
+              <StatusBadge tone={attention.some((a) => a.tone === 'urgent') ? 'urgent' : 'warn'}>
                 {upNextLabel(attention)}
               </StatusBadge>
             ) : (
@@ -76,13 +76,13 @@ export function EventHeader({ event }) {
         }
       >
         {/* The four facts that are true no matter which tab you are on. */}
-        <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 border-y border-line bg-surface px-5 py-4 sm:grid-cols-4">
+        <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-4 border-y border-line py-6 sm:grid-cols-4">
           <Field label="Date" value={event.date} />
           <Field label="Schedule" value={event.headline} />
           <Field
             label="Guests"
             value={`${event.guests} expected · ${event.guarantee ? `${event.guarantee} guaranteed` : 'guarantee due'}`}
-           />
+          />
           <Field label="Spaces" value={event.spaces} />
         </dl>
       </PageHeader>

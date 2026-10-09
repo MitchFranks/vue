@@ -16,7 +16,7 @@ import { coverage, eventOf, needOf, rangeLabel, rolesOf, suggestedFor } from '@/
 import { useStaffing2 } from '@/lib/staffing/store'
 
 const selectCls =
-  'mt-1.5 block w-full rounded-2xl border border-line bg-surface px-4 py-2.5 text-[15px] text-ink focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft'
+  'mt-1.5 block w-full rounded-sm border border-line-strong bg-surface px-3 py-2 text-body text-ink focus:border-accent'
 
 export function EditNeeds({ eventId, onClose }) {
   const { state, saveNeeds } = useStaffing2()
@@ -87,7 +87,7 @@ export function EditNeeds({ eventId, onClose }) {
           <TextInput label="Guests expected" id="en-guests" type="number" min="0" value={fields.expectedGuests} onChange={set('expectedGuests')} />
           <TextInput label="Guarantee" id="en-guarantee" type="number" min="0" value={fields.guaranteedCount} onChange={set('guaranteedCount')} hint="Final count, usually 48–72 h before" />
           <div>
-            <label htmlFor="en-service" className="eyebrow block text-ink-2">
+            <label htmlFor="en-service" className="eyebrow block text-ink">
               Service
             </label>
             <select id="en-service" className={selectCls} value={fields.serviceStyle} onChange={set('serviceStyle')}>
@@ -99,7 +99,7 @@ export function EditNeeds({ eventId, onClose }) {
             </select>
           </div>
           <div>
-            <label htmlFor="en-bar" className="eyebrow block text-ink-2">
+            <label htmlFor="en-bar" className="eyebrow block text-ink">
               Bar
             </label>
             <select id="en-bar" className={selectCls} value={fields.bar} onChange={set('bar')}>
@@ -112,14 +112,14 @@ export function EditNeeds({ eventId, onClose }) {
           </div>
           <TextInput label="Bar stations" id="en-stations" type="number" min="0" value={fields.barStations} onChange={set('barStations')} />
           <div>
-            <label htmlFor="en-servers" className="eyebrow block text-ink-2">
+            <label htmlFor="en-servers" className="eyebrow block text-ink">
               Servers come from
             </label>
             <select id="en-servers" className={selectCls} value={fields.serversFrom} onChange={set('serversFrom')}>
               <option value="venue">Venue</option>
               <option value="caterer">Caterer</option>
             </select>
-            {fields.serversFrom === 'caterer' && <p className="mt-1 text-[11px] text-muted">Server suggestions are turned off.</p>}
+            {fields.serversFrom === 'caterer' && <p className="mt-1 text-label text-ink-muted">Server suggestions are turned off.</p>}
           </div>
         </div>
 
@@ -128,20 +128,20 @@ export function EditNeeds({ eventId, onClose }) {
           const missing = ROLES.filter((r) => !(r in needs[b.id]))
           return (
             <section key={b.id}>
-              <h3 className="text-[14px] font-bold text-ink">
-                {b.name} <span className="font-normal text-muted">{rangeLabel(b.start, b.end)}</span>
+              <h3 className="text-body font-medium text-ink">
+                {b.name} <span className="font-normal text-ink-muted">{rangeLabel(b.start, b.end)}</span>
               </h3>
-              <table className="mt-1.5 w-full table-fixed text-[13px]">
+              <table className="mt-1.5 w-full table-fixed text-small">
                 <colgroup>
                   <col />
                   <col className="w-[120px]" />
                   <col className="w-[84px]" />
                 </colgroup>
                 <thead>
-                  <tr className="text-left text-[11px] text-muted">
-                    <th className="py-1 font-semibold">Role</th>
-                    <th className="py-1 font-semibold">Needed</th>
-                    <th className="py-1 text-right font-semibold">Suggested</th>
+                  <tr className="text-left text-label text-ink-muted">
+                    <th className="py-1 font-medium">Role</th>
+                    <th className="py-1 font-medium">Needed</th>
+                    <th className="py-1 text-right font-medium">Suggested</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -150,30 +150,30 @@ export function EditNeeds({ eventId, onClose }) {
                     const n = needs[b.id][role]
                     const confirmed = coverage(eventId, b, role, state).confirmed
                     return (
-                      <tr key={role} className="border-t border-line-soft">
+                      <tr key={role} className="border-t border-line">
                         <td className="py-1.5 pr-2 text-ink">
                           {role}
-                          {n < confirmed && <span className="block text-[11px] text-muted">{confirmed} confirmed; extras stay on</span>}
+                          {n < confirmed && <span className="block text-label text-ink-muted">{confirmed} confirmed; extras stay on</span>}
                         </td>
                         <td className="py-1.5">
                           <span className="inline-flex items-center gap-1">
-                            <button type="button" aria-label={`Fewer ${role} on ${b.name}`} onClick={() => step(b.id, role, -1)} className="grid h-8 w-8 place-items-center rounded-full border border-line hover:bg-accent-soft">
+                            <button type="button" aria-label={`Fewer ${role} on ${b.name}`} onClick={() => step(b.id, role, -1)} className="grid h-8 w-8 place-items-center rounded-full border border-line hover:bg-surface-sunken">
                               −
                             </button>
-                            <span className="w-6 text-center font-semibold tabular-nums">{n}</span>
-                            <button type="button" aria-label={`More ${role} on ${b.name}`} onClick={() => step(b.id, role, 1)} className="grid h-8 w-8 place-items-center rounded-full border border-line hover:bg-accent-soft">
+                            <span className="w-6 text-center font-medium tabular-nums">{n}</span>
+                            <button type="button" aria-label={`More ${role} on ${b.name}`} onClick={() => step(b.id, role, 1)} className="grid h-8 w-8 place-items-center rounded-full border border-line hover:bg-surface-sunken">
                               +
                             </button>
                           </span>
                         </td>
-                        <td className="py-1.5 text-right text-muted">
+                        <td className="py-1.5 text-right text-ink-muted">
                           {sug && sug.suggested != null ? (
                             <span title={`${sug.rule.basis} · confidence ${sug.rule.confidence}`}>
                               {sug.suggested}
                               {sug.suggested !== n && (
                                 <>
                                   {' · '}
-                                  <button type="button" className="font-semibold text-accent hover:underline" onClick={() => setCount(b.id, role, sug.suggested)}>
+                                  <button type="button" className="font-medium text-accent hover:underline" onClick={() => setCount(b.id, role, sug.suggested)}>
                                     Use
                                   </button>
                                 </>
@@ -193,7 +193,7 @@ export function EditNeeds({ eventId, onClose }) {
                   aria-label={`Add a role to ${b.name}`}
                   value=""
                   onChange={(e) => e.target.value && setCount(b.id, e.target.value, 1)}
-                  className="mt-1.5 rounded-full border border-dashed border-line bg-surface px-3 py-1.5 text-[12px] font-semibold text-accent"
+                  className="mt-2 h-8 rounded-sm border border-dashed border-line-strong bg-surface px-3 text-small font-medium text-ink"
                 >
                   <option value="">+ Add a role to {b.name}</option>
                   {missing.map((r) => (
@@ -207,19 +207,19 @@ export function EditNeeds({ eventId, onClose }) {
           )
         })}
 
-        <details className="rounded-2xl bg-wash px-3 py-2.5">
-          <summary className="cursor-pointer text-[13px] font-semibold text-ink-2">How suggestions work</summary>
-          <p className="mt-2 text-[12px] text-muted">
+        <details className="rounded-md bg-surface-sunken px-3 py-2.5">
+          <summary className="cursor-pointer text-small font-medium text-ink">How suggestions work</summary>
+          <p className="mt-2 text-label text-ink-muted">
             Suggestions use the guarantee if there is one, otherwise guests expected. They apply only to guest-facing blocks, skip roles the caterer supplies, and never change your needs unless you choose &quot;Use&quot;. These are venue defaults, not rules you must follow.
           </p>
-          <ul className="mt-2 space-y-1.5 text-[12px] text-ink-2">
+          <ul className="mt-2 space-y-1.5 text-label text-ink">
             {RATIO_RULES.map((r) => (
               <li key={r.id}>
-                <span className="font-semibold">{r.role}:</span> {r.basis}. Confidence {r.confidence}. {r.source}
+                <span className="font-medium">{r.role}:</span> {r.basis}. Confidence {r.confidence}. {r.source}
               </li>
             ))}
             <li>
-              <span className="font-semibold">Event Staff, Grounds, Venue Manager:</span> {NO_RULE_TEXT}
+              <span className="font-medium">Event Staff, Grounds, Venue Manager:</span> {NO_RULE_TEXT}
             </li>
           </ul>
         </details>

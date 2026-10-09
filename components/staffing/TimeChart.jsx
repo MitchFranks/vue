@@ -65,27 +65,27 @@ export function TimeChart({ eventId, blocks, roles, st }) {
         <Link
           href={`/events/${eventId}/timeline`}
           title="Edit this timeline"
-          className="px-1 pb-2 text-center text-[12px] font-bold text-accent underline-offset-2 hover:underline"
+          className="px-1 pb-2 text-center text-label font-medium text-accent underline-offset-2 hover:underline"
         >
           Run of show
         </Link>
         {columns.map(({ role }) => (
-          <div key={role} className="px-1 pb-2 text-center text-[12px] font-bold text-ink">
+          <div key={role} className="px-1 pb-2 text-center text-label font-medium text-ink">
             {role}
           </div>
         ))}
 
         <div className="relative" style={{ height }}>
           {hours.map((h) => (
-            <span key={h} className="absolute right-2 -translate-y-1/2 whitespace-nowrap text-[10px] text-faint" style={{ top: (h - first) * PX_PER_HOUR }}>
+            <span key={h} className="absolute right-2 -translate-y-1/2 whitespace-nowrap text-label text-ink-muted" style={{ top: (h - first) * PX_PER_HOUR }}>
               {fmtH(h)}
             </span>
           ))}
         </div>
 
-        <div className="relative border-l border-line-soft" style={{ height }}>
+        <div className="relative border-l border-line" style={{ height }}>
           {hours.map((h) => (
-            <div key={h} className="absolute inset-x-0 border-t border-line-soft" style={{ top: (h - first) * PX_PER_HOUR }} />
+            <div key={h} className="absolute inset-x-0 border-t border-line" style={{ top: (h - first) * PX_PER_HOUR }} />
           ))}
           {segments.map(({ block, lane }) => (
             <button
@@ -93,7 +93,7 @@ export function TimeChart({ eventId, blocks, roles, st }) {
               type="button"
               onClick={() => jump(block.id)}
               title={`${block.name} ${rangeLabel(block.start, block.end)}`}
-              className="absolute flex flex-col overflow-hidden rounded-xl border border-line bg-wash px-2 py-1 text-left text-[11px] leading-tight text-ink-2 transition-colors hover:bg-wash-deep"
+              className="absolute flex flex-col overflow-hidden rounded-md border border-line bg-surface-sunken px-2 py-1 text-left text-label leading-tight text-ink transition-colors hover:bg-surface-sunken"
               style={{
                 top: (block.start - first) * PX_PER_HOUR + 2,
                 height: (block.end - block.start) * PX_PER_HOUR - 4,
@@ -101,16 +101,16 @@ export function TimeChart({ eventId, blocks, roles, st }) {
                 width: `calc(${100 / segLanes}% - 8px)`
               }}
             >
-              <span className="truncate font-bold text-ink">{block.name}</span>
-              <span className="truncate text-muted">{rangeLabel(block.start, block.end)}</span>
+              <span className="truncate font-medium text-ink">{block.name}</span>
+              <span className="truncate text-ink-muted">{rangeLabel(block.start, block.end)}</span>
             </button>
           ))}
         </div>
 
         {columns.map(({ role, laid, lanes }) => (
-          <div key={role} className="relative border-l border-line-soft" style={{ height }}>
+          <div key={role} className="relative border-l border-line" style={{ height }}>
             {hours.map((h) => (
-              <div key={h} className="absolute inset-x-0 border-t border-line-soft" style={{ top: (h - first) * PX_PER_HOUR }} />
+              <div key={h} className="absolute inset-x-0 border-t border-line" style={{ top: (h - first) * PX_PER_HOUR }} />
             ))}
             {laid.map(({ block, c, lane }) => {
               const done = c.confirmed >= c.need
@@ -126,10 +126,10 @@ export function TimeChart({ eventId, blocks, roles, st }) {
                   onClick={() => jump(block.id)}
                   title={`${block.name} ${rangeLabel(block.start, block.end)}: ${c.filled} of ${c.need} ${role}`}
                   className={cx(
-                    'absolute flex flex-col overflow-hidden rounded-xl border px-2 py-1 text-left text-[11px] leading-tight transition-colors hover:brightness-95',
-                    done && 'border-done-line bg-done-soft text-done',
-                    !done && open && 'border-dashed border-accent bg-accent-soft/50 text-accent',
-                    !done && !open && 'border-pending-line bg-pending-soft text-pending'
+                    'absolute flex flex-col overflow-hidden rounded-md border px-2 py-1 text-left text-label leading-tight transition-colors hover:brightness-95',
+                    done && 'border-status-clear-soft bg-status-clear-soft text-status-clear',
+                    !done && open && 'border-dashed border-accent bg-surface-sunken/50 text-accent',
+                    !done && !open && 'border-line bg-surface-sunken text-ink-muted'
                   )}
                   style={{
                     top: (block.start - first) * PX_PER_HOUR + 2,
@@ -138,14 +138,14 @@ export function TimeChart({ eventId, blocks, roles, st }) {
                     width: `calc(${100 / lanes}% - 8px)`
                   }}
                 >
-                  <span className="flex items-center gap-1 font-bold">
+                  <span className="flex items-center gap-1 font-medium">
                     <Icon name={done ? 'check' : open ? 'plus' : 'clock'} size={10} />
                     <span className="truncate">{headline(c)}</span>
                   </span>
                   <span className="truncate">
                     {c.filled} of {c.need}
                   </span>
-                  {tall && names.length > 0 && <span className="mt-0.5 truncate text-[10px] opacity-80">{names.join(', ')}</span>}
+                  {tall && names.length > 0 && <span className="mt-0.5 truncate text-label opacity-80">{names.join(', ')}</span>}
                 </button>
               )
             })}
