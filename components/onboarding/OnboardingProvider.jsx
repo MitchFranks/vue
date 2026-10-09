@@ -1,11 +1,10 @@
 'use client'
 
 // ---------------------------------------------------------------------------
-// First-run guide: three standalone steps, then a short flow to the first win.
+// First-run guide: two standalone steps, then a short flow to the first win.
 //
-//   1/3  Welcome       what Vue is, that the guide is short, that it is skippable
-//   2/3  Your colour   pick an accent; the whole app switches to it live
-//   3/3  What first?   three likely tasks and a "More options" list. The choice
+//   1/2  Welcome       what Vue is, that the guide is short, that it is skippable
+//   2/2  What first?   three likely tasks and a "More options" list. The choice
 //                      decides which flow comes next.
 //   then the flow      one or two "click this next" steps (FLOWS in
 //                      lib/onboarding.js), each pointing at the button to click
@@ -15,25 +14,14 @@
 //                      on Up Next with the add-couple field focused.
 //
 // Shown once per browser (GUIDE_KEY in localStorage). "Reset prototype data"
-// in the sidebar calls reset() here, which brings the guide back, restores the
-// default colour and returns to the dashboard. Every step can be left with
+// in the sidebar calls reset() here, which brings the guide back and returns
+// to the dashboard. Every step can be left with
 // Skip, the close button or Esc, and the app is fully usable afterwards.
 // ---------------------------------------------------------------------------
 
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import {
-  ACCENT_VARS,
-  DEFAULT_ACCENT,
-  FLOWS,
-  GUIDE_KEY,
-  PLANNER_GUIDE_KEY,
-  PLANNER_REPLAY_EVENT,
-  THEME_KEY,
-  deriveAccent,
-  isHex,
-  makeCouple
-} from '@/lib/onboarding'
+import { FLOWS, GUIDE_KEY, PLANNER_GUIDE_KEY, PLANNER_REPLAY_EVENT, makeCouple } from '@/lib/onboarding'
 import { GuideDialog } from './GuideDialog'
 import { CoachPopover } from './CoachPopover'
 
@@ -56,39 +44,23 @@ function writeJson(key, value) {
   }
 }
 
-function paint(vars) {
-  const style = document.documentElement.style
-  for (const name of ACCENT_VARS) {
-    if (vars) style.setProperty(name, vars[name])
-    else style.removeProperty(name)
-  }
-}
-
 export function OnboardingProvider({ children }) {
   const router = useRouter()
   const [hydrated, setHydrated] = useState(false)
-  // welcome | theme | choose | flow | done | skipped
+  // welcome | choose | flow | done | skipped
   const [step, setStep] = useState(null)
   const [couple, setCouple] = useState(null)
   // Which first task they chose, and where they are in its flow.
   const [choice, setChoice] = useState(null)
   const [flowIndex, setFlowIndex] = useState(0)
-  const [accent, setAccentState] = useState(DEFAULT_ACCENT)
   // One-shot: the user arrived on Up Next from the guide, so focus the field.
   const [arrivedFromGuide, setArrivedFromGuide] = useState(false)
 
-  // Read before paint. The inline script in app/layout.jsx already painted the
-  // colour on a hard load; this re-applies it after React's dev remount.
+  // Read before paint so the guide never flashes in and out on a reload.
   useLayoutEffect(() => {
-    const theme = readJson(THEME_KEY)
-    if (theme && isHex(theme.hex)) {
-      const vars = deriveAccent(theme.hex)
-      paint(vars)
-      setAccentState(theme.hex)
-    }
     const guide = readJson(GUIDE_KEY)
-    // An older save that was mid-way through the old step 3 simply asks again.
-    const saved = guide?.step === 'coach' ? 'choose' : guide?.step
+    // Older saves mid-way through a step that no longer exists simply ask again.
+    const saved = guide?.step === 'coach' || guide?.step === 'theme' ? 'choose' : guide?.step
     const flowOk = saved !== 'flow' || (guide?.choice && FLOWS[guide.choice])
     setStep(flowOk ? saved || 'welcome' : 'choose')
     setChoice(flowOk ? guide?.choice || null : null)
@@ -101,21 +73,7 @@ export function OnboardingProvider({ children }) {
     if (hydrated) writeJson(GUIDE_KEY, { step, couple, choice, flowIndex })
   }, [hydrated, step, couple, choice, flowIndex])
 
-  const setAccent = useCallback((hex) => {
-    if (!isHex(hex)) return
-    const vars = deriveAccent(hex)
-    paint(vars)
-    setAccentState(hex.toLowerCase())
-    writeJson(THEME_KEY, { hex: hex.toLowerCase(), vars })
-  }, [])
-
-  const resetAccent = useCallback(() => {
-    writeJson(THEME_KEY, null)
-    paint(null)
-    setAccentState(DEFAULT_ACCENT)
-  }, [])
-
-  /** Settings: show the welcome guide again, from the dashboard. Keeps their colour and couple. */
+  /** Settings: show the welcome guide again, from the dashboard. Keeps their couple. */
   const replay = useCallback(() => {
     setArrivedFromGuide(false)
     setChoice(null)
@@ -125,18 +83,16 @@ export function OnboardingProvider({ children }) {
   }, [router])
 
   const skip = useCallback(() => setStep('skipped'), [])
-  const start = useCallback(() => setStep('theme'), [])
-
-  const finishTheme = useCallback(() => {
+  const start = useCallback(() => {
     setStep('choose')
     // The menu items the flows point at live in the product sidebar. The
-    // welcome screen has no sidebar, so step 3 takes the user into the product.
+    // welcome screen has no sidebar, so step 2 takes the user into the product.
     if (!document.querySelector('[data-onboarding="up-next"]')) router.push('/dashboard')
   }, [router])
 
-  const back = useCallback(() => setStep((s) => (s === 'choose' ? 'theme' : s === 'theme' ? 'welcome' : s)), [])
+  const back = useCallback(() => setStep((s) => (s === 'choose' ? 'welcome' : s)), [])
 
-  /** Step 3: they picked what to do first. Start that flow. */
+  /** Step 2: they picked what to do first. Start that flow. */
   const choose = useCallback((id) => {
     if (!FLOWS[id]) return
     // The planner has its own guide; make sure it shows even if it was seen before.
@@ -185,9 +141,6 @@ export function OnboardingProvider({ children }) {
 
   const reset = useCallback(() => {
     writeJson(GUIDE_KEY, null)
-    writeJson(THEME_KEY, null)
-    paint(null)
-    setAccentState(DEFAULT_ACCENT)
     setCouple(null)
     setChoice(null)
     setFlowIndex(0)
@@ -196,7 +149,7 @@ export function OnboardingProvider({ children }) {
     router.push('/dashboard')
   }, [router])
 
-  // Which sidebar item the guide is pointing at, so it can wear the user's colour.
+  // Which sidebar item the guide is pointing at, so the sidebar can mark it.
   const guideTarget = flowStep?.target.match(/data-onboarding="([^"]+)"/)?.[1] || null
 
   const value = useMemo(
@@ -205,29 +158,24 @@ export function OnboardingProvider({ children }) {
       step,
       choice,
       guideTarget,
-      accent,
       couple,
       arrivedFromGuide,
-      setAccent,
-      resetAccent,
       replay,
       addCouple,
       consumeArrival,
       skip,
       reset
     }),
-    [hydrated, step, choice, guideTarget, accent, couple, arrivedFromGuide, setAccent, resetAccent, replay, addCouple, consumeArrival, skip, reset]
+    [hydrated, step, choice, guideTarget, couple, arrivedFromGuide, replay, addCouple, consumeArrival, skip, reset]
   )
 
   return (
     <OnboardingContext.Provider value={value}>
       {children}
-      {hydrated && (step === 'welcome' || step === 'theme' || step === 'choose') && (
+      {hydrated && (step === 'welcome' || step === 'choose') && (
         <GuideDialog
           step={step}
-          accent={accent}
-          onAccent={setAccent}
-          onNext={step === 'welcome' ? start : finishTheme}
+          onNext={start}
           onBack={back}
           onChoose={choose}
           onSkip={skip}

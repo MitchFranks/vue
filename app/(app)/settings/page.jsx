@@ -1,40 +1,28 @@
 'use client'
 
 // Settings: only things that really work in the prototype.
-//   Theme          the same colour choices as step 2 of the welcome guide
 //   Welcome guide  replay the guide
 //   Staffing Planner guide  replay the planner guide
 
 import { useRouter } from 'next/navigation'
 import { clearPlannerGuide } from '@/components/onboarding/PlannerGuide'
 import { clearEventsGuide } from '@/components/onboarding/EventsGuide'
-import { DEFAULT_ACCENT } from '@/lib/onboarding'
 import { useOnboarding } from '@/components/onboarding/OnboardingProvider'
-import { ThemePicker } from '@/components/onboarding/ThemePicker'
 import { Breadcrumbs, Button, Card, Icon, PageHeader } from '@/components/ui/primitives'
 
 export default function SettingsPage() {
-  const { accent, setAccent, resetAccent, replay } = useOnboarding()
+  const { replay } = useOnboarding()
   const router = useRouter()
 
   return (
     <div>
       <Breadcrumbs items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Settings' }]} />
-      <PageHeader title="Settings" lead="Make Vue yours. Changes apply straight away and are kept on this device." />
+      <PageHeader title="Settings" lead="Replay any of the guides. Changes apply straight away and are kept on this device." />
 
       <div className="max-w-2xl space-y-4">
-        <Card title="Theme" subtitle="Vue uses your colour for the things that need you." icon="check">
-          <ThemePicker accent={accent} onChange={setAccent} />
-          <div className="mt-4">
-            <Button variant="secondary" size="sm" onClick={resetAccent} disabled={accent === DEFAULT_ACCENT}>
-              Reset to default colour
-            </Button>
-          </div>
-        </Card>
-
-        <Card title="Welcome guide" subtitle="The three quick steps shown on first visit." icon="list">
+        <Card title="Welcome guide" subtitle="The two quick steps shown on first visit." icon="list">
           <p className="text-[14px] leading-relaxed text-ink-2">
-            Want the tour again? It takes you back to the dashboard and starts from the welcome step. Your colour and couples stay as they are.
+            Want the tour again? It takes you back to the dashboard and starts from the welcome step. Your couples stay as they are.
           </p>
           <div className="mt-4">
             <Button

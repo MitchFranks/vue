@@ -4,7 +4,7 @@
 // Staffing Planner guide: two steps, shown the first time someone opens the
 // planner once the welcome guide is out of the way. Each step points at the
 // button to click next, using the same CoachPopover as the welcome guide's
-// Up Next step: a glowing ring in the user's colour and a card beside it.
+// Up Next step: a glowing Laurel ring and a card beside it.
 //
 //   1/2  events list   points at the first event's button; opening the event
 //                      moves the guide on

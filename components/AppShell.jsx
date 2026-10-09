@@ -147,7 +147,7 @@ export function AppShell({ children }) {
                 <ul className="space-y-0.5">
                   {group.items.map((item) => {
                     const active = item.href === activeHref
-                    // Step 3 of the first-run guide: the Up Next item wears the user's colour.
+                    // While the first-run guide points at a sidebar item, that item is marked.
                     const guided = guideTarget && item.onboarding === guideTarget && !active
                     const count = item.badge ? counts[item.badge] : 0
                     return (

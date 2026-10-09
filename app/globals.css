@@ -1,111 +1,194 @@
 /* ==========================================================================
    Vue — design tokens
    --------------------------------------------------------------------------
-   The full rules live in docs/STYLE-GUIDE.md (and live at /style-guide).
-   Short version:
+   Quiet by default, loud on purpose. The full rules live in
+   docs/STYLE-GUIDE.md (and live at /style-guide). Short version:
 
-     COLOUR   five hues, no more
-              accent (violet)   the one interactive colour: buttons, links,
-                                active navigation, focus rings
-              blush  (pink)     decoration and warmth only, never a status
-              done   (mint)     confirmed / settled
-              warn   (sunshine) due soon
-              urgent (coral)    act now
-              + ink (text) and warm neutrals for surfaces
+     COLOUR   Almost everything is ink on surface. Colour appears only when
+              it means something:
+                status-now   (vermilion)  act today or it slips
+                status-soon  (ochre)      coming up this week
+                status-clear (slate blue) handled or on track
+                accent       (Laurel)     focus, selection, links. Never a
+                                          button fill, never a status.
+              Primary actions are ink, so every hue is free to mean a state.
+              Every status also carries an icon and a word, never colour alone.
 
-     SHAPE    everything is soft: pill buttons and badges, 16–28px cards,
-              rounded inputs. Nothing has a sharp corner.
+     SHAPE    radius-sm (6px) on controls, radius-md (12px) on containers,
+              full pills only for status chips and filters. A pill always
+              means a state, never an action.
 
-     TYPE     Plus Jakarta Sans only. Weight and size carry hierarchy,
-              not a second typeface, not uppercase tracking.
+     TYPE     Geist for UI, Geist Mono for numbers that align. Weights 300,
+              400 and 500 only: hierarchy comes from size and space, never
+              bold. Sentence case everywhere.
 
-   Status colours are never used for interaction and accent is never used for
-   status, so a coloured thing always means one thing. Every status also
-   carries an icon and a word — never colour alone.
+   Raw values are plain CSS variables (light on :root, dark under
+   prefers-color-scheme) and @theme inline maps them into Tailwind, so a
+   utility like bg-surface follows the OS theme with no dark: variants.
    ========================================================================== */
 
 @import 'tailwindcss';
 
-@theme {
-  /* ---- Surfaces ---- */
-  --color-canvas: #fff8f5;
-  --color-surface: #ffffff;
-  --color-wash: #f7f2ff;
-  --color-wash-deep: #eee7fd;
-  --color-line: #e7dff5;
-  --color-line-soft: #f0ebf9;
+/* --- Raw tokens: light ------------------------------------------------- */
+:root {
+  color-scheme: light;
 
-  /* ---- Text ---- */
-  --color-ink: #2a2145;
-  --color-ink-2: #4a4268;
-  --color-muted: #6b6485;
-  --color-faint: #9a94b3;
+  --canvas: #f3f1ec;
+  --surface: #faf9f6;
+  --surface-sunken: #e9e6df;
+  --line: #e0dcd3;
+  --line-strong: #8f897e;
+  --ink: #1c1b19;
+  --ink-muted: #5c5850;
+  --on-ink: #faf9f6;
+  --accent: #2f4a3e;
+  --on-accent: #faf9f6;
 
-  /* ---- Accent: the one interactive colour ---- */
-  --color-accent: #6b4bf0;
-  --color-accent-dark: #5636d6;
-  --color-accent-soft: #efeaff;
-  --color-accent-line: #d5caff;
-  /* Text placed ON an accent fill. White by default; the user theme switches
-     it to ink when their colour is too light for white (lib/onboarding.js). */
-  --color-on-accent: #ffffff;
+  --status-now: #a8361a;
+  --status-now-soft: #f5e3db;
+  --status-soon: #7c5400;
+  --status-soon-soft: #f2e8d1;
+  --status-clear: #2b5873;
+  --status-clear-soft: #dfe9ef;
 
-  /* ---- Blush: decoration only ---- */
-  --color-blush: #ffd9e6;
-  --color-blush-deep: #ff8fb3;
+  --shadow-raised-value: 0 1px 2px rgba(28, 27, 25, 0.05), 0 6px 20px rgba(28, 27, 25, 0.05);
+  --shadow-overlay-value: 0 2px 4px rgba(28, 27, 25, 0.06), 0 16px 48px rgba(28, 27, 25, 0.12);
+}
 
-  /* ---- Status ---- */
-  --color-urgent: #c8372f;
-  --color-urgent-soft: #ffece9;
-  --color-urgent-line: #ffc9c2;
+/* --- Raw tokens: dark (follows the OS setting) --------------------------
+   Applies only when <html> carries .theme-auto, which is switched on once
+   every screen is built from the new components. */
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto {
+    color-scheme: dark;
 
-  --color-warn: #86560a;
-  --color-warn-soft: #fff4d4;
-  --color-warn-line: #ffdf8f;
+    --canvas: #121211;
+    --surface: #1a1a18;
+    --surface-sunken: #0c0c0b;
+    --line: #2c2b28;
+    --line-strong: #6e695f;
+    --ink: #ecebe7;
+    --ink-muted: #a39e94;
+    --on-ink: #121211;
+    --accent: #9cc1ae;
+    --on-accent: #121211;
 
-  --color-pending: #5636d6;
-  --color-pending-soft: #efeaff;
-  --color-pending-line: #d5caff;
+    --status-now: #f0896a;
+    --status-now-soft: #3a1f17;
+    --status-soon: #ddb25a;
+    --status-soon-soft: #33280f;
+    --status-clear: #8dbad3;
+    --status-clear-soft: #172833;
 
-  --color-done: #0c7358;
-  --color-done-soft: #dff8ee;
-  --color-done-line: #a6ebd0;
+    --shadow-raised-value: 0 1px 2px rgba(0, 0, 0, 0.5), 0 6px 20px rgba(0, 0, 0, 0.35);
+    --shadow-overlay-value: 0 2px 4px rgba(0, 0, 0, 0.5), 0 16px 48px rgba(0, 0, 0, 0.55);
+  }
+}
 
-  --color-info: #6b6485;
-  --color-info-soft: #f4f0fa;
-  --color-info-line: #e3dcef;
+/* --- Tailwind mapping --------------------------------------------------- */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-on-ink: var(--on-ink);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-status-now: var(--status-now);
+  --color-status-now-soft: var(--status-now-soft);
+  --color-status-soon: var(--status-soon);
+  --color-status-soon-soft: var(--status-soon-soft);
+  --color-status-clear: var(--status-clear);
+  --color-status-clear-soft: var(--status-clear-soft);
 
-  /* ---- Type ---- */
-  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-geist-sans), 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, Menlo, monospace;
+
+  --shadow-raised: var(--shadow-raised-value);
+  --shadow-overlay: var(--shadow-overlay-value);
+
+  /* -------------------------------------------------------------------------
+     TEMPORARY compatibility aliases. The previous token names point at the
+     new system so every screen keeps rendering while the components and
+     screens move to the new names. Removed in the last step of the migration.
+     ------------------------------------------------------------------------- */
+  --color-wash: var(--surface-sunken);
+  --color-wash-deep: var(--surface-sunken);
+  --color-line-soft: var(--line);
+  --color-ink-2: var(--ink);
+  --color-muted: var(--ink-muted);
+  --color-faint: var(--ink-muted);
+  --color-accent-dark: var(--accent);
+  --color-accent-soft: var(--surface-sunken);
+  --color-accent-line: var(--line-strong);
+  --color-blush: var(--surface-sunken);
+  --color-blush-deep: var(--line-strong);
+  --color-urgent: var(--status-now);
+  --color-urgent-soft: var(--status-now-soft);
+  --color-urgent-line: var(--status-now-soft);
+  --color-warn: var(--status-soon);
+  --color-warn-soft: var(--status-soon-soft);
+  --color-warn-line: var(--status-soon-soft);
+  --color-done: var(--status-clear);
+  --color-done-soft: var(--status-clear-soft);
+  --color-done-line: var(--status-clear-soft);
+  --color-pending: var(--ink-muted);
+  --color-pending-soft: var(--surface-sunken);
+  --color-pending-line: var(--line);
+  --color-info: var(--ink-muted);
+  --color-info-soft: var(--surface-sunken);
+  --color-info-line: var(--line);
+  --font-display: var(--font-sans);
   --font-body: var(--font-sans);
+  --shadow-card: var(--shadow-raised-value);
+  --shadow-pop: var(--shadow-raised-value);
+}
 
-  /* ---- Shape ---- */
-  --radius-box: 1.25rem;
+@theme {
+  /* 4px base unit, fixed in px: p-1 = 4px, p-3 = 12px, p-6 = 24px.
+     Use steps 1, 2, 3, 4, 6, 8 and 12. */
+  --spacing: 4px;
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-box: 12px;
   --radius-pill: 999px;
 
-  /* ---- Depth ---- */
-  --shadow-card: 0 1px 2px rgb(42 33 69 / 0.04), 0 10px 28px -8px rgb(107 75 240 / 0.12);
-  --shadow-pop: 0 14px 34px -10px rgb(107 75 240 / 0.35);
+  /* Type scale — the only sizes in the product. */
+  --text-display: 40px;
+  --text-display--line-height: 44px;
+  --text-display--letter-spacing: -0.02em;
+  --text-title: 24px;
+  --text-title--line-height: 30px;
+  --text-title--letter-spacing: -0.01em;
+  --text-heading: 16px;
+  --text-heading--line-height: 22px;
+  --text-body: 14px;
+  --text-body--line-height: 20px;
+  --text-small: 13px;
+  --text-small--line-height: 18px;
+  --text-label: 12px;
+  --text-label--line-height: 16px;
+
+  --ease-calm: cubic-bezier(0.2, 0, 0, 1);
 }
 
 @layer base {
   html {
-    background: var(--color-canvas);
-    color: var(--color-ink);
+    background: var(--canvas);
+    color: var(--ink);
     font-family: var(--font-sans);
-    font-size: 15px;
-    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
   }
 
   body {
     margin: 0;
-    background:
-      radial-gradient(60rem 30rem at 100% -10%, rgb(255 217 230 / 0.55), transparent 60%),
-      radial-gradient(50rem 28rem at -10% 0%, rgb(223 212 255 / 0.5), transparent 60%),
-      var(--color-canvas);
-    background-attachment: fixed;
+    background: var(--canvas);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
   }
 
   button,
@@ -127,9 +210,9 @@
     text-decoration: none;
   }
 
-  /* Accent focus ring, offset. */
+  /* Focus is a solid Laurel ring on every interactive element, never removed. */
   :focus-visible {
-    outline: 3px solid var(--color-accent-line);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 
@@ -147,26 +230,29 @@
 }
 
 @layer components {
-  /* Small label used above values and on form fields. Sentence case. */
+  /* Small label above values and on form fields. Sentence case, muted. */
   .eyebrow {
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: var(--text-small);
+    line-height: var(--text-small--line-height);
+    font-weight: 400;
     letter-spacing: 0;
   }
 
-  /* Page and section headings. */
+  /* The one display-size anchor of a screen. A light weight at size is
+     where the luxury lives; heavy weights read as loud. */
   .display {
-    font-family: var(--font-display);
-    font-weight: 800;
-    letter-spacing: -0.03em;
+    font-family: var(--font-sans);
+    font-weight: 300;
+    letter-spacing: -0.02em;
     line-height: 1.1;
   }
 
-  /* Soft raised surface used by cards and tiles. */
+  /* A raised surface: cards, panels, tiles. */
   .surface-card {
-    background: var(--color-surface);
-    border-radius: 1.5rem;
-    box-shadow: var(--shadow-card);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-raised-value);
   }
 }
 
@@ -183,38 +269,16 @@
     border: 0;
   }
 
-  /* Gentle lift on every interactive surface. */
+  /* Interactive surfaces confirm hover with colour, not movement. */
   .lift {
-    transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+    transition: background-color 150ms var(--ease-calm), border-color 150ms var(--ease-calm);
   }
-
-  .lift:hover {
-    transform: translateY(-2px);
-  }
-}
-
-/* --------------------------------------------------------------------------
-   User theme (first-run guide, components/onboarding/)
-   --------------------------------------------------------------------------
-   The user picks the accent. lib/onboarding.js derives every --color-accent-*
-   token from it and sets them on <html>. Accent used AS text needs more
-   contrast than accent used as a fill, so it reads its own shade,
-   --color-accent-text (falls back to the accent itself). Unlayered on purpose
-   so it wins over the generated utilities. */
-.text-accent,
-.hover\:text-accent:hover {
-  color: var(--color-accent-text, var(--color-accent));
-}
-
-/* The primary button's glow follows the accent instead of fixed violet. */
-.shadow-pop {
-  --tw-shadow-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
 }
 
 @keyframes vue-rise {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.98);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -224,13 +288,12 @@
 
 @keyframes vue-pop {
   0% {
-    transform: scale(0.4);
-  }
-  70% {
-    transform: scale(1.12);
+    transform: scale(0.8);
+    opacity: 0;
   }
   100% {
     transform: scale(1);
+    opacity: 1;
   }
 }
 
@@ -254,6 +317,6 @@
     outline: 0 solid transparent;
   }
   50% {
-    outline: 6px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
+    outline: 4px solid color-mix(in srgb, var(--accent) 30%, transparent);
   }
 }

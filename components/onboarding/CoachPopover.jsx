@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 // THE standard for pointing at the next click in a guide.
 //
-// A pop-up that points at one button: a glowing ring in the user's colour
+// A pop-up that points at one button: a glowing Laurel ring
 // around the target, a soft dim everywhere else, and a card beside it with a
 // pointer. Every guide step that asks for a click uses this (the Up Next step
 // of the welcome guide, each Staffing Planner step). The two welcome screens

@@ -1,17 +1,13 @@
-import { Plus_Jakarta_Sans } from 'next/font/google'
+import { GeistSans } from 'geist/font/sans'
+import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import { StoreProvider } from '@/lib/store'
 import { TimelineEditsProvider } from '@/lib/timelineEdits'
-import { THEME_BOOT_SCRIPT } from '@/lib/onboarding'
 import { OnboardingProvider } from '@/components/onboarding/OnboardingProvider'
 
-// One typeface for everything. Hierarchy comes from weight and size.
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-jakarta',
-  display: 'swap'
-})
+// One family: Geist for all UI text, Geist Mono for times, money and counts
+// that need to line up. The `geist` package self-hosts the files, so the
+// build never depends on reaching Google Fonts.
 
 export const metadata = {
   title: 'Vue — Wedding Venue Operations',
@@ -19,18 +15,13 @@ export const metadata = {
     'Clickable prototype of an operations platform for wedding venues. Simulated data.',
   icons: {
     icon:
-      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='16' fill='%236b4bf0'/%3E%3Ctext x='16' y='22' font-family='Arial,sans-serif' font-size='18' font-weight='800' fill='white' text-anchor='middle'%3EV%3C/text%3E%3C/svg%3E"
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231c1b19'/%3E%3Ctext x='16' y='22.5' font-family='Helvetica,Arial,sans-serif' font-size='17' font-weight='300' fill='%23faf9f6' text-anchor='middle'%3EV%3C/text%3E%3C/svg%3E"
   }
 }
 
 export default function RootLayout({ children }) {
   return (
-    // suppressHydrationWarning: the inline script below sets the user's accent
-    // colour on <html> before first paint, so the DOM differs from the HTML.
-    <html lang="en" className={jakarta.variable} suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
-      </head>
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body>
         <TimelineEditsProvider>
           <StoreProvider>

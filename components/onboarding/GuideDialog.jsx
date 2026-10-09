@@ -1,7 +1,7 @@
 'use client'
 
 // ---------------------------------------------------------------------------
-// Steps 1/3 (welcome) and 2/3 (choose your colour) of the first-run guide.
+// Steps 1/2 (welcome) and 2/2 (what first?) of the first-run guide.
 //
 // One dialog shell for both steps, so focus moves smoothly from step 1 to
 // step 2 instead of bouncing out and back in. Modal: focus is moved in, Tab
@@ -13,12 +13,11 @@ import { useEffect, useRef, useState } from 'react'
 import { cx } from '@/lib/cx'
 import { Button, Icon } from '@/components/ui/primitives'
 import { FIRST_CHOICES, MORE_CHOICES } from '@/lib/onboarding'
-import { ThemePicker } from './ThemePicker'
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
-/** "1/3" pill plus three dots. Tells the user the guide is short and where they are. */
-export function StepPill({ n, total = 3 }) {
+/** "1/2" pill plus dots. Tells the user the guide is short and where they are. */
+export function StepPill({ n, total = 2 }) {
   return (
     <span className="inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-[12px] font-bold text-accent">
       <span aria-hidden="true">
@@ -36,7 +35,7 @@ export function StepPill({ n, total = 3 }) {
   )
 }
 
-export function GuideDialog({ step, accent, onAccent, onNext, onBack, onChoose, onSkip }) {
+export function GuideDialog({ step, onNext, onBack, onChoose, onSkip }) {
   const ref = useRef(null)
   const skipRef = useRef(onSkip)
   skipRef.current = onSkip
@@ -75,7 +74,7 @@ export function GuideDialog({ step, accent, onAccent, onNext, onBack, onChoose, 
     ref.current?.querySelector('[data-autofocus]')?.focus()
   }, [step])
 
-  const n = step === 'welcome' ? 1 : step === 'theme' ? 2 : 3
+  const n = step === 'welcome' ? 1 : 2
   const titleId = `guide-title-${n}`
   const bodyId = `guide-body-${n}`
 
@@ -108,8 +107,7 @@ export function GuideDialog({ step, accent, onAccent, onNext, onBack, onChoose, 
             </h2>
             <div id={bodyId} className="mt-3 space-y-3 text-[15px] leading-relaxed text-ink-2">
               <p>
-                Three quick steps. Make Vue your own, tell us what you want to do first, and we will walk you straight
-                to it.
+                Two quick steps. Tell us what you want to do first, and we will walk you straight to it.
               </p>
               <p>Ask your team, see who said yes, and fill gaps.</p>
               <p className="text-[13px] text-muted">You can leave the guide at any time.</p>
@@ -119,8 +117,6 @@ export function GuideDialog({ step, accent, onAccent, onNext, onBack, onChoose, 
               Nothing is saved to a real system and no real messages are sent.
             </p>
           </div>
-        ) : step === 'theme' ? (
-          <ThemeStep titleId={titleId} bodyId={bodyId} accent={accent} onAccent={onAccent} />
         ) : (
           <ChooseStep titleId={titleId} bodyId={bodyId} onChoose={onChoose} />
         )}
@@ -137,7 +133,7 @@ export function GuideDialog({ step, accent, onAccent, onNext, onBack, onChoose, 
           </Button>
           {step !== 'choose' && (
             <Button variant="primary" onClick={onNext}>
-              {step === 'welcome' ? 'Let’s start' : 'Use this colour'}
+              Let’s start
               <Icon name="arrowRight" size={14} />
             </Button>
           )}
@@ -147,35 +143,7 @@ export function GuideDialog({ step, accent, onAccent, onNext, onBack, onChoose, 
   )
 }
 
-function ThemeStep({ titleId, bodyId, accent, onAccent }) {
-  return (
-    <div className="px-6 pb-2 pt-4">
-      <h2 id={titleId} tabIndex={-1} data-autofocus className="display text-[28px] text-ink outline-none">
-        Choose your theme
-      </h2>
-      <p id={bodyId} className="mt-3 text-[15px] leading-relaxed text-ink-2">
-        Vue uses it for the things that need you, so they stand out. Everything switches as you pick.
-      </p>
-
-      <ThemePicker accent={accent} onChange={onAccent} />
-
-      {/* Live preview of the two places the colour matters most. */}
-      <div className="mt-4 rounded-2xl bg-wash px-4 py-3" aria-hidden="true">
-        <div className="eyebrow mb-2 text-faint">Preview</div>
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-[13px] font-semibold text-on-accent shadow-pop">
-            <Icon name="check" size={14} />
-            Up Next
-          </span>
-          <span className="text-[13px] font-semibold text-accent">View couple</span>
-          <span className="rounded-full bg-accent-soft px-3 py-1 text-[12px] font-bold text-accent">2 to do first</span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/** Step 3/3: what do you want to do first? The choice picks the flow they get next. */
+/** Step 2/2: what do you want to do first? The choice picks the flow they get next. */
 function ChooseStep({ titleId, bodyId, onChoose }) {
   const [more, setMore] = useState(false)
   const row = (c, small) => (
