@@ -131,7 +131,7 @@ export function Icon({ name, size = 16, className = '' }) {
 // Pill-shaped. Filled accent for the one primary action on a screen, soft
 // outline for everything else. Press lifts 2px up, then settles.
 const BUTTON_VARIANTS = {
-  primary: 'bg-accent text-white border-accent shadow-pop hover:bg-accent-dark',
+  primary: 'bg-accent text-on-accent border-accent shadow-pop hover:bg-accent-dark',
   secondary: 'bg-surface text-ink border-line hover:border-accent-line hover:bg-accent-soft',
   danger: 'bg-surface text-urgent border-urgent-line hover:bg-urgent-soft',
   ghost: 'bg-transparent text-accent border-transparent hover:bg-accent-soft'
@@ -295,7 +295,7 @@ export function Tabs({ tabs, active }) {
             className={cx(
               'flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-[13px] transition-colors',
               isActive
-                ? 'bg-accent font-semibold text-white shadow-pop'
+                ? 'bg-accent font-semibold text-on-accent shadow-pop'
                 : 'bg-surface text-muted hover:bg-accent-soft hover:text-accent'
             )}
           >

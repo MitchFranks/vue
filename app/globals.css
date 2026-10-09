@@ -46,6 +46,9 @@
   --color-accent-dark: #5636d6;
   --color-accent-soft: #efeaff;
   --color-accent-line: #d5caff;
+  /* Text placed ON an accent fill. White by default; the user theme switches
+     it to ink when their colour is too light for white (lib/onboarding.js). */
+  --color-on-accent: #ffffff;
 
   /* ---- Blush: decoration only ---- */
   --color-blush: #ffd9e6;
@@ -187,5 +190,70 @@
 
   .lift:hover {
     transform: translateY(-2px);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   User theme (first-run guide, components/onboarding/)
+   --------------------------------------------------------------------------
+   The user picks the accent. lib/onboarding.js derives every --color-accent-*
+   token from it and sets them on <html>. Accent used AS text needs more
+   contrast than accent used as a fill, so it reads its own shade,
+   --color-accent-text (falls back to the accent itself). Unlayered on purpose
+   so it wins over the generated utilities. */
+.text-accent,
+.hover\:text-accent:hover {
+  color: var(--color-accent-text, var(--color-accent));
+}
+
+/* The primary button's glow follows the accent instead of fixed violet. */
+.shadow-pop {
+  --tw-shadow-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+
+@keyframes vue-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes vue-pop {
+  0% {
+    transform: scale(0.4);
+  }
+  70% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes vue-sparkle {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.6);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-70px) scale(1);
+  }
+}
+
+@keyframes vue-glow {
+  0%,
+  100% {
+    outline: 0 solid transparent;
+  }
+  50% {
+    outline: 6px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
   }
 }

@@ -19,14 +19,15 @@ import { upNextLabel, useStore } from '@/lib/store'
 import { venue } from '@/lib/mock/events'
 import { Button, Icon } from './ui/primitives'
 import { ToastHost } from './ui/domain'
-import { IntroModal } from './IntroModal'
+import { useOnboarding } from './onboarding/OnboardingProvider'
+import { AccountMenu } from './AccountMenu'
 
 const NAV = [
   {
     heading: 'Overview',
     items: [
       { href: '/dashboard', label: 'Dashboard', icon: 'home', exact: true },
-      { href: '/up-next', label: 'Up Next', icon: 'check', badge: 'attention' },
+      { href: '/up-next', label: 'Up Next', icon: 'check', badge: 'attention', onboarding: 'up-next' },
       { href: '/calendar', label: 'Calendar', icon: 'calendar' },
       { href: '/events', label: 'Upcoming Events', icon: 'list' }
     ]
@@ -34,14 +35,22 @@ const NAV = [
   {
     heading: 'Staffing',
     items: [
-      // One workflow, one menu item. The stage bar inside it links the stages
-      // (availability, weekly schedule, open positions, planner, publish).
+      // One workflow, one menu item. The tab bar inside it links its screens.
       {
         href: '/staffing',
         match: '/staffing',
         label: 'Staffing Planner',
         icon: 'users',
         badge: 'openPositions'
+      },
+      // Parallel changeover: a second, independently researched and built
+      // Staff Planner so the two can be compared side by side. Lives under
+      // /staffing2 and does not touch the first one.
+      {
+        href: '/staffing2',
+        match: '/staffing2',
+        label: 'Staffing Planner 2',
+        icon: 'users'
       }
     ]
   },
@@ -60,6 +69,7 @@ export function AppShell({ children }) {
   const pathname = usePathname()
   const [navOpen, setNavOpen] = useState(false)
   const { attention, openPositions, messageList, toasts, dismissToast, reset } = useStore()
+  const { reset: resetGuide, step: guideStep, finish: finishGuide } = useOnboarding()
 
   const unreplied = messageList.filter((m) => m.needsReply && !m.replied).length
   const counts = { attention: attention.filter((a) => a.tone === 'urgent').length, openPositions: openPositions.length, messages: unreplied }
@@ -96,7 +106,7 @@ export function AppShell({ children }) {
           </button>
 
           <Link href="/" className="flex items-center gap-2.5" title="Back to the welcome screen">
-            <span className="grid h-10 w-10 place-items-center rounded-full bg-accent font-display text-[17px] font-extrabold text-white shadow-pop">
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-accent font-display text-[17px] font-extrabold text-on-accent shadow-pop">
               v
             </span>
             <span className="leading-none">
@@ -113,7 +123,7 @@ export function AppShell({ children }) {
           <div className="ml-auto flex items-center gap-2">
             <Link
               href="/up-next"
-              className="hidden items-center gap-2 rounded-full bg-accent-soft px-4 py-2 text-[12px] font-bold text-accent transition-colors hover:bg-accent hover:text-white sm:inline-flex"
+              className="hidden items-center gap-2 rounded-full bg-accent-soft px-4 py-2 text-[12px] font-bold text-accent transition-colors hover:bg-accent hover:text-on-accent sm:inline-flex"
             >
               <Icon name="check" size={13} />
               {upNextLabel(attention)}
@@ -122,9 +132,7 @@ export function AppShell({ children }) {
               <div className="text-xs font-semibold text-ink">{venue.manager}</div>
               <div className="text-[11px] text-muted">{venue.managerRole}</div>
             </div>
-            <span className="grid h-9 w-9 place-items-center rounded-full bg-blush font-bold text-[12px] text-ink">
-              {venue.managerInitials}
-            </span>
+            <AccountMenu />
           </div>
         </div>
       </header>
@@ -145,26 +153,32 @@ export function AppShell({ children }) {
                 <ul className="space-y-0.5">
                   {group.items.map((item) => {
                     const active = item.href === activeHref
+                    // Step 3 of the first-run guide: the Up Next item wears the user's colour.
+                    const guided = guideStep === 'coach' && item.onboarding === 'up-next' && !active
                     const count = item.badge ? counts[item.badge] : 0
                     return (
                       <li key={item.href}>
                         <Link
                           href={item.href}
                           aria-current={active ? 'page' : undefined}
+                          data-onboarding={item.onboarding}
+                          onClick={guideStep === 'coach' && item.onboarding === 'up-next' ? finishGuide : undefined}
                           className={cx(
                             'flex items-center gap-2.5 rounded-full py-2.5 pl-3.5 pr-3 text-[13px] transition-colors',
                             active
-                              ? 'bg-accent font-semibold text-white shadow-pop'
-                              : 'text-muted hover:bg-accent-soft hover:text-accent'
+                              ? 'bg-accent font-semibold text-on-accent shadow-pop'
+                              : guided
+                                ? 'bg-accent-soft font-semibold text-accent'
+                                : 'text-muted hover:bg-accent-soft hover:text-accent'
                           )}
                         >
-                          <Icon name={item.icon} size={15} className={active ? 'text-white' : 'text-faint'} />
+                          <Icon name={item.icon} size={15} className={active ? 'text-on-accent' : guided ? 'text-accent' : 'text-faint'} />
                           <span className="flex-1 truncate">{item.label}</span>
                           {count > 0 && (
                             <span
                               className={cx(
                                 'rounded-full px-2 text-[11px] font-bold',
-                                active ? 'bg-white/25 text-white' : 'bg-accent-soft text-accent'
+                                active ? 'bg-on-accent/20 text-on-accent' : 'bg-accent-soft text-accent'
                               )}
                             >
                               {count}
@@ -185,7 +199,10 @@ export function AppShell({ children }) {
               </Button>
               <button
                 type="button"
-                onClick={reset}
+                onClick={() => {
+                  reset()
+                  resetGuide()
+                }}
                 className="mt-2 w-full rounded-full border border-line px-3 py-2 text-[12px] font-medium text-muted transition-colors hover:border-accent-line hover:bg-accent-soft hover:text-accent"
               >
                 Reset prototype data
@@ -214,7 +231,6 @@ export function AppShell({ children }) {
         </main>
       </div>
 
-      <IntroModal />
       <ToastHost toasts={toasts} onDismiss={dismissToast} />
     </div>
   )

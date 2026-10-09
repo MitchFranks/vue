@@ -1,6 +1,8 @@
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { StoreProvider } from '@/lib/store'
+import { THEME_BOOT_SCRIPT } from '@/lib/onboarding'
+import { OnboardingProvider } from '@/components/onboarding/OnboardingProvider'
 
 // One typeface for everything. Hierarchy comes from weight and size.
 const jakarta = Plus_Jakarta_Sans({
@@ -22,9 +24,16 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={jakarta.variable}>
+    // suppressHydrationWarning: the inline script below sets the user's accent
+    // colour on <html> before first paint, so the DOM differs from the HTML.
+    <html lang="en" className={jakarta.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
       <body>
-        <StoreProvider>{children}</StoreProvider>
+        <StoreProvider>
+          <OnboardingProvider>{children}</OnboardingProvider>
+        </StoreProvider>
       </body>
     </html>
   )

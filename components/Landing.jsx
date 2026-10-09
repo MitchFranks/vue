@@ -45,7 +45,7 @@ export function Landing() {
       <header className="relative z-10">
         <div className="mx-auto flex h-20 w-[min(100%-2rem,1200px)] items-center justify-between gap-6 md:h-24">
           <span className="flex items-center gap-3">
-            <span className="grid h-11 w-11 place-items-center rounded-full bg-accent font-display text-[20px] font-extrabold text-white shadow-pop">
+            <span className="grid h-11 w-11 place-items-center rounded-full bg-accent font-display text-[20px] font-extrabold text-on-accent shadow-pop">
               v
             </span>
             <span className="leading-none">
@@ -68,7 +68,7 @@ export function Landing() {
 
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-2.5 rounded-full bg-ink px-6 py-3 text-[13px] font-bold text-white transition-all duration-200 hover:-translate-y-[2px] hover:bg-accent"
+            className="inline-flex items-center gap-2.5 rounded-full bg-ink px-6 py-3 text-[13px] font-bold text-white transition-all duration-200 hover:-translate-y-[2px] hover:bg-accent hover:text-on-accent"
           >
             Open dashboard
             <Icon name="arrowRight" size={15} />
@@ -87,7 +87,7 @@ export function Landing() {
           <h1 className="display mt-7 max-w-4xl text-[clamp(2.8rem,6.4vw,5.4rem)] leading-[1.02]">
             Every wedding, every loose end,
             <br />
-            <span className="rounded-[2rem] bg-accent px-4 text-white">in one happy place.</span>
+            <span className="rounded-[2rem] bg-accent px-4 text-on-accent">in one happy place.</span>
           </h1>
 
           <p className="mt-8 max-w-xl text-base leading-7 text-ink-2 md:text-lg">
@@ -98,7 +98,7 @@ export function Landing() {
           <div className="mt-10 flex flex-wrap gap-4">
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-3 rounded-full bg-accent px-8 py-4 text-[14px] font-bold text-white shadow-pop transition-all duration-200 hover:-translate-y-[2px] hover:bg-accent-dark"
+              className="inline-flex items-center gap-3 rounded-full bg-accent px-8 py-4 text-[14px] font-bold text-on-accent shadow-pop transition-all duration-200 hover:-translate-y-[2px] hover:bg-accent-dark"
             >
               See what's up next
               <Icon name="arrowRight" size={16} />

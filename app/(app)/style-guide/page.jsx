@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/primitives'
 
 const COLOURS = [
-  { name: 'accent', role: 'Action — buttons, links, active nav', swatch: 'bg-accent', text: 'text-white', hex: '#6B4BF0' },
+  { name: 'accent', role: 'Action — buttons, links, active nav', swatch: 'bg-accent', text: 'text-on-accent', hex: '#6B4BF0' },
   { name: 'blush', role: 'Warmth — decoration only', swatch: 'bg-blush', text: 'text-ink-2', hex: '#FFD9E6' },
   { name: 'done', role: 'Settled — confirmed, staffed, paid', swatch: 'bg-done-soft', text: 'text-done', hex: '#0C7358' },
   { name: 'warn', role: 'Soon — due soon, needs a look', swatch: 'bg-warn-soft', text: 'text-warn', hex: '#86560A' },

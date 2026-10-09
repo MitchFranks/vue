@@ -5,6 +5,7 @@
 import { use } from 'react'
 import { useStore } from '@/lib/store'
 import { coupleById } from '@/lib/mock/records'
+import { useOnboarding } from '@/components/onboarding/OnboardingProvider'
 import { events } from '@/lib/mock/events'
 import {
   Avatar,
@@ -20,10 +21,12 @@ import {
 
 export default function CoupleDetailPage({ params }) {
   const { id } = use(params)
-  const couple = coupleById(id)
   const { messageList, attentionForEvent, coverageForEvent } = useStore()
+  // The first-run guide's couple lives in the browser, not in the mock data.
+  const { hydrated, couple: firstCouple } = useOnboarding()
+  const couple = coupleById(id) || (firstCouple?.id === id ? firstCouple : null)
 
-  if (!couple) return <EmptyState title="No such couple" />
+  if (!couple) return hydrated ? <EmptyState title="No such couple" /> : null
 
   const theirEvents = events.filter((e) => couple.eventIds.includes(e.id))
   const theirMessages = messageList.filter((m) => m.coupleId === couple.id)
@@ -49,14 +52,22 @@ export default function CoupleDetailPage({ params }) {
             </div>
           </div>
           <dl className="space-y-2">
-            <Field label="Email" value={couple.email} />
-            <Field label="Phone" value={couple.phone} />
+            <Field label="Email" value={couple.email || 'Not added yet'} />
+            <Field label="Phone" value={couple.phone || 'Not added yet'} />
             <Field label="Relationship" value={couple.since} />
           </dl>
         </Card>
 
         <div className="space-y-4">
           <Card title="Their events" icon="calendar" bodyClassName="px-0 py-0">
+            {theirEvents.length === 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+                <p className="text-sm text-muted">No wedding booked yet.</p>
+                <Button href="/events/new" variant="primary" size="sm">
+                  Book their wedding
+                </Button>
+              </div>
+            )}
             {theirEvents.map((e) => {
               const needs = attentionForEvent(e.id).length
               const cov = coverageForEvent(e.id)

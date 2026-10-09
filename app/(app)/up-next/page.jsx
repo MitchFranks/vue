@@ -13,6 +13,7 @@ import { useStore } from '@/lib/store'
 import { events } from '@/lib/mock/events'
 import { Breadcrumbs, Button, Card, EmptyState, Icon, PageHeader } from '@/components/ui/primitives'
 import { UpNextItem } from '@/components/ui/domain'
+import { FirstCoupleItem } from '@/components/onboarding/FirstCoupleItem'
 
 const KINDS = [
   { id: 'all', label: 'Everything' },
@@ -40,6 +41,9 @@ export default function UpNextPage() {
         title="Up next"
         lead="Everything worth doing next, with the most useful first. Nothing here was entered by hand — each item is generated from the current state of your events, assignments, messages and documents."
       />
+
+      {/* A new venue's first item: add a couple (the first-run guide lands here). */}
+      <FirstCoupleItem />
 
       {/* Filters — PROGRESSIVE DISCLOSURE for a long queue. */}
       <div className="mb-4 space-y-2">

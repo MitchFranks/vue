@@ -6,9 +6,11 @@ Your original wording is kept. `[x]` = done, `[ ]` = not done yet. The notes cam
 
 ## Must have
 
-- [ ] **Guide the user quickly into solving problems that need attention for weddings, with small, rapid wins.** *(batch 2, #7)*
-  I think we need to guide the user quickly into solving problems that need attention for weddings. To encourage this behavior, we want to give them a series of small, rapid wins that make them feel like they're making progress. The first thing I can think of is customizing the platform look to their own preference and typing something in that makes it feel like the system is getting updated with information it "needs to know". I think they should choose their preferred color and we use this to guide their attention through the platform right to their first creating their first to do item.
-  ↳ Not started. Related backlog items: B-01 (first event in under 10 minutes), B-03 (guided first run with sample data). The style guide's single accent colour makes the "choose your colour" step a one-token change.
+- [x] **Guide the user quickly into solving problems that need attention for weddings, with small, rapid wins.** *(batch 2, #7)*
+  I think we need to guide the user quickly into solving problems that need attention for weddings. To encourage this behavior, we want to give them a series of small, rapid wins that make them feel like they're making progress. The first thing I can think of is customizing the platform look to their own preference and typing something in that makes it feel like the system is getting updated with information it "needs to know". I think they should choose their preferred color and then the system updates to use their chosen color. We strategically design the system so that the buttons/elements that we use to direct their attention adopt their chosen color. It will immediately stand out to them. use this to guide their attention through the platform right to inputting their first couple's names. Basic screen flow: 1. (From Home page) Welcome to the platform pop up (allow them to exit the guide but signify that the guide is only 3 steps and they're already on the 1st one: signify this with a "1/3" label on the pop up). 2. Choose your theme pop up. 3. point to the "Up Next" menu button (conveniently the very color they chose).
+  *(Updated wording, replaces the earlier version that ended at "their first to do item". The goal is now: guide them to inputting their first couple's names.)*
+  ↳ Done. First visit (any page, usually the welcome screen): **1/3** "Welcome to Vue" → **2/3** "Choose your theme" (6 swatches + custom picker; the whole app recolours live and the choice persists) → **3/3** spotlight on the sidebar's Up Next item in their colour → Up Next opens with **"Add your couple's names"** first: one field, one button, a small celebration, then the couple is in Couples with its own page. Skippable at every step (Skip, ×, Esc); shown once; "Reset prototype data" brings it back and restores violet. Replaces the old "Before you start" pop-up. Code: `components/onboarding/`, `lib/onboarding.js`. Open: the Dashboard's Up Next preview and counts do not include the couple item; on phones step 3 shows a bottom card instead of the spotlight (sidebar is folded away).
+  ↳ Follow-up: the guide now ends the instant the user clicks Up Next (nav item or popover button), saved as done so it never returns. Top-bar initials are an account menu (Account, Settings). New `/account` (read-only profile) and `/settings` (Theme card with the same picker as step 2 plus "Reset to default colour"; "Welcome guide" replay).
 
 - [ ] **Dashboard reads like a sales pitch; it should streamline the next action.** *(batch 1, #2)*
   when i visit the dashboard is that it still reads like a sales demo pitch rather than a useful platform. I think these should be separate. Once on the platform, it should be streamline your thought process to the next action you want to take, not reselling the value of the platform back to you.
@@ -66,6 +68,6 @@ Nothing deliberately excluded yet. The competitor-complaint backlog (`docs/BACKL
 
 | Bucket | Done | Open |
 |---|---|---|
-| Must | 4 of 6 | Guided quick wins; dashboard as next action |
+| Must | 5 of 6 | Dashboard as next action |
 | Should | 2 of 3 | Duplicate home page buttons |
 | Could | 0 of 1 | Native AI |
