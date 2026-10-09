@@ -201,7 +201,7 @@ Evidence caveat: the complexity theme is well supported (Dubsado strongly, Aisle
 - **Acceptance criteria:**
   - A notification settings screen with three choices: each event, daily digest, off.
   - Default is a daily digest.
-  - Counts in the interface remain soft violet and show "to do first" only (STYLE-GUIDE section 8).
+  - Counts in the interface stay neutral and show "to do first" only (STYLE-GUIDE section 7).
 
 #### B-13: Phone-ready core flows
 - **Answers:** Dubsado mobile "near-unusable"; AP floor plan hard on touch (C16, C17, C18).

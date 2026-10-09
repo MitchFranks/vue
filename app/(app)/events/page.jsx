@@ -45,7 +45,7 @@ export default function EventsPage() {
 
       <div className="mb-4 flex flex-wrap items-end gap-2">
         <div className="min-w-[180px] flex-1">
-          <label htmlFor="event-search" className="mb-1 block text-xs font-semibold text-ink-2">
+          <label htmlFor="event-search" className="mb-1 block text-label font-medium text-ink">
             Search
           </label>
           <input
@@ -53,18 +53,18 @@ export default function EventsPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Event or couple name"
-            className="w-full rounded-box border border-line bg-surface px-2.5 py-1.5 text-sm placeholder:text-faint focus:border-accent focus:outline-none"
+            className="w-full h-9 rounded-sm border border-line-strong bg-surface px-3 text-body placeholder:text-ink-muted focus:border-accent"
           />
         </div>
         <div>
-          <label htmlFor="event-type" className="mb-1 block text-xs font-semibold text-ink-2">
+          <label htmlFor="event-type" className="mb-1 block text-label font-medium text-ink">
             Event type
           </label>
           <select
             id="event-type"
             value={type}
             onChange={(e) => setType(e.target.value)}
-            className="rounded-box border border-line bg-surface px-2.5 py-1.5 text-sm focus:border-accent focus:outline-none"
+            className="h-9 rounded-sm border border-line-strong bg-surface px-3 text-body focus:border-accent"
           >
             {['All types', ...EVENT_TYPES].map((t) => (
               <option key={t}>{t}</option>
@@ -72,14 +72,14 @@ export default function EventsPage() {
           </select>
         </div>
         <div>
-          <label htmlFor="event-sort" className="mb-1 block text-xs font-semibold text-ink-2">
+          <label htmlFor="event-sort" className="mb-1 block text-label font-medium text-ink">
             Sort by
           </label>
           <select
             id="event-sort"
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="rounded-box border border-line bg-surface px-2.5 py-1.5 text-sm focus:border-accent focus:outline-none"
+            className="h-9 rounded-sm border border-line-strong bg-surface px-3 text-body focus:border-accent"
           >
             <option value="soonest">Date: soonest first</option>
             <option value="latest">Date: latest first</option>
@@ -128,8 +128,8 @@ export default function EventsPage() {
                 key={t}
                 className={
                   n
-                    ? 'rounded-xl border border-line bg-wash-deep px-2 py-0.5 text-xs text-ink-2'
-                    : 'rounded-xl border border-dashed border-line px-2 py-0.5 text-xs text-faint'
+                    ? 'rounded-md border border-line bg-surface-sunken px-2 py-0.5 text-label text-ink'
+                    : 'rounded-md border border-dashed border-line px-2 py-0.5 text-label text-ink-muted'
                 }
               >
                 {t} {n > 0 && `(${n})`}
@@ -137,7 +137,7 @@ export default function EventsPage() {
             )
           })}
         </div>
-        <p className="mt-2 text-xs text-muted">
+        <p className="mt-2 text-label text-ink-muted">
           Types shown in grey have no events booked yet, but are selectable when creating one.
         </p>
       </Card>

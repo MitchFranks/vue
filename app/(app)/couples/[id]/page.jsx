@@ -47,8 +47,8 @@ export default function CoupleDetailPage({ params }) {
           <div className="mb-3 flex items-center gap-3">
             <Avatar initials={couple.initials} />
             <div>
-              <div className="text-sm font-medium text-ink">{couple.primaryContact}</div>
-              <div className="text-xs text-muted">Primary contact</div>
+              <div className="text-body font-medium text-ink">{couple.primaryContact}</div>
+              <div className="text-label text-ink-muted">Primary contact</div>
             </div>
           </div>
           <dl className="space-y-2">
@@ -62,7 +62,7 @@ export default function CoupleDetailPage({ params }) {
           <Card title="Their events" icon="calendar" bodyClassName="px-0 py-0">
             {theirEvents.length === 0 && (
               <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-                <p className="text-sm text-muted">No wedding booked yet.</p>
+                <p className="text-body text-ink-muted">No wedding booked yet.</p>
                 <Button href="/events/new" variant="primary" size="sm">
                   Book their wedding
                 </Button>
@@ -98,7 +98,7 @@ export default function CoupleDetailPage({ params }) {
 
           <Card title="Messages" icon="mail" bodyClassName="px-0 py-0">
             {theirMessages.length === 0 ? (
-              <p className="px-4 py-4 text-sm text-muted">No messages from this couple.</p>
+              <p className="px-4 py-4 text-body text-ink-muted">No messages from this couple.</p>
             ) : (
               theirMessages.map((m) => (
                 <ListRow

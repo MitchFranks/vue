@@ -7,6 +7,7 @@ import {
   Breadcrumbs,
   Button,
   Card,
+  Count,
   EmptyState,
   Icon,
   ListRow,
@@ -16,23 +17,35 @@ import {
   TextInput
 } from '@/components/ui/primitives'
 
-const COLOURS = [
-  { name: 'accent', role: 'Action — buttons, links, active nav', swatch: 'bg-accent', text: 'text-on-accent', hex: '#6B4BF0' },
-  { name: 'blush', role: 'Warmth — decoration only', swatch: 'bg-blush', text: 'text-ink-2', hex: '#FFD9E6' },
-  { name: 'done', role: 'Settled — confirmed, staffed, paid', swatch: 'bg-done-soft', text: 'text-done', hex: '#0C7358' },
-  { name: 'warn', role: 'Soon — due soon, needs a look', swatch: 'bg-warn-soft', text: 'text-warn', hex: '#86560A' },
-  { name: 'urgent', role: 'Now — act now', swatch: 'bg-urgent-soft', text: 'text-urgent', hex: '#C8372F' }
+// Swatch classes are spelled out in full so Tailwind generates them.
+const MEANING = [
+  { name: 'accent', role: 'Laurel. Focus, selection, links. Never a button', swatch: 'bg-accent', text: 'text-on-accent' },
+  { name: 'status-now', role: 'Act today: open positions, overdue, declined', swatch: 'bg-status-now-soft', text: 'text-status-now' },
+  { name: 'status-soon', role: 'Coming up this week, needs a look', swatch: 'bg-status-soon-soft', text: 'text-status-soon' },
+  { name: 'status-clear', role: 'Handled: confirmed, staffed, paid', swatch: 'bg-status-clear-soft', text: 'text-status-clear' }
 ]
 
 const NEUTRALS = [
-  { name: 'ink', swatch: 'bg-ink', text: 'text-white' },
-  { name: 'ink-2', swatch: 'bg-ink-2', text: 'text-white' },
-  { name: 'muted', swatch: 'bg-muted', text: 'text-white' },
-  { name: 'faint', swatch: 'bg-faint', text: 'text-white' },
+  { name: 'ink', swatch: 'bg-ink', text: 'text-on-ink' },
+  { name: 'ink-muted', swatch: 'bg-ink-muted', text: 'text-on-ink' },
+  { name: 'line-strong', swatch: 'bg-line-strong', text: 'text-on-ink' },
   { name: 'line', swatch: 'bg-line', text: 'text-ink' },
-  { name: 'wash', swatch: 'bg-wash', text: 'text-ink' },
+  { name: 'surface-sunken', swatch: 'bg-surface-sunken', text: 'text-ink' },
   { name: 'canvas', swatch: 'bg-canvas border border-line', text: 'text-ink' },
   { name: 'surface', swatch: 'bg-surface border border-line', text: 'text-ink' }
+]
+
+const TYPE = [
+  { label: 'Display · 40/44 · 300', cls: 'text-display font-light', sample: 'Johnson Wedding' },
+  { label: 'Title · 24/30 · 300', cls: 'text-title font-light', sample: 'Fill the ceremony shift' },
+  { label: 'Heading · 16/22 · 500', cls: 'text-heading font-medium', sample: 'Staffable blocks' },
+  {
+    label: 'Body · 14/20 · 400',
+    cls: 'text-body max-w-prose',
+    sample: "Jake declined the ceremony assignment. Find a replacement before Saturday so the couple's guests are greeted on time."
+  },
+  { label: 'Small · 13/18 · 400', cls: 'text-small text-ink-muted', sample: 'Updated 12 minutes ago' },
+  { label: 'Numbers · Geist Mono', cls: 'font-mono text-small tabular-nums', sample: '4:30 PM · $12,480.00 · 150 guests' }
 ]
 
 export const metadata = { title: 'Style guide — Vue' }
@@ -43,120 +56,118 @@ export default function StyleGuidePage() {
       <Breadcrumbs items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Style guide' }]} />
       <PageHeader
         title="Style guide"
-        lead="Five colours, one typeface, round shapes. Everything below is rendered with the real components, so it always matches the product. The written rules are in docs/STYLE-GUIDE.md."
+        lead="Quiet by default, loud on purpose. Everything below is rendered with the real components and tokens, in whichever theme your system is using. The written rules are in docs/STYLE-GUIDE.md."
       />
 
-      <div className="space-y-5">
-        <Card title="Colour — five hues" icon="info">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            {COLOURS.map((c) => (
-              <div key={c.name} className="overflow-hidden rounded-2xl border border-line">
-                <div className={`${c.swatch} ${c.text} px-4 py-6 text-[15px] font-bold`}>{c.name}</div>
-                <div className="px-4 py-3">
-                  <p className="text-xs font-semibold text-ink">{c.hex}</p>
-                  <p className="mt-1 text-xs text-muted">{c.role}</p>
-                </div>
+      <div className="space-y-6">
+        <Card title="Colour that means something" icon="info">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {MEANING.map((c) => (
+              <div key={c.name} className="overflow-hidden rounded-md border border-line">
+                <div className={`${c.swatch} ${c.text} px-4 py-6 font-medium`}>{c.name}</div>
+                <p className="px-4 py-3 text-small text-ink-muted">{c.role}</p>
               </div>
             ))}
           </div>
-          <p className="mb-2 mt-5 text-xs font-semibold text-muted">Supporting neutrals</p>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+          <p className="mb-2 mt-6 text-small text-ink-muted">Neutrals: almost everything is ink on surface</p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
             {NEUTRALS.map((n) => (
-              <div key={n.name} className={`${n.swatch} ${n.text} rounded-2xl px-3 py-4 text-xs font-semibold`}>
+              <div key={n.name} className={`${n.swatch} ${n.text} rounded-sm px-3 py-4 text-label font-medium`}>
                 {n.name}
               </div>
             ))}
           </div>
         </Card>
 
-        <Card title="Typography — Plus Jakarta Sans" icon="list">
-          <div className="space-y-4">
-            <div>
-              <p className="eyebrow text-muted">Page title · 800 · 28/36px</p>
-              <p className="display text-[34px] text-ink">Johnson Wedding</p>
-            </div>
-            <div>
-              <p className="eyebrow text-muted">Card title · 700 · 14px</p>
-              <p className="text-[14px] font-bold text-ink">Staffable blocks</p>
-            </div>
-            <div>
-              <p className="eyebrow text-muted">Body · 400 · 14–15px</p>
-              <p className="max-w-[60ch] text-[15px] text-ink-2">
-                Jake declined the ceremony assignment. Find a replacement before Saturday so the couple&apos;s
-                guests are greeted on time.
-              </p>
-            </div>
-            <div>
-              <p className="eyebrow text-muted">Label · 600 · 12px, sentence case</p>
-              <p className="text-xs text-muted">Caption · 500 · 11–12px</p>
-            </div>
-          </div>
+        <Card title="Typography: Geist, never bold" icon="list">
+          <dl className="divide-y divide-line">
+            {TYPE.map((t) => (
+              <div key={t.label} className="grid gap-1 py-4 first:pt-0 last:pb-0 sm:grid-cols-[12rem_1fr] sm:gap-6">
+                <dt className="text-small text-ink-muted">{t.label}</dt>
+                <dd className={`${t.cls} text-ink`}>{t.sample}</dd>
+              </div>
+            ))}
+          </dl>
         </Card>
 
-        <Card title="Buttons — pills" icon="send">
+        <Card title="Buttons" icon="send">
           <div className="flex flex-wrap items-center gap-3">
             <Button variant="primary" size="lg">
-              Primary
+              Send reply
+              <Icon name="arrowRight" size={16} />
             </Button>
-            <Button variant="primary" size="md">
+            <Button variant="primary">
               <Icon name="plus" size={14} />
               New event
             </Button>
-            <Button variant="secondary">Secondary</Button>
-            <Button variant="ghost">Ghost</Button>
+            <Button variant="secondary">Cancel</Button>
+            <Button variant="ghost">Restore draft</Button>
             <Button variant="danger">Decline</Button>
-            <Button variant="primary" size="sm" disabled>
+            <Button variant="secondary" disabled>
               Disabled
             </Button>
           </div>
-          <p className="mt-3 text-xs text-muted">One filled violet button per region. Everything else is a soft outline.</p>
+          <p className="mt-4 text-small text-ink-muted">
+            One ink button per region. Buttons are never coloured: colour means state, not action.
+          </p>
         </Card>
 
-        <Card title="Status badges — icon + word, never colour alone" icon="check">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <StatusBadge tone="warn">Needs 1 more</StatusBadge>
-            <StatusBadge tone="warn">Due Friday</StatusBadge>
-            <StatusBadge tone="pending">Pending</StatusBadge>
-            <StatusBadge tone="done">Fully staffed</StatusBadge>
-            <StatusBadge tone="info">Draft</StatusBadge>
+        <Card title="Status: icon and word, never colour alone" icon="check">
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge tone="urgent">Do first</StatusBadge>
             <StatusBadge tone="declined">Declined</StatusBadge>
+            <StatusBadge tone="warn">Needs 1 more</StatusBadge>
+            <StatusBadge tone="done">Fully staffed</StatusBadge>
+            <StatusBadge tone="pending">Pending</StatusBadge>
+            <StatusBadge tone="info">Draft</StatusBadge>
             <StatusBadge tone="empty">Unassigned</StatusBadge>
+            <span className="ml-2 inline-flex items-center gap-2 text-small text-ink-muted">
+              Counts stay neutral <Count>7</Count>
+            </span>
           </div>
         </Card>
 
-        <div className="grid gap-5 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-2">
           <Card title="Cards and lists" icon="calendar" bodyClassName="px-0 py-0">
             <ListRow
               leading={<Avatar initials="EJ" />}
               title="Emily & Marcus Johnson"
               sub="Johnson Wedding · Sat, Sep 19"
-              trailing={<StatusBadge tone="warn" size="sm">Needs 1 more</StatusBadge>}
+              trailing={
+                <StatusBadge tone="warn" size="sm">
+                  Needs 1 more
+                </StatusBadge>
+              }
               href="/couples/cpl-2001"
             />
             <ListRow
-              leading={<Avatar initials="AM" />}
-              title="Ana & Diego Martinez"
-              sub="Martinez Wedding Reception · Sat, Oct 3"
-              trailing={<StatusBadge tone="done" size="sm">Staffed</StatusBadge>}
-              href="/couples/cpl-2004"
+              leading={<Avatar initials="PS" />}
+              title="Priya Shah & Dev Patel"
+              sub="Shah–Patel Rehearsal Dinner · Thu, Sep 24"
+              trailing={
+                <StatusBadge tone="done" size="sm">
+                  Staffed
+                </StatusBadge>
+              }
+              href="/couples/cpl-2002"
             />
           </Card>
 
           <Card title="Form fields" icon="user">
             <div className="space-y-4">
-              <TextInput label="Couple" id="sg-couple" placeholder="Emily & Marcus Johnson" readOnly />
-              <TextInput label="Expected guests" id="sg-guests" placeholder="150" readOnly />
+              <TextInput label="Couple" id="sg-couple" placeholder="Emily & Marcus Johnson" />
+              <TextInput label="Expected guests" id="sg-guests" placeholder="150" hint="You can change this until the guarantee is due." />
             </div>
           </Card>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-3">
           <MetricTile label="Open positions" value="2" tone="urgent" sub="Need someone this week" />
           <MetricTile label="Confirmed" value="18" tone="done" sub="Across 5 events" />
           <MetricTile label="Weddings" value="3" sub="This season" />
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid items-start gap-6 lg:grid-cols-2">
           <Alert tone="warn" title="Guarantee due Friday">
             Harvest Table needs the final count 48 hours before service.
           </Alert>

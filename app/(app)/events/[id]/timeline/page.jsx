@@ -23,7 +23,7 @@ const DEFAULT_LEN = 60
 const MIN_LEN = 15
 
 const INPUT =
-  'w-full rounded-xl border border-line bg-surface px-3 py-2 text-[14px] text-ink placeholder:text-faint focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft'
+  'w-full rounded-sm border border-line-strong bg-surface px-3 py-2 text-body text-ink placeholder:text-ink-muted focus:border-accent'
 
 const snap = (m) => Math.round(m / SNAP) * SNAP
 const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi)
@@ -128,11 +128,11 @@ function Editor({ value, isNew, anchorId, onSave, onDelete, onClose }) {
       role="dialog"
       aria-label={isNew ? 'New block' : 'Edit block'}
       style={pos ? { left: pos.left, top: pos.top, width: 340 } : { visibility: 'hidden' }}
-      className="fixed z-40 rounded-2xl border border-line bg-surface p-4 shadow-pop"
+      className="fixed z-40 rounded-md border border-line bg-surface p-4"
     >
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-faint">{isNew ? 'New block' : 'Edit block'}</span>
-        <button type="button" onClick={onClose} className="rounded-full p-1.5 text-muted hover:bg-accent-soft hover:text-accent" aria-label="Close">
+        <span className="text-label font-medium uppercase tracking-wide text-ink-muted">{isNew ? 'New block' : 'Edit block'}</span>
+        <button type="button" onClick={onClose} className="rounded-full p-1.5 text-ink-muted hover:bg-surface-sunken hover:text-accent" aria-label="Close">
           <Icon name="x" size={14} />
         </button>
       </div>
@@ -147,12 +147,12 @@ function Editor({ value, isNew, anchorId, onSave, onDelete, onClose }) {
         onChange={(e) => set({ title: e.target.value })}
         onKeyDown={(e) => e.key === 'Enter' && save()}
         placeholder="Add title"
-        className="w-full border-0 border-b-2 border-line bg-transparent px-0 pb-1.5 text-[20px] font-semibold text-ink placeholder:text-faint focus:border-accent focus:outline-none"
+        className="w-full border-0 border-b-2 border-line bg-transparent px-0 pb-1.5 text-title font-light text-ink placeholder:text-ink-muted focus:border-accent"
       />
 
       <div className="mt-4 grid grid-cols-2 gap-2">
         <div>
-          <label htmlFor="blk-start" className="mb-1 block text-xs font-semibold text-ink-2">
+          <label htmlFor="blk-start" className="mb-1 block text-label font-medium text-ink">
             Starts
           </label>
           <input
@@ -164,7 +164,7 @@ function Editor({ value, isNew, anchorId, onSave, onDelete, onClose }) {
           />
         </div>
         <div>
-          <label htmlFor="blk-end" className="mb-1 block text-xs font-semibold text-ink-2">
+          <label htmlFor="blk-end" className="mb-1 block text-label font-medium text-ink">
             Ends
           </label>
           <input
@@ -177,7 +177,7 @@ function Editor({ value, isNew, anchorId, onSave, onDelete, onClose }) {
         </div>
       </div>
 
-      <label className="mt-3 flex items-start gap-2.5 rounded-xl bg-accent-soft/50 px-3 py-2.5">
+      <label className="mt-3 flex items-start gap-2.5 rounded-md bg-surface-sunken/50 px-3 py-2.5">
         <input
           type="checkbox"
           checked={form.needsStaff}
@@ -185,13 +185,13 @@ function Editor({ value, isNew, anchorId, onSave, onDelete, onClose }) {
           className="mt-0.5 h-4 w-4 accent-[var(--color-accent)]"
         />
         <span>
-          <span className="block text-[13px] font-semibold text-ink">Needs staff</span>
-          <span className="block text-[12px] text-muted">Shows up in the Staffing Planner so you can fill it.</span>
+          <span className="block text-small font-medium text-ink">Needs staff</span>
+          <span className="block text-label text-ink-muted">Shows up in the Staffing Planner so you can fill it.</span>
         </span>
       </label>
 
       <div className="mt-3">
-        <label htmlFor="blk-note" className="mb-1 block text-xs font-semibold text-ink-2">
+        <label htmlFor="blk-note" className="mb-1 block text-label font-medium text-ink">
           Note
         </label>
         <textarea id="blk-note" rows={2} value={form.note} onChange={(e) => set({ note: e.target.value })} placeholder="Optional" className={INPUT} />
@@ -204,7 +204,7 @@ function Editor({ value, isNew, anchorId, onSave, onDelete, onClose }) {
           <button
             type="button"
             onClick={onDelete}
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-semibold text-urgent hover:bg-urgent-soft"
+            className="inline-flex h-9 items-center gap-1.5 rounded-sm px-3 text-small font-medium text-status-now transition-colors hover:bg-status-now-soft"
           >
             <Icon name="trash" size={15} />
             Delete
@@ -400,11 +400,11 @@ export default function RunOfShowPage({ params }) {
         data-row={row.id}
         title={`${row.title || '(No title)'}, ${range(s, e)}`}
         className={[
-          'absolute cursor-grab select-none overflow-hidden rounded-xl border px-2 py-1 text-left text-[12px] leading-tight transition-shadow active:cursor-grabbing',
-          tone === 'urgent' ? 'border-urgent-line bg-urgent-soft text-urgent' : '',
-          tone === 'staff' ? 'border-accent bg-accent text-on-accent' : '',
-          tone === 'plain' ? 'border-line bg-wash-deep text-ink' : '',
-          active ? 'z-20 shadow-pop ring-2 ring-accent-line' : 'z-10 hover:shadow-card'
+          'absolute cursor-grab select-none overflow-hidden rounded-md border px-2 py-1 text-left text-label leading-tight transition-shadow active:cursor-grabbing',
+          tone === 'urgent' ? 'border-status-now-soft bg-status-now-soft text-status-now' : '',
+          tone === 'staff' ? 'border-line-strong bg-surface text-ink' : '',
+          tone === 'plain' ? 'border-line bg-surface-sunken text-ink' : '',
+          active ? 'z-20 ring-2 ring-accent' : 'z-10 hover:shadow-raised'
         ].join(' ')}
         style={{
           top: top + 1,
@@ -414,14 +414,14 @@ export default function RunOfShowPage({ params }) {
         }}
       >
         <span data-edge="top" className="absolute inset-x-0 top-0 h-2 cursor-ns-resize" />
-        <span className="block truncate font-semibold">{row.title || '(No title)'}</span>
+        <span className="block truncate font-medium">{row.title || '(No title)'}</span>
         {h >= 38 && <span className="block truncate opacity-85">{range(s, e)}</span>}
         {h >= 56 && row.needsStaff && (
-          <span className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold opacity-90">
+          <span className="mt-0.5 flex items-center gap-1 text-label font-medium opacity-90">
             <Icon name="users" size={11} /> Needs staff
           </span>
         )}
-        {h >= 74 && row.note && <span className="mt-0.5 block truncate text-[11px] opacity-80">{row.note}</span>}
+        {h >= 74 && row.note && <span className="mt-0.5 block truncate text-label opacity-80">{row.note}</span>}
         <span data-edge="bottom" className="absolute inset-x-0 bottom-0 h-2 cursor-ns-resize" />
       </div>
     )
@@ -460,7 +460,7 @@ export default function RunOfShowPage({ params }) {
           <div className="relative w-14 shrink-0" style={{ height }} aria-hidden="true">
             {hours.map((h, i) =>
               i === 0 || i === hours.length - 1 ? null : (
-                <span key={h} className="absolute right-2 -translate-y-1/2 whitespace-nowrap text-[10px] text-faint" style={{ top: ((h * 60 - lo) / 60) * PX }}>
+                <span key={h} className="absolute right-2 -translate-y-1/2 whitespace-nowrap text-label text-ink-muted" style={{ top: ((h * 60 - lo) / 60) * PX }}>
                   {clockLabel(h * 60)}
                 </span>
               )
@@ -470,16 +470,16 @@ export default function RunOfShowPage({ params }) {
           <div
             ref={gridRef}
             onPointerDown={onPointerDown}
-            className="relative flex-1 cursor-cell touch-none border-l border-line-soft"
+            className="relative flex-1 cursor-cell touch-none border-l border-line"
             style={{ height }}
             role="application"
             aria-label="Run of show day view. Click or drag to add a block."
           >
             {hours.map((h) => (
-              <div key={h} className="pointer-events-none absolute inset-x-0 border-t border-line-soft" style={{ top: ((h * 60 - lo) / 60) * PX }} />
+              <div key={h} className="pointer-events-none absolute inset-x-0 border-t border-line" style={{ top: ((h * 60 - lo) / 60) * PX }} />
             ))}
             {hours.slice(0, -1).map((h) => (
-              <div key={`half-${h}`} className="pointer-events-none absolute inset-x-0 border-t border-dashed border-line-soft/60" style={{ top: ((h * 60 + 30 - lo) / 60) * PX }} />
+              <div key={`half-${h}`} className="pointer-events-none absolute inset-x-0 border-t border-dashed border-line/60" style={{ top: ((h * 60 + 30 - lo) / 60) * PX }} />
             ))}
 
             {shown.map(renderBlock)}
@@ -487,7 +487,7 @@ export default function RunOfShowPage({ params }) {
             {draft && (
               <div
                 data-row="draft"
-                className="pointer-events-none absolute inset-x-1 z-20 overflow-hidden rounded-xl border-2 border-dashed border-accent bg-accent-soft px-2 py-1 text-[12px] font-semibold text-accent"
+                className="pointer-events-none absolute inset-x-1 z-20 overflow-hidden rounded-md border-2 border-dashed border-accent bg-surface-sunken px-2 py-1 text-label font-medium text-accent"
                 style={{ top: ((draft.s - lo) / 60) * PX + 1, height: Math.max(((draft.e - draft.s) / 60) * PX, 20) - 2 }}
               >
                 {(editor?.values.title || '(No title)') + ' · ' + range(draft.s, draft.e)}
@@ -510,7 +510,7 @@ export default function RunOfShowPage({ params }) {
       )}
 
       {undo && (
-        <div role="status" className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full bg-ink px-5 py-2.5 text-[13px] font-medium text-surface shadow-pop">
+        <div role="status" className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-md bg-ink px-4 py-3 text-small font-medium text-on-ink shadow-overlay">
           <span>{undo.message}</span>
           <button
             type="button"
@@ -518,7 +518,7 @@ export default function RunOfShowPage({ params }) {
               setRows(id, undo.rows)
               setUndo(null)
             }}
-            className="rounded-full px-2 py-0.5 font-bold text-accent-line hover:bg-surface/10"
+            className="rounded-sm px-2 py-0.5 font-medium text-on-ink underline underline-offset-4 hover:no-underline"
           >
             Undo
           </button>

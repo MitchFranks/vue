@@ -55,11 +55,9 @@
   --shadow-overlay-value: 0 2px 4px rgba(28, 27, 25, 0.06), 0 16px 48px rgba(28, 27, 25, 0.12);
 }
 
-/* --- Raw tokens: dark (follows the OS setting) --------------------------
-   Applies only when <html> carries .theme-auto, which is switched on once
-   every screen is built from the new components. */
+/* --- Raw tokens: dark (follows the OS setting) -------------------------- */
 @media (prefers-color-scheme: dark) {
-  :root.theme-auto {
+  :root {
     color-scheme: dark;
 
     --canvas: #121211;
@@ -109,42 +107,6 @@
 
   --shadow-raised: var(--shadow-raised-value);
   --shadow-overlay: var(--shadow-overlay-value);
-
-  /* -------------------------------------------------------------------------
-     TEMPORARY compatibility aliases. The previous token names point at the
-     new system so every screen keeps rendering while the components and
-     screens move to the new names. Removed in the last step of the migration.
-     ------------------------------------------------------------------------- */
-  --color-wash: var(--surface-sunken);
-  --color-wash-deep: var(--surface-sunken);
-  --color-line-soft: var(--line);
-  --color-ink-2: var(--ink);
-  --color-muted: var(--ink-muted);
-  --color-faint: var(--ink-muted);
-  --color-accent-dark: var(--accent);
-  --color-accent-soft: var(--surface-sunken);
-  --color-accent-line: var(--line-strong);
-  --color-blush: var(--surface-sunken);
-  --color-blush-deep: var(--line-strong);
-  --color-urgent: var(--status-now);
-  --color-urgent-soft: var(--status-now-soft);
-  --color-urgent-line: var(--status-now-soft);
-  --color-warn: var(--status-soon);
-  --color-warn-soft: var(--status-soon-soft);
-  --color-warn-line: var(--status-soon-soft);
-  --color-done: var(--status-clear);
-  --color-done-soft: var(--status-clear-soft);
-  --color-done-line: var(--status-clear-soft);
-  --color-pending: var(--ink-muted);
-  --color-pending-soft: var(--surface-sunken);
-  --color-pending-line: var(--line);
-  --color-info: var(--ink-muted);
-  --color-info-soft: var(--surface-sunken);
-  --color-info-line: var(--line);
-  --font-display: var(--font-sans);
-  --font-body: var(--font-sans);
-  --shadow-card: var(--shadow-raised-value);
-  --shadow-pop: var(--shadow-raised-value);
 }
 
 @theme {
@@ -154,7 +116,6 @@
 
   --radius-sm: 6px;
   --radius-md: 12px;
-  --radius-box: 12px;
   --radius-pill: 999px;
 
   /* Type scale — the only sizes in the product. */

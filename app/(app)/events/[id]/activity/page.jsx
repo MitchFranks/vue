@@ -24,11 +24,11 @@ export default function ActivityLogPage({ params }) {
       ) : (
         <ol>
           {entries.map((h) => (
-            <li key={h.id} className="flex items-start gap-3 border-b border-line-soft px-4 py-3 last:border-b-0">
-              <span className="w-28 shrink-0 text-xs text-faint">{h.when}</span>
+            <li key={h.id} className="flex items-start gap-3 border-b border-line px-4 py-3 last:border-b-0">
+              <span className="w-28 shrink-0 text-label text-ink-muted">{h.when}</span>
               <span className="min-w-0 flex-1">
-                <span className="block text-sm text-ink">{h.what}</span>
-                <span className="mt-0.5 block text-xs text-muted">by {h.who}</span>
+                <span className="block text-body text-ink">{h.what}</span>
+                <span className="mt-0.5 block text-label text-ink-muted">by {h.who}</span>
               </span>
               <StatusBadge tone={h.tone} size="sm">
                 {h.tone === 'urgent'

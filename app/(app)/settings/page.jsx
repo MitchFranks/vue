@@ -21,7 +21,7 @@ export default function SettingsPage() {
 
       <div className="max-w-2xl space-y-4">
         <Card title="Welcome guide" subtitle="The two quick steps shown on first visit." icon="list">
-          <p className="text-[14px] leading-relaxed text-ink-2">
+          <p className="text-body leading-relaxed text-ink">
             Want the tour again? It takes you back to the dashboard and starts from the welcome step. Your couples stay as they are.
           </p>
           <div className="mt-4">
@@ -37,7 +37,7 @@ export default function SettingsPage() {
         </Card>
 
         <Card title="Staffing Planner guide" subtitle="The two quick steps shown the first time you open the planner." icon="users">
-          <p className="text-[14px] leading-relaxed text-ink-2">
+          <p className="text-body leading-relaxed text-ink">
             Want the planner tour again? It opens the Staffing Planner and points at the first button to click.
           </p>
           <div className="mt-4">
@@ -56,7 +56,7 @@ export default function SettingsPage() {
         </Card>
 
         <Card title="Events guide" subtitle="The three quick steps shown the first time you open Events." icon="calendar">
-          <p className="text-[14px] leading-relaxed text-ink-2">
+          <p className="text-body leading-relaxed text-ink">
             Want the events tour again? It opens Events and points at the first thing to click.
           </p>
           <div className="mt-4">

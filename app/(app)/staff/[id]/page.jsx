@@ -59,8 +59,8 @@ export default function StaffDetailPage({ params }) {
           <div className="mb-3 flex items-center gap-3">
             <Avatar initials={person.initials} />
             <div>
-              <div className="text-sm font-medium text-ink">{person.name}</div>
-              <div className="text-xs text-muted">{person.role}</div>
+              <div className="text-body font-medium text-ink">{person.name}</div>
+              <div className="text-label text-ink-muted">{person.role}</div>
             </div>
           </div>
           <dl className="space-y-2">

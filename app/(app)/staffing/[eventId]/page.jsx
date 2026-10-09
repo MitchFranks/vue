@@ -259,7 +259,7 @@ function Crew({ eventId }) {
         <div className="mb-5 space-y-2">
           {notices.slice(0, 3).map((n) => (
             <Alert key={n.key} tone={n.tone} action={n.action}>
-              <span className="text-[13px]">{n.text}</span>
+              <span className="text-small">{n.text}</span>
             </Alert>
           ))}
         </div>
@@ -299,17 +299,17 @@ function Crew({ eventId }) {
       )}
 
       <details className="surface-card mt-5 px-5 py-3.5">
-        <summary className="cursor-pointer text-[14px] font-bold text-ink">Replies and changes ({activity.length})</summary>
+        <summary className="cursor-pointer text-body font-medium text-ink">Replies and changes ({activity.length})</summary>
         {activity.length ? (
-          <ul className="mt-2 space-y-1.5 text-[13px] text-ink-2">
+          <ul className="mt-2 space-y-1.5 text-small text-ink">
             {activity.map((a) => (
               <li key={a.id}>
-                <span className="text-muted">{stampLabel(a.at)} ·</span> {a.text}
+                <span className="text-ink-muted">{stampLabel(a.at)} ·</span> {a.text}
               </li>
             ))}
           </ul>
         ) : (
-          <p className="mt-2 text-[13px] text-muted">Nothing yet. Asks, replies and changes show up here.</p>
+          <p className="mt-2 text-small text-ink-muted">Nothing yet. Asks, replies and changes show up here.</p>
         )}
       </details>
 

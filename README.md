@@ -268,8 +268,9 @@ without creating chronic stress. Priority is shown by order and wording, not ala
 
 - The list is split into **Do first** and **Coming up**. The counter in the top bar, sidebar and
   dashboard shows only what to do first ("2 to do first"), never a raw total of everything open.
-- Do-first items use the accent colour, not red; coming-up items use sunshine. Nothing on the list is
-  styled as an error.
+- Do-first items carry a quiet `status-now` chip ("Do first"); coming-up items a `status-soon` chip
+  ("Coming up"). Only the first item has a filled button, and counts stay neutral, so nothing on the
+  list reads as an error screen.
 - Copy is calm and specific: "Ceremony needs 1 more Event Staff", "Reply to Marla Perez", "Document is
   ready for your signature". Shortages read "Needs 1 more", not "Short 1".
 - When the list is empty the product says "All caught up".
@@ -278,11 +279,14 @@ The status tones themselves are unchanged and defined once:
 
 | Tone | Meaning | Colour | Glyph |
 |---|---|---|---|
-| `urgent` | Do first (a real problem, e.g. a declined assignment) | coral, used sparingly | triangle |
-| `warn` | Coming up | sunshine | clock |
-| `pending` | Awaiting a reply / Up Next emphasis | violet | clock |
-| `done` | Confirmed / complete | mint | tick |
-| `info` | Informational | grey | i |
+| `urgent` | Do first / act today (e.g. a declined assignment) | `status-now` (vermilion) | alert |
+| `warn` | Coming up this week | `status-soon` (ochre) | clock |
+| `pending` | Awaiting a reply | neutral | clock |
+| `done` | Confirmed / complete | `status-clear` (slate blue) | tick |
+| `info` | Informational | neutral | i |
+
+The full visual system (tokens for light and dark, type scale, components and rules) is in
+[`docs/STYLE-GUIDE.md`](docs/STYLE-GUIDE.md) and live at `/style-guide`.
 
 **Colour is never used alone.** `StatusBadge` always renders colour **plus** an icon glyph **plus**
 a text label, so the meaning survives greyscale printing and colour-blindness.

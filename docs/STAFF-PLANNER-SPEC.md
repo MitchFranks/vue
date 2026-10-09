@@ -47,7 +47,7 @@ Four screens. Every screen carries the same pill tab bar (`Tabs`, each tab its o
 - Actions: **Open board** per event, a per-week **Publish all drafts** that opens the Publish dialog for several events (When I Work: publish everything in view), and a quick filter chip "Needs people".
 
 ### 2. Event board (`/staffing/<eventId>`), the primary screen
-Header: event picker (select), date and couple, staffing badge, **Publish and notify** (the single filled violet button), and `Copy staffing from another event` (Planning Center templates; used when blocks have no assignments yet).
+Header: event picker (select), date and couple, staffing badge, **Publish and notify** (the single filled ink button), and `Copy staffing from another event` (Planning Center templates; used when blocks have no assignments yet).
 
 Body: **one row per timeline block** (Setup 9:00 AM to 3:00 PM, Ceremony, Reception, Teardown), with the block's time and `kind`. Inside a row, one group per required role with `count` **slots**:
 
@@ -55,7 +55,7 @@ Body: **one row per timeline block** (Setup 9:00 AM to 3:00 PM, Ceremony, Recept
 |---|---|---|
 | Open | Dashed pill "Open: Event Staff" with `+` | No (this is the open position) |
 | Not sent | Soft-outline chip, avatar, "Not sent" | No |
-| Pending | Violet chip, "Pending" | No (existing rule) |
+| Pending | Neutral chip with a clock, "Pending" | No (existing rule) |
 | Accepted | Mint chip, check, "Accepted" | Yes |
 | Declined | Coral chip, struck name, "Declined", reason in tooltip; the slot beside it shows as Open | No |
 | Overridden | Any chip plus a warning mark and "Assigned despite: <warning>" tooltip | Per its status |
@@ -156,7 +156,7 @@ Seed data: no change to `lib/mock/events.js` or `staff.js` beyond switching a fe
 10. The Up Next "Find replacement" link opens the board with the panel on the right slot.
 11. Sidebar badge and Week screen counts match the derived open positions.
 12. Reload keeps state; "Reset prototype" restores the seed. `next build` static export succeeds with `generateStaticParams`.
-13. Copy uses couple, timeline block, open position, assignment ("shift" only in staff-facing text) and Up Next; every status has an icon and a word; one filled violet button per region.
+13. Copy uses couple, timeline block, open position, assignment ("shift" only in staff-facing text) and Up Next; every status has an icon and a word; one filled ink button per region.
 
 **Deliberately out of scope**
 - Time off and date-specific blockouts (the model has weekly availability only); per-event availability requests (Event Staff App).

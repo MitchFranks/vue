@@ -24,9 +24,9 @@ export function EventHeader({ event }) {
 
   const base = `/events/${event.id}`
   const tabs = [
-    { id: 'overview', label: 'Up Next', href: base, count: attention.length || null, tone: attention.length ? 'urgent' : null },
+    { id: 'overview', label: 'Up Next', href: base, count: attention.length || null, tone: null },
     { id: 'timeline', label: 'Run of show', href: `${base}/timeline`, guide: 'tab-timeline' },
-    { id: 'tasks', label: 'Tasks', href: `${base}/tasks`, count: openTasks || null, tone: openTasks ? 'urgent' : null },
+    { id: 'tasks', label: 'Tasks', href: `${base}/tasks`, count: openTasks || null, tone: null },
     { id: 'vendors', label: 'Vendors', href: `${base}/vendors` },
     { id: 'payments', label: 'Payments', href: `${base}/payments` },
     {
@@ -34,7 +34,7 @@ export function EventHeader({ event }) {
       label: 'Messages',
       href: `${base}/messages`,
       count: unreplied || null,
-      tone: unreplied ? 'urgent' : null
+      tone: null
     },
     { id: 'documents', label: 'Documents', href: `${base}/documents`, count: docs },
     { id: 'activity', label: 'Activity Log', href: `${base}/activity` }

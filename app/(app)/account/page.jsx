@@ -24,12 +24,12 @@ export default function AccountPage() {
 
         <Card title="Profile" icon="user">
           <div className="mb-5 flex items-center gap-3">
-            <span className="grid h-14 w-14 place-items-center rounded-full bg-blush text-[18px] font-extrabold text-ink">
+            <span className="grid h-14 w-14 place-items-center rounded-full bg-surface-sunken text-heading font-medium text-ink">
               {venue.managerInitials}
             </span>
             <div>
-              <div className="text-[18px] font-bold text-ink">{venue.manager}</div>
-              <div className="text-[13px] text-muted">{venue.managerRole}</div>
+              <div className="text-heading font-medium text-ink">{venue.manager}</div>
+              <div className="text-small text-ink-muted">{venue.managerRole}</div>
             </div>
           </div>
           <dl className="grid gap-4 sm:grid-cols-2">
