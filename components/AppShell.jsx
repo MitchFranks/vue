@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cx } from '@/lib/cx'
-import { useStore } from '@/lib/store'
+import { upNextLabel, useStore } from '@/lib/store'
 import { venue } from '@/lib/mock/events'
 import { Button, Icon } from './ui/primitives'
 import { ToastHost } from './ui/domain'
@@ -26,7 +26,7 @@ const NAV = [
     heading: 'Overview',
     items: [
       { href: '/dashboard', label: 'Dashboard', icon: 'home', exact: true },
-      { href: '/attention', label: 'Needs Attention', icon: 'alert', badge: 'attention' },
+      { href: '/up-next', label: 'Up Next', icon: 'check', badge: 'attention' },
       { href: '/calendar', label: 'Calendar', icon: 'calendar' },
       { href: '/events', label: 'Upcoming Events', icon: 'list' }
     ]
@@ -34,19 +34,23 @@ const NAV = [
   {
     heading: 'Staffing',
     items: [
-      { href: '/schedule', label: 'Weekly Schedule', icon: 'grid' },
-      { href: '/schedule/gaps', label: 'Coverage Gaps', icon: 'alert', badge: 'gaps' },
-      { href: '/schedule/planner', label: 'Staffing Planner', icon: 'users' },
-      { href: '/schedule/publish', label: 'Publish Schedule', icon: 'send' },
-      { href: '/staff', label: 'Staff Directory', icon: 'user' },
-      { href: '/staff/availability', label: 'Availability', icon: 'clock' }
+      // One workflow, one menu item. The stage bar inside it links the stages
+      // (availability, weekly schedule, open positions, planner, publish).
+      {
+        href: '/staffing',
+        match: '/staffing',
+        label: 'Staffing Planner',
+        icon: 'users',
+        badge: 'openPositions'
+      }
     ]
   },
   {
     heading: 'People & Comms',
     items: [
+      { href: '/staff', label: 'Staff Directory', icon: 'user' },
       { href: '/messages', label: 'Messages', icon: 'mail', badge: 'messages' },
-      { href: '/clients', label: 'Clients', icon: 'users' },
+      { href: '/couples', label: 'Couples', icon: 'users' },
       { href: '/vendors', label: 'Vendors', icon: 'truck' }
     ]
   }
@@ -55,10 +59,20 @@ const NAV = [
 export function AppShell({ children }) {
   const pathname = usePathname()
   const [navOpen, setNavOpen] = useState(false)
-  const { attention, gaps, messageList, toasts, dismissToast, reset } = useStore()
+  const { attention, openPositions, messageList, toasts, dismissToast, reset } = useStore()
 
   const unreplied = messageList.filter((m) => m.needsReply && !m.replied).length
-  const counts = { attention: attention.length, gaps: gaps.length, messages: unreplied }
+  const counts = { attention: attention.filter((a) => a.tone === 'urgent').length, openPositions: openPositions.length, messages: unreplied }
+
+  // Highlight only the most specific nav item for the current route, so a
+  // parent is not also lit up on a child route. `match` lets one item own a
+  // whole section (the staffing workflow owns every /staffing/* page).
+  const activeHref = NAV.flatMap((g) => g.items)
+    .filter((item) => {
+      const base = item.match ?? item.href
+      return pathname === base || (!item.exact && pathname.startsWith(`${base}/`))
+    })
+    .sort((a, b) => (b.match ?? b.href).length - (a.match ?? a.href).length)[0]?.href
 
   // Close the mobile nav whenever the route changes.
   useEffect(() => {
@@ -68,49 +82,47 @@ export function AppShell({ children }) {
   return (
     <div className="min-h-screen">
       {/* ---- Top bar ---- */}
-      <header className="sticky top-0 z-30 border-b border-ink/15 bg-ink text-cream">
+      <header className="sticky top-0 z-30 border-b border-line bg-surface/85 text-ink backdrop-blur">
         <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
           <button
             type="button"
             onClick={() => setNavOpen((v) => !v)}
             aria-expanded={navOpen}
             aria-controls="main-nav"
-            className="border border-cream/30 px-2 py-1.5 text-cream transition-colors hover:bg-cream/10 lg:hidden"
+            className="rounded-full border border-line bg-surface px-2.5 py-2 text-ink transition-colors hover:bg-accent-soft lg:hidden"
           >
             <Icon name="list" size={16} />
             <span className="sr-only">Toggle navigation</span>
           </button>
 
           <Link href="/" className="flex items-center gap-2.5" title="Back to the welcome screen">
-            <span className="grid h-9 w-9 place-items-center rounded-full border border-cream/45 font-serif text-[15px] text-cream">
-              V
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-accent font-display text-[17px] font-extrabold text-white shadow-pop">
+              v
             </span>
             <span className="leading-none">
-              <span className="block text-[13px] font-semibold tracking-[0.16em] text-cream">VUE</span>
-              <span className="mt-1 hidden text-[9px] tracking-[0.18em] text-cream/60 sm:block">
-                VENUE OPERATIONS
-              </span>
+              <span className="block font-display text-[19px] font-extrabold tracking-tight text-ink">vue</span>
+              <span className="mt-0.5 hidden text-[11px] font-medium text-muted sm:block">wedding venue ops</span>
             </span>
           </Link>
 
           {/* VISIBILITY OF SYSTEM STATUS: the prototype never pretends to be real. */}
-          <span className="ml-2 hidden border border-cream/30 px-2 py-0.5 text-[9px] font-semibold tracking-[0.16em] text-cream/75 sm:inline">
-            PROTOTYPE
+          <span className="ml-2 hidden rounded-full bg-blush px-3 py-1 text-[11px] font-bold text-ink-2 sm:inline">
+            Prototype
           </span>
 
           <div className="ml-auto flex items-center gap-2">
             <Link
-              href="/attention"
-              className="hidden items-center gap-2 border border-cream/35 px-3 py-2 text-[12px] font-semibold tracking-[0.04em] text-cream transition-colors hover:bg-cream hover:text-ink sm:inline-flex"
+              href="/up-next"
+              className="hidden items-center gap-2 rounded-full bg-accent-soft px-4 py-2 text-[12px] font-bold text-accent transition-colors hover:bg-accent hover:text-white sm:inline-flex"
             >
-              <Icon name="alert" size={13} />
-              {attention.length} need{attention.length === 1 ? 's' : ''} attention
+              <Icon name="check" size={13} />
+              {upNextLabel(attention)}
             </Link>
             <div className="hidden text-right leading-tight sm:block">
-              <div className="text-xs font-medium text-cream">{venue.manager}</div>
-              <div className="text-[10px] tracking-[0.08em] text-cream/55">{venue.managerRole}</div>
+              <div className="text-xs font-semibold text-ink">{venue.manager}</div>
+              <div className="text-[11px] text-muted">{venue.managerRole}</div>
             </div>
-            <span className="grid h-9 w-9 place-items-center rounded-full border border-cream/40 font-serif text-[12px] text-cream">
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-blush font-bold text-[12px] text-ink">
               {venue.managerInitials}
             </span>
           </div>
@@ -122,17 +134,17 @@ export function AppShell({ children }) {
         <aside
           id="main-nav"
           className={cx(
-            'fixed inset-y-0 left-0 z-40 w-64 shrink-0 overflow-y-auto border-r border-line bg-paper pt-16 transition-transform lg:sticky lg:top-16 lg:z-0 lg:h-[calc(100vh-4rem)] lg:translate-x-0 lg:pt-0',
+            'fixed inset-y-0 left-0 z-40 w-64 shrink-0 overflow-y-auto border-r border-line bg-surface/90 pt-16 backdrop-blur transition-transform lg:sticky lg:top-16 lg:z-0 lg:h-[calc(100vh-4rem)] lg:translate-x-0 lg:pt-0',
             navOpen ? 'translate-x-0' : '-translate-x-full'
           )}
         >
           <nav className="p-3" aria-label="Main">
             {NAV.map((group) => (
               <div key={group.heading} className="mb-4">
-                <div className="eyebrow mb-2 px-2 text-faint">{group.heading}</div>
+                <div className="eyebrow mb-2 px-3 text-faint">{group.heading}</div>
                 <ul className="space-y-0.5">
                   {group.items.map((item) => {
-                    const active = item.exact ? pathname === item.href : pathname.startsWith(item.href)
+                    const active = item.href === activeHref
                     const count = item.badge ? counts[item.badge] : 0
                     return (
                       <li key={item.href}>
@@ -140,21 +152,19 @@ export function AppShell({ children }) {
                           href={item.href}
                           aria-current={active ? 'page' : undefined}
                           className={cx(
-                            'flex items-center gap-2.5 border-l-2 py-2 pl-3 pr-2 text-[13px] transition-colors',
+                            'flex items-center gap-2.5 rounded-full py-2.5 pl-3.5 pr-3 text-[13px] transition-colors',
                             active
-                              ? 'border-l-brass bg-brass-soft/60 font-semibold text-ink'
-                              : 'border-l-transparent text-stone hover:border-l-line hover:bg-sand/50 hover:text-ink'
+                              ? 'bg-accent font-semibold text-white shadow-pop'
+                              : 'text-muted hover:bg-accent-soft hover:text-accent'
                           )}
                         >
-                          <Icon name={item.icon} size={15} className={active ? 'text-brass' : 'text-faint'} />
+                          <Icon name={item.icon} size={15} className={active ? 'text-white' : 'text-faint'} />
                           <span className="flex-1 truncate">{item.label}</span>
                           {count > 0 && (
                             <span
                               className={cx(
-                                'border px-1.5 text-[10px] font-semibold',
-                                item.badge === 'attention' || item.badge === 'gaps'
-                                  ? 'border-urgent-line bg-urgent-soft text-urgent'
-                                  : 'border-line bg-sand text-stone'
+                                'rounded-full px-2 text-[11px] font-bold',
+                                active ? 'bg-white/25 text-white' : 'bg-accent-soft text-accent'
                               )}
                             >
                               {count}
@@ -169,17 +179,20 @@ export function AppShell({ children }) {
             ))}
 
             <div className="mt-6 border-t border-line-soft pt-3">
-              <Button href="/events/new" variant="secondary" size="sm" className="w-full">
+              <Button href="/events/new" variant="primary" size="md" className="w-full">
                 <Icon name="plus" size={13} />
                 New event
               </Button>
               <button
                 type="button"
                 onClick={reset}
-                className="mt-2 w-full border border-line px-2 py-2 text-[11px] uppercase tracking-[0.1em] text-stone transition-colors hover:border-ink hover:text-ink"
+                className="mt-2 w-full rounded-full border border-line px-3 py-2 text-[12px] font-medium text-muted transition-colors hover:border-accent-line hover:bg-accent-soft hover:text-accent"
               >
                 Reset prototype data
               </button>
+              <Link href="/style-guide" className="mt-2 block rounded-full px-3 py-2 text-center text-[12px] font-medium text-faint transition-colors hover:bg-accent-soft hover:text-accent">
+                Style guide
+              </Link>
               <p className="mt-3 px-1 text-[11px] leading-relaxed text-faint">
                 Simulated data. Nothing here is saved to a real system.
               </p>

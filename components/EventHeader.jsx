@@ -9,7 +9,7 @@
 // ---------------------------------------------------------------------------
 
 import { usePathname } from 'next/navigation'
-import { useStore } from '@/lib/store'
+import { upNextLabel, useStore } from '@/lib/store'
 import { Breadcrumbs, Field, Icon, PageHeader, StatusBadge, Tabs } from './ui/primitives'
 
 export function EventHeader({ event }) {
@@ -44,7 +44,7 @@ export function EventHeader({ event }) {
       tone: unreplied ? 'urgent' : null
     },
     { id: 'documents', label: 'Documents', href: `${base}/documents`, count: docs },
-    { id: 'history', label: 'History', href: `${base}/history` }
+    { id: 'activity', label: 'Activity Log', href: `${base}/activity` }
   ]
 
   const active =
@@ -64,29 +64,32 @@ export function EventHeader({ event }) {
 
       <PageHeader
         title={event.name}
-        lead={`${event.client} · ${event.type}`}
+        lead={`${event.couple} · ${event.type}`}
         actions={
           <div className="flex flex-wrap gap-2">
             {attention.length > 0 ? (
-              <StatusBadge tone="urgent">
-                {attention.length} need{attention.length === 1 ? 's' : ''} attention
+              <StatusBadge tone="pending">
+                {upNextLabel(attention)}
               </StatusBadge>
             ) : (
-              <StatusBadge tone="done">Nothing outstanding</StatusBadge>
+              <StatusBadge tone="done">All set</StatusBadge>
             )}
             {coverage.complete ? (
               <StatusBadge tone="done">Fully staffed</StatusBadge>
             ) : (
-              <StatusBadge tone="urgent">Short {coverage.short} staff</StatusBadge>
+              <StatusBadge tone="warn">Needs {coverage.short} more</StatusBadge>
             )}
           </div>
         }
       >
         {/* The four facts that are true no matter which tab you are on. */}
-        <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 border-y border-line bg-paper px-5 py-4 sm:grid-cols-4">
+        <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 border-y border-line bg-surface px-5 py-4 sm:grid-cols-4">
           <Field label="Date" value={event.date} />
           <Field label="Schedule" value={event.headline} />
-          <Field label="Guests" value={`${event.guests} confirmed`} />
+          <Field
+            label="Guests"
+            value={`${event.expectedGuests} expected · ${event.guaranteedCount ? `${event.guaranteedCount} guaranteed` : 'guarantee due'}`}
+           />
           <Field label="Spaces" value={event.spaces} />
         </dl>
       </PageHeader>

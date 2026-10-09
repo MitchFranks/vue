@@ -9,8 +9,8 @@
 
 ## Product Summary
 
-Vue is an operations platform for venues that host weddings, receptions, ceremonies, birthdays,
-corporate dinners, anniversaries and graduations. It is aimed at the person who actually runs the
+Vue is an operations platform for wedding venues. It covers the wedding itself and the events around
+it — rehearsal dinners, engagement parties, showers, welcome parties and farewell brunches. It is aimed at the person who actually runs the
 day: a venue manager or coordinator juggling several upcoming events, their staff, vendors,
 deadlines, payments and the last-minute changes that affect all of them at once.
 
@@ -34,7 +34,7 @@ to that: the system goes looking for problems so the manager does not have to.
 - Event information is scattered across email, calendars, documents, spreadsheets, checklists and
   conversations.
 - Last-minute changes are common, and one change cascades — a time change affects staffing,
-  vendors, the timeline and the client.
+  vendors, the timeline and the couple.
 - Staff scheduling and availability are the hardest thing to coordinate.
 - Small venues value simplicity and flexibility; they will abandon a system that becomes another
   thing to maintain.
@@ -47,19 +47,19 @@ to that: the system goes looking for problems so the manager does not have to.
 
 ## Core Design Features
 
-### 1. Needs Attention dashboard
+### 1. Up Next dashboard
 
 The system proactively surfaces anything that requires action rather than making the manager hunt
-for it. It covers staffing gaps, declined shifts, unanswered client and vendor messages, approaching
+for it. It covers open positions, declined assignments, unanswered couple and vendor messages, approaching
 vendor deadlines, overdue guest counts, unpaid balances, unsigned documents and overdue tasks.
 
 Critically, an attention item does not just say something is wrong. Every item states:
 
 | | |
 |---|---|
-| **What happened** | "Jake Pearson declined the ceremony shift." |
+| **What happened** | "Jake Pearson declined the ceremony assignment." |
 | **Which event** | Johnson Wedding (a link straight to it) |
-| **Why it matters** | "Johnson Wedding is 2 days out. Without cover this segment runs understaffed." |
+| **Why it matters** | "Johnson Wedding is 2 days out. Without a filled position this timeline block runs understaffed." |
 | **What you can do** | A primary action button — "Find replacement" |
 
 **Nothing in this list is hard-coded.** Attention items are *derived* from the live state of
@@ -69,15 +69,15 @@ disappears on its own.
 ### 2. Staff availability + smart scheduling
 
 Staff submit the hours they can work. The manager sees that availability, builds a schedule by
-event segment, publishes it, and staff accept or decline. Anything left uncovered flows straight
-back into Needs Attention.
+timeline block, publishes it, and staff accept or decline. Any open position flows straight
+back into Up Next.
 
-The scheduling is "smart" in a deliberately modest, explainable way. When a shift needs filling,
+The scheduling is "smart" in a deliberately modest, explainable way. When a position needs filling,
 the system proposes people by checking three things:
 
 1. Do they hold the required role?
 2. Does their stated availability actually cover this window?
-3. Are they already booked on an overlapping segment *on that date*?
+3. Are they already booked on an overlapping timeline block *on that date*?
 
 People who fail those checks are still listed, with the reason shown, and can be assigned anyway —
 the manager is never blocked, just informed.
@@ -90,9 +90,9 @@ staff availability
    → schedule published
    → staff accept or decline
    → a decline opens a COVERAGE GAP
-   → the gap appears in NEEDS ATTENTION
+   → the open position appears in NEEDS ATTENTION
    → manager finds a replacement
-   → gap closes, attention item resolves, dashboard updates
+   → open position closes, attention item resolves, dashboard updates
 ```
 
 This chain is implemented, not mocked per-screen. It was verified in a headless browser:
@@ -105,7 +105,7 @@ flips from "Short 1 staff" to "Fully staffed".
 
 Discovery ranked these two highest, and they are causally linked rather than merely adjacent.
 Scheduling is where last-minute change does the most damage — a single decline two days before a
-wedding affects the segment, the event and the manager's confidence in the whole booking. A
+wedding affects the timeline block, the event and the manager's confidence in the whole booking. A
 "needs attention" dashboard with nothing feeding it is just a to-do list; staffing without a
 feedback loop is just a rota. Together they produce the actual outcome: the manager finds out
 about the problem without looking for it, and can fix it in two clicks from wherever they happen
@@ -134,16 +134,16 @@ Users are told this in two places:
 
 Testers are given this goal in the opening modal:
 
-> **The Johnson Wedding is this Saturday. Review what needs attention and make sure the event is
+> **The Johnson Wedding is this Saturday. Start with what is up next and make sure the event is
 > fully staffed.**
 
 The modal does **not** say which buttons to press. The seeded scenario supporting it:
 
 - **Johnson Wedding** — Saturday 19 September 2026, 150 guests, 4:00 PM ceremony
-- Segments: Setup 9:00–3:00 (2 grounds) · Ceremony 3:00–5:00 (1 manager + 2 event staff) ·
-  Reception 5:00–9:00 (1 manager + 2 event staff + 1 bartender + 1 server) · Cleanup 9:00–11:00
-- **Jake Pearson has declined the ceremony shift** — leaving the event short 1 Event Staff
-- An unanswered client request to move decorating to 9:00 AM
+- Timeline blocks: Setup 9:00–3:00 (2 grounds) · Ceremony 3:00–5:00 (1 venue manager + 2 event staff) ·
+  Reception 5:00–9:00 (1 venue manager + 2 event staff + 1 bartender + 1 server) · Cleanup 9:00–11:00
+- **Jake Pearson has declined the ceremony assignment** — leaving the event short 1 Event Staff
+- An unanswered couple request to move decorating to 9:00 AM
 - A catering guest-count deadline due today
 - A final balance of $4,250 due tomorrow
 - An unsigned day-of timeline
@@ -158,7 +158,7 @@ The modal does **not** say which buttons to press. The seeded scenario supportin
 | # | Route | Screen |
 |---|---|---|
 | 1 | `/` | Dashboard (entry) |
-| 2 | `/attention` | Needs Attention Center |
+| 2 | `/up-next` | Up Next Center |
 | 3 | `/calendar` | Calendar |
 | 4 | `/events` | Upcoming Events |
 
@@ -173,7 +173,7 @@ The modal does **not** say which buttons to press. The seeded scenario supportin
 | 10 | `/events/[id]/payments` | Event Payments |
 | 11 | `/events/[id]/messages` | Event Messages |
 | 12 | `/events/[id]/documents` | Event Documents |
-| 13 | `/events/[id]/history` | Event Change History |
+| 13 | `/events/[id]/activity` | Event Activity Log |
 | 14 | `/events/new` | Create Event |
 
 ### Staffing
@@ -181,26 +181,22 @@ The modal does **not** say which buttons to press. The seeded scenario supportin
 |---|---|---|
 | 15 | `/staff` | Staff Directory |
 | 16 | `/staff/[id]` | Staff Member Detail |
-| 17 | `/staff/availability` | Staff Availability |
-| 18 | `/schedule` | Weekly Schedule |
-| 19 | `/schedule/planner` | Event Staffing Planner |
-| 20 | `/schedule/shifts/[shiftId]` | Shift Detail |
-| 21 | `/schedule/publish` | Publish Schedule |
-| 22 | `/schedule/gaps` | Coverage Gaps |
-| 23 | `/schedule/gaps/[gapId]` | Replacement Suggestions |
-| 24 | `/schedule/requests/[reqId]` | Coverage Request Detail |
+| 17 | `/staffing` | Staff Planner: Week |
+| 18 | `/staffing/[eventId]` | Staff Planner: Event board |
+| 19 | `/staffing/team` | Staff Planner: Team availability |
+| 20 | `/staffing/replies` | Staff Planner: Staff replies |
 
 ### Communication & people
 | # | Route | Screen |
 |---|---|---|
 | 25 | `/messages` | Message Inbox |
 | 26 | `/messages/[id]` | Message Detail / Reply |
-| 27 | `/clients` | Clients |
-| 28 | `/clients/[id]` | Client Detail |
+| 27 | `/couples` | Couples |
+| 28 | `/couples/[id]` | Couple Detail |
 | 29 | `/vendors` | Vendors |
 | 30 | `/vendors/[id]` | Vendor Detail |
 
-Dynamic routes are statically generated for every seeded record — 278 HTML pages in total, so any
+Dynamic routes are statically generated for every seeded record — the seeded pages in total, so any
 of them can be deep-linked.
 
 ---
@@ -238,12 +234,12 @@ assigned to Johnson Wedding — Ceremony. Gap closed.", "Schedule published to 8
 "Completed 'Send final guest count'.", "Reply sent to Marla Perez."
 
 **Visibility of system status.** Coverage is shown as "12 of 13 roles confirmed" with a bar;
-schedules are labelled Draft or Published; shifts read Accepted / Pending / Declined; the sidebar
-carries live counts for attention, gaps and unread messages.
+schedules are labelled Draft or Published; assignments read Accepted / Pending / Declined; the sidebar
+carries live counts for attention, open positions and unread messages.
 
-**Error prevention.** Declining a shift, assigning someone with a scheduling clash, removing an
+**Error prevention.** Declining an assignment, assigning someone with a scheduling clash, removing an
 assignment and publishing a schedule all route through a confirmation dialog that states the
-consequence ("This will open a coverage gap for Ceremony and raise an item in Needs Attention").
+consequence ("This will create an open position for Ceremony and add an item to Up Next").
 
 **Recognition over recall.** The message reply screen shows the event context beside the message —
 current setup window, earliest venue access, whether anything is booked the night before — so the
@@ -266,32 +262,40 @@ icon-only controls, and a `prefers-reduced-motion` guard.
 
 ---
 
-## Attention Design
+## Up Next Design
 
-An intentional status hierarchy, defined once and never varied:
+The old "Needs Attention" framing was replaced with **Up Next**, so the product signals priority
+without creating chronic stress. Priority is shown by order and wording, not alarm:
 
-| Tone | Meaning | Colour | Glyph | Where it outranks |
-|---|---|---|---|---|
-| `urgent` | Needs action now | red | ⚠ triangle | top of every list |
-| `warn` | Due soon | amber | clock | below urgent |
-| `pending` | Awaiting a reply | blue | clock | informational |
-| `done` | Confirmed / complete | green | tick | settled |
-| `info` | Informational | grey | i | lowest |
+- The list is split into **Do first** and **Coming up**. The counter in the top bar, sidebar and
+  dashboard shows only what to do first ("2 to do first"), never a raw total of everything open.
+- Do-first items use the accent colour, not red; coming-up items use sunshine. Nothing on the list is
+  styled as an error.
+- Copy is calm and specific: "Ceremony needs 1 more Event Staff", "Reply to Marla Perez", "Document is
+  ready for your signature". Shortages read "Needs 1 more", not "Short 1".
+- When the list is empty the product says "All caught up".
+
+The status tones themselves are unchanged and defined once:
+
+| Tone | Meaning | Colour | Glyph |
+|---|---|---|---|
+| `urgent` | Do first (a real problem, e.g. a declined assignment) | coral, used sparingly | triangle |
+| `warn` | Coming up | sunshine | clock |
+| `pending` | Awaiting a reply / Up Next emphasis | violet | clock |
+| `done` | Confirmed / complete | mint | tick |
+| `info` | Informational | grey | i |
 
 **Colour is never used alone.** `StatusBadge` always renders colour **plus** an icon glyph **plus**
-a text label, so the meaning survives greyscale printing and colour-blindness. Urgency is
-additionally signalled by position (sorted first), border weight (4px left rule) and button
-prominence.
+a text label, so the meaning survives greyscale printing and colour-blindness.
 
 ---
 
 ## Event Types
 
-The platform is not wedding-only. Seeded events cover Wedding, Birthday, Corporate Event, Reception
-and Anniversary; `/events/new` offers all eight types (adding Ceremony, Graduation and Other) and
-changes its optional fields with the selection — a corporate event asks for AV requirements and a
-purchase-order number, a wedding asks for ceremony and rehearsal times. The underlying structure
-(segments, staffing, tasks, payments) is shared.
+Vue is built for weddings. Seeded events are three weddings, a rehearsal dinner and an engagement
+party. `/events/new` offers six types (Wedding, Rehearsal Dinner, Engagement Party, Bridal Shower,
+Welcome Party, Farewell Brunch) and changes its optional fields with the selection. The underlying
+structure (timeline blocks, staffing, tasks, payments) is shared.
 
 ---
 
@@ -306,7 +310,7 @@ button.
 `Select` · `Textarea` · `SectionNote` · `MetricTile`
 
 **`components/ui/domain.jsx`**
-`AttentionItem` · `EventCard` · `EventRow` · `StaffCard` · `ShiftCard` · `EventSegment` ·
+`AttentionItem` · `EventCard` · `EventRow` · `StaffCard` · `AssignmentCard` · `EventBlock` ·
 `AvailabilityGrid` · `TaskRow` · `Modal` · `ToastHost` · `useConfirm`
 
 **Shell:** `components/AppShell.jsx` (sidebar + top bar + mobile nav) ·
@@ -316,7 +320,7 @@ button.
 the five status ramps as CSS custom properties consumed through Tailwind v4's `@theme`.
 
 **State:** `lib/store.jsx` — one context holding assignments, task/message/document state and
-derived gaps and attention items, persisted to `localStorage`.
+derived open positions and attention items, persisted to `localStorage`.
 
 ---
 
@@ -325,10 +329,10 @@ derived gaps and attention items, persisted to `localStorage`.
 Fill these in with real names. The codebase is split so these four areas can be worked on without
 editing the same files.
 
-- **[Team Member]** — Dashboard / Needs Attention — `app/page.jsx`, `app/attention/`, `app/calendar/`
+- **[Team Member]** — Dashboard / Up Next — `app/page.jsx`, `app/attention/`, `app/calendar/`
 - **[Team Member]** — Events — `app/events/`, `components/EventHeader.jsx`
-- **[Team Member]** — Staffing — `app/schedule/`, `app/staff/`, `lib/mock/staff.js`
-- **[Team Member]** — Communication & people — `app/messages/`, `app/clients/`, `app/vendors/`
+- **[Team Member]** — Staffing — `app/(app)/staffing/`, `app/(app)/staff/`, `lib/mock/staff.js`
+- **[Team Member]** — Communication & people — `app/messages/`, `app/couples/`, `app/vendors/`
 
 Shared files to coordinate on before editing: `lib/store.jsx`, `components/ui/*`, `app/globals.css`.
 
@@ -377,5 +381,5 @@ Deployed from `main` to GitHub Pages by `.github/workflows/deploy.yml`:
 - **The calendar is one month.** Only September 2026 is populated.
 - **Availability is read-only.** Staff availability is seeded and viewable but not editable here;
   in the real product staff would submit it themselves.
-- **Coverage counts confirmed staff only.** A pending shift deliberately does not count as covered,
-  which is why an event can show a gap while someone is still deciding.
+- **Coverage counts confirmed staff only.** A pending assignment deliberately does not count as confirmed,
+  which is why an event can show an open position while someone is still deciding.

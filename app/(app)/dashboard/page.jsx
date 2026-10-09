@@ -13,10 +13,10 @@ import Link from 'next/link'
 import { useStore } from '@/lib/store'
 import { events, venue } from '@/lib/mock/events'
 import { Button, Card, Icon, MetricTile, PageHeader, StatusBadge } from '@/components/ui/primitives'
-import { AttentionItem, EventCard } from '@/components/ui/domain'
+import { UpNextItem, EventCard } from '@/components/ui/domain'
 
 export default function DashboardPage() {
-  const { attention, gaps, coverageForEvent, attentionForEvent, messageList, taskList } = useStore()
+  const { attention, openPositions, coverageForEvent, attentionForEvent, messageList, taskList } = useStore()
 
   const urgent = attention.filter((a) => a.tone === 'urgent')
   const soon = attention.filter((a) => a.tone !== 'urgent')
@@ -27,11 +27,11 @@ export default function DashboardPage() {
   return (
     <div>
       <PageHeader
-        title="Know what needs your attention across every event."
-        lead={`${venue.name} · ${venue.today}. Everything below is sorted by what is most likely to go wrong first.`}
+        title="Here's what to tackle next across your weddings."
+        lead={`${venue.name} · ${venue.today}. Everything below is ordered so the most useful thing to do comes first.`}
         actions={
-          <Button href="/attention" variant="primary" size="md">
-            Open attention list
+          <Button href="/up-next" variant="primary" size="md">
+            See what's up next
             <Icon name="arrowRight" size={14} />
           </Button>
         }
@@ -40,59 +40,59 @@ export default function DashboardPage() {
       {/* Counters that describe WORK, not vanity metrics. Each is a route in. */}
       <div className="mb-5 grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
         <MetricTile
-          label="Needs attention"
-          value={attention.length}
-          tone={attention.length ? 'urgent' : 'done'}
-          sub={`${urgent.length} need action now`}
-          href="/attention"
+          label="Up next"
+          value={urgent.length}
+          tone={attention.length ? 'accent' : 'done'}
+          sub={`to do first ·  coming up`}
+          href="/up-next"
         />
         <MetricTile
-          label="Coverage gaps"
-          value={gaps.length}
-          tone={gaps.length ? 'urgent' : 'done'}
-          sub={gaps.length ? 'Shifts without cover' : 'Every shift covered'}
-          href="/schedule/gaps"
+          label="Open positions"
+          value={openPositions.length}
+          tone={openPositions.length ? 'accent' : 'done'}
+          sub={openPositions.length ? 'Positions to fill' : 'Every position filled'}
+          href="/staffing"
         />
         <MetricTile
           label="Awaiting reply"
           value={unreplied}
-          tone={unreplied ? 'warn' : 'done'}
-          sub="Client and vendor messages"
+          tone={unreplied ? 'accent' : 'done'}
+          sub="Couple and vendor messages"
           href="/messages"
         />
         <MetricTile label="Open tasks" value={openTasks} sub="Across all events" href="/events/johnson/tasks" />
       </div>
 
-      {/* ---- THE attention block. Visually dominant by design. ---- */}
+      {/* ---- THE up-next block. Visually dominant by design. ---- */}
       <section className="mb-6">
         <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
           <div>
             <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
-              <Icon name="alert" size={17} className="text-urgent" />
-              Needs attention
+              <Icon name="list" size={17} className="text-accent" />
+              Up next
             </h2>
             <p className="mt-0.5 text-xs text-muted">
-              Surfaced automatically. Each item says what happened, why it matters and what you can do.
+              Picked for you automatically. Each item says what happened, why it matters and what to do.
             </p>
           </div>
-          <Link href="/attention" className="text-xs text-accent underline-offset-2 hover:underline">
-            See all {attention.length}
+          <Link href="/up-next" className="text-xs text-accent underline-offset-2 hover:underline">
+            See everything ({attention.length})
           </Link>
         </div>
 
         {attention.length === 0 ? (
           <Card>
             <p className="py-4 text-center text-sm text-muted">
-              Nothing needs attention right now. Every event is covered.
+              You&apos;re all caught up. Every event is fully staffed.
             </p>
           </Card>
         ) : (
           <div className="overflow-hidden rounded-box border border-line">
             {urgent.slice(0, 3).map((item) => (
-              <AttentionItem key={item.id} item={item} />
+              <UpNextItem key={item.id} item={item} />
             ))}
             {soon.slice(0, 2).map((item) => (
-              <AttentionItem key={item.id} item={item} compact />
+              <UpNextItem key={item.id} item={item} compact />
             ))}
           </div>
         )}
@@ -122,8 +122,8 @@ export default function DashboardPage() {
         {/* ---- Staffing coverage at a glance ---- */}
         <section>
           <div className="mb-2 flex items-end justify-between gap-2">
-            <h2 className="text-base font-semibold text-ink">Staffing coverage</h2>
-            <Link href="/schedule" className="text-xs text-accent underline-offset-2 hover:underline">
+            <h2 className="text-base font-semibold text-ink">Staffing status</h2>
+            <Link href="/staffing" className="text-xs text-accent underline-offset-2 hover:underline">
               Weekly schedule
             </Link>
           </div>
@@ -134,7 +134,7 @@ export default function DashboardPage() {
                 <Link
                   key={event.id}
                   href={`/events/${event.id}/staffing`}
-                  className="flex items-center gap-3 border-b border-line-soft px-3 py-2.5 last:border-b-0 hover:bg-sunken"
+                  className="flex items-center gap-3 border-b border-line-soft px-3 py-2.5 last:border-b-0 hover:bg-wash-deep"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium text-ink">{event.name}</div>
@@ -143,7 +143,7 @@ export default function DashboardPage() {
                       {cov.pending > 0 && ` · ${cov.pending} pending`}
                     </div>
                     {/* Placeholder-style coverage bar — wireframe, not a chart. */}
-                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-pill border border-line bg-sunken">
+                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-pill border border-line bg-wash-deep">
                       <div
                         className={cx2(cov.complete ? 'bg-done' : 'bg-urgent', 'h-full')}
                         style={{ width: `${cov.required ? (cov.filled / cov.required) * 100 : 0}%` }}
@@ -173,11 +173,11 @@ export default function DashboardPage() {
                 </li>
                 <li className="flex gap-2">
                   <span className="w-16 shrink-0 font-medium text-ink-2">7:15 AM</span>
-                  <span className="text-muted">Harvest Table asked for the final guest count</span>
+                  <span className="text-muted">Harvest Table asked for the guarantee</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="w-16 shrink-0 font-medium text-ink-2">Yesterday</span>
-                  <span className="text-muted">Jake Pearson declined the Johnson ceremony shift</span>
+                  <span className="text-muted">Jake Pearson declined the Johnson ceremony assignment</span>
                 </li>
               </ul>
             </Card>

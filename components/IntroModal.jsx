@@ -57,16 +57,16 @@ export function IntroModal() {
         </div>
 
         <div>
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-faint">Your goal</h3>
+          <h3 className="text-xs font-semibold tracking-wide text-faint">Your goal</h3>
           <p className="mt-1 text-[15px] text-ink">
-            The Johnson Wedding is this Saturday. Review what needs attention and make sure the event is fully
+            The Johnson Wedding is this Saturday. Start with what is up next and make sure the event is fully
             staffed.
           </p>
         </div>
 
         <p className="text-xs text-muted">
           There is more than one way to get there. Explore however you like — you can reach the same place from the
-          dashboard, the attention list, the event itself, or the schedule.
+          dashboard, the Up Next list, the event itself, or the schedule.
         </p>
       </div>
     </Modal>

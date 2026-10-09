@@ -3,13 +3,13 @@
 // ---------------------------------------------------------------------------
 // Prototype state engine.
 //
-// The whole point of this file: nothing in the Needs Attention list is
-// hard-coded. Attention items are DERIVED from the current state of shifts,
-// tasks, messages and documents. So when Jake declines a shift, a coverage gap
+// The whole point of this file: nothing in the Up Next list is
+// hard-coded. Attention items are DERIVED from the current state of assignments,
+// tasks, messages and documents. So when Jake declines an assignment, an open position
 // appears, and an attention item appears with it. Assign a replacement and all
 // three disappear together. The chain is real, not simulated per-screen.
 //
-//   assignments  ->  coverage gaps  ->  attention items
+//   assignments  ->  open positions  ->  attention items
 //   tasks        ->  attention items
 //   messages     ->  attention items
 //   documents    ->  attention items
@@ -19,24 +19,41 @@
 // ---------------------------------------------------------------------------
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { events, eventById, seedAssignments, segmentById } from './mock/events.js'
+import { events, eventById, seedAssignments, blockById, daysOutLabel } from './mock/events.js'
 import { documents, messages, tasks } from './mock/records.js'
 import { isAvailable, pluralRole, staff, staffById } from './mock/staff.js'
 
 const StoreContext = createContext(null)
-const STORAGE_KEY = 'vue-lowfi-prototype-v1'
+
+/** Open-position ids are `${blockId}--${role-slug}`; the slug is derived from the role name. */
+export function positionIdFor(blockId, role) {
+  return `${blockId}--${role.replace(/\s+/g, '-').toLowerCase()}`
+}
+
+export function parsePositionId(positionId) {
+  const [blockId, slug] = positionId.split('--')
+  const found = blockById(blockId)
+  const requirement = found?.block.requirements.find(
+    (r) => r.role.replace(/\s+/g, '-').toLowerCase() === slug
+  )
+  return { blockId, role: requirement ? requirement.role : null }
+}
+const STORAGE_KEY = 'vue-lowfi-prototype-v3'
 
 function initialState() {
   return {
-    // shiftId -> { segmentId, staffId, role, status, declineReason }
+    // assignmentId -> { blockId, staffId, role, status, declineReason, overridden, warning }
+    // status: draft (assigned, not yet sent) | pending | accepted | declined
     assignments: Object.fromEntries(
-      seedAssignments.map((a) => [`${a.segmentId}--${a.staffId}`, { ...a, id: `${a.segmentId}--${a.staffId}` }])
+      seedAssignments.map((a) => [`${a.blockId}--${a.staffId}`, { ...a, id: `${a.blockId}--${a.staffId}` }])
     ),
     doneTaskIds: tasks.filter((t) => t.done).map((t) => t.id),
     repliedMessageIds: [],
     readMessageIds: [],
     signedDocumentIds: [],
     publishedEventIds: ['johnson', 'taylor'],
+    // positionId -> { staffIds }  who an open position was offered to
+    offers: {},
     dismissedAttentionIds: [],
     seenIntro: false
   }
@@ -47,7 +64,7 @@ export function StoreProvider({ children }) {
   const [toasts, setToasts] = useState([])
   const [hydrated, setHydrated] = useState(false)
 
-  // Rehydrate after mount so the server-rendered HTML and the first client
+  // Rehydrate after mount so the server-rendered HTML and the first couple
   // render match (static export would otherwise warn about a mismatch).
   useEffect(() => {
     try {
@@ -80,16 +97,26 @@ export function StoreProvider({ children }) {
 
   // ---- actions ------------------------------------------------------------
 
-  const setShiftStatus = useCallback(
-    (shiftId, status, declineReason) => {
+  const setAssignmentStatus = useCallback(
+    (assignmentId, status, declineReason) => {
       setState((s) => {
-        const existing = s.assignments[shiftId]
+        const existing = s.assignments[assignmentId]
         if (!existing) return s
+        // Once someone accepts, any outstanding offer for that position is moot.
+        let offers = s.offers
+        if (status === 'accepted') {
+          const positionId = positionIdFor(existing.blockId, existing.role)
+          if (offers[positionId]) {
+            offers = { ...offers }
+            delete offers[positionId]
+          }
+        }
         return {
           ...s,
+          offers,
           assignments: {
             ...s.assignments,
-            [shiftId]: { ...existing, status, declineReason: declineReason ?? existing.declineReason }
+            [assignmentId]: { ...existing, status, declineReason: declineReason ?? existing.declineReason }
           }
         }
       })
@@ -97,21 +124,79 @@ export function StoreProvider({ children }) {
     []
   )
 
-  const assignStaff = useCallback((segmentId, staffId, role) => {
-    const id = `${segmentId}--${staffId}`
+  /**
+   * Assigning saves a DRAFT ("Not sent"). Nothing is confirmed, and the open
+   * position stays open, until the schedule is published and the person accepts.
+   * A soft warning can be overridden; the override is kept so it stays visible.
+   */
+  const assignStaff = useCallback((blockId, staffId, role, opts = {}) => {
+    const id = `${blockId}--${staffId}`
     setState((s) => ({
       ...s,
       assignments: {
         ...s.assignments,
-        [id]: { id, segmentId, staffId, role, status: 'accepted' }
+        [id]: {
+          id,
+          blockId,
+          staffId,
+          role,
+          status: opts.status || 'draft',
+          ...(opts.overridden ? { overridden: true, warning: opts.warning } : {})
+        }
       }
     }))
   }, [])
 
-  const removeAssignment = useCallback((shiftId) => {
+  /** Offer an open position to several eligible people. Nothing is assigned until one claims it. */
+  const offerPosition = useCallback((positionId, staffIds) => {
+    setState((s) => ({ ...s, offers: { ...s.offers, [positionId]: { staffIds } } }))
+  }, [])
+
+  /** Simulates one offered person claiming the position: they become an accepted assignment. */
+  const claimOffer = useCallback((positionId, staffId) => {
+    const { blockId, role } = parsePositionId(positionId)
+    if (!blockId || !role) return
+    const id = `${blockId}--${staffId}`
+    setState((s) => {
+      const offers = { ...s.offers }
+      delete offers[positionId]
+      return {
+        ...s,
+        offers,
+        assignments: { ...s.assignments, [id]: { id, blockId, staffId, role, status: 'accepted' } }
+      }
+    })
+  }, [])
+
+  /** Copy staffing from another event onto blocks that have nobody yet, as drafts. */
+  const copyStaffing = useCallback((fromEventId, toEventId) => {
+    const from = eventById(fromEventId)
+    const to = eventById(toEventId)
+    if (!from || !to) return 0
+    let copied = 0
     setState((s) => {
       const next = { ...s.assignments }
-      delete next[shiftId]
+      for (const block of to.blocks) {
+        const hasPeople = Object.values(next).some((a) => a.blockId === block.id && a.status !== 'declined')
+        if (hasPeople) continue
+        const source = from.blocks.find((b) => b.name === block.name)
+        if (!source) continue
+        for (const a of Object.values(s.assignments)) {
+          if (a.blockId !== source.id || a.status === 'declined') continue
+          const id = `${block.id}--${a.staffId}`
+          next[id] = { id, blockId: block.id, staffId: a.staffId, role: a.role, status: 'draft' }
+          copied += 1
+        }
+      }
+      return { ...s, assignments: next }
+    })
+    return copied
+  }, [])
+
+  const removeAssignment = useCallback((assignmentId) => {
+    setState((s) => {
+      const next = { ...s.assignments }
+      delete next[assignmentId]
       return { ...s, assignments: next }
     })
   }, [])
@@ -150,13 +235,23 @@ export function StoreProvider({ children }) {
     }))
   }, [])
 
+  /** Publish: every draft ("Not sent") on the event becomes pending, i.e. staff are asked. */
   const publishSchedule = useCallback((eventId) => {
-    setState((s) => ({
-      ...s,
-      publishedEventIds: s.publishedEventIds.includes(eventId)
-        ? s.publishedEventIds
-        : [...s.publishedEventIds, eventId]
-    }))
+    setState((s) => {
+      const event = eventById(eventId)
+      const blockIds = event ? event.blocks.map((b) => b.id) : []
+      const assignments = { ...s.assignments }
+      for (const a of Object.values(s.assignments)) {
+        if (blockIds.includes(a.blockId) && a.status === 'draft') assignments[a.id] = { ...a, status: 'pending' }
+      }
+      return {
+        ...s,
+        assignments,
+        publishedEventIds: s.publishedEventIds.includes(eventId)
+          ? s.publishedEventIds
+          : [...s.publishedEventIds, eventId]
+      }
+    })
   }, [])
 
   const dismissAttention = useCallback((id) => {
@@ -174,54 +269,56 @@ export function StoreProvider({ children }) {
     }
   }, [])
 
-  // ---- derived: shifts ----------------------------------------------------
+  // ---- derived: assignments ----------------------------------------------------
 
   const assignmentList = useMemo(() => Object.values(state.assignments), [state.assignments])
 
-  const shiftsForSegment = useCallback(
-    (segmentId) => assignmentList.filter((a) => a.segmentId === segmentId),
+  const assignmentsForBlock = useCallback(
+    (blockId) => assignmentList.filter((a) => a.blockId === blockId),
     [assignmentList]
   )
 
-  const shiftsForStaff = useCallback(
+  const assignmentsForStaff = useCallback(
     (staffId) =>
       assignmentList
         .filter((a) => a.staffId === staffId)
         .map((a) => {
-          const found = segmentById(a.segmentId)
-          return found ? { ...a, event: found.event, segment: found.segment } : null
+          const found = blockById(a.blockId)
+          return found ? { ...a, event: found.event, block: found.block } : null
         })
         .filter(Boolean),
     [assignmentList]
   )
 
-  // ---- derived: coverage gaps --------------------------------------------
+  // ---- derived: open positions --------------------------------------------
   //
-  // A gap is a (segment, role) pair where accepted assignments < required.
+  // An open position is a (block, role) pair where accepted assignments < required.
   // Pending assignments deliberately do NOT count as covered — an unanswered
-  // shift request is not coverage, and that distinction is the point of the
+  // assignment request is not coverage, and that distinction is the point of the
   // accept/decline loop.
 
-  const gaps = useMemo(() => {
+  const openPositions = useMemo(() => {
     const out = []
     for (const event of events) {
-      for (const segment of event.segments) {
-        const assigned = assignmentList.filter((a) => a.segmentId === segment.id)
-        for (const need of segment.needs) {
-          const accepted = assigned.filter((a) => a.role === need.role && a.status === 'accepted').length
-          const pending = assigned.filter((a) => a.role === need.role && a.status === 'pending').length
-          const declined = assigned.filter((a) => a.role === need.role && a.status === 'declined')
-          const short = need.count - accepted
+      for (const block of event.blocks) {
+        const assigned = assignmentList.filter((a) => a.blockId === block.id)
+        for (const requirement of block.requirements) {
+          const accepted = assigned.filter((a) => a.role === requirement.role && a.status === 'accepted').length
+          const pending = assigned.filter((a) => a.role === requirement.role && a.status === 'pending').length
+          const draft = assigned.filter((a) => a.role === requirement.role && a.status === 'draft').length
+          const declined = assigned.filter((a) => a.role === requirement.role && a.status === 'declined')
+          const short = requirement.count - accepted
           if (short > 0) {
             out.push({
-              id: `${segment.id}--${need.role.replace(/\s+/g, '-').toLowerCase()}`,
+              id: `${block.id}--${requirement.role.replace(/\s+/g, '-').toLowerCase()}`,
               eventId: event.id,
               event,
-              segment,
-              role: need.role,
-              required: need.count,
+              block,
+              role: requirement.role,
+              required: requirement.count,
               accepted,
               pending,
+              draft,
               short,
               declinedBy: declined.map((d) => staffById(d.staffId)).filter(Boolean),
               urgency: event.primary ? 'urgent' : 'warn'
@@ -233,63 +330,86 @@ export function StoreProvider({ children }) {
     return out
   }, [assignmentList])
 
-  const gapById = useCallback((id) => gaps.find((g) => g.id === id) || null, [gaps])
+  const openPositionById = useCallback((id) => openPositions.find((g) => g.id === id) || null, [openPositions])
 
-  /** Who could actually fill this gap? Right role, genuinely free, no clash. */
-  const replacementsForGap = useCallback(
-    (gap) => {
-      if (!gap) return []
-      const { event, segment, role } = gap
-      const alreadyOnSegment = assignmentList
-        .filter((a) => a.segmentId === segment.id && a.status !== 'declined')
-        .map((a) => a.staffId)
+  /**
+   * Who could fill this slot? Every person gets a list of SOFT warnings (never a
+   * block): outside their availability, double-booked, declined this before,
+   * or usually a different role. The manager can always assign anyway.
+   */
+  const candidatesForSlot = useCallback(
+    (block, role, { allRoles = false } = {}) => {
+      const found = blockById(block.id)
+      if (!found) return []
+      const { event } = found
+      const onBlock = assignmentList.filter((a) => a.blockId === block.id && a.status !== 'declined').map((a) => a.staffId)
 
       return staff
-        .filter((person) => person.role === role)
-        .filter((person) => !alreadyOnSegment.includes(person.id))
+        .filter((person) => allRoles || person.role === role)
         .map((person) => {
-          const available = isAvailable(person, event.day, segment.start, segment.end)
-          // A clash is another segment on the same day whose hours overlap.
+          const warnings = []
+          const windows = person.availability[event.day] || []
+          if (!isAvailable(person, event.day, block.start, block.end)) {
+            warnings.push({
+              kind: 'availability',
+              text: windows.length
+                ? `Free ${windows.map((w) => `${hourLabel(w.start)}–${hourLabel(w.end)}`).join(', ')} only`
+                : `Not available ${event.day}`
+            })
+          }
           const clash = assignmentList
             .filter((a) => a.staffId === person.id && a.status !== 'declined')
-            .map((a) => segmentById(a.segmentId))
+            .map((a) => blockById(a.blockId))
             .filter(Boolean)
             .find(
-              ({ event: e, segment: s }) =>
-                e.dateKey === event.dateKey && s.id !== segment.id && s.start < segment.end && s.end > segment.start
+              ({ event: e, block: s }) =>
+                e.dateKey === event.dateKey && s.id !== block.id && s.start < block.end && s.end > block.start
             )
-          return {
-            person,
-            available,
-            clash: clash ? { event: clash.event, segment: clash.segment } : null,
-            eligible: available && !clash
+          if (clash) {
+            warnings.push({
+              kind: 'overlap',
+              text: `${clash.block.name} at ${clash.event.name}, ${hourLabel(clash.block.start)}–${hourLabel(clash.block.end)}`
+            })
           }
+          const previous = state.assignments[`${block.id}--${person.id}`]
+          if (previous && previous.status === 'declined') {
+            warnings.push({ kind: 'declinedBefore', text: 'Declined this timeline block' })
+          }
+          if (person.role !== role) warnings.push({ kind: 'otherRole', text: `Usually works as ${person.role}` })
+          return { person, warnings, eligible: warnings.length === 0, alreadyOnBlock: onBlock.includes(person.id) }
         })
-        .sort((a, b) => Number(b.eligible) - Number(a.eligible))
+        .sort(
+          (x, y) =>
+            Number(x.alreadyOnBlock) - Number(y.alreadyOnBlock) ||
+            x.warnings.length - y.warnings.length ||
+            Number(y.person.role === role) - Number(x.person.role === role)
+        )
     },
-    [assignmentList]
+    [assignmentList, state.assignments]
   )
 
   /** Coverage summary for a whole event — drives the staffing badge everywhere. */
   const coverageForEvent = useCallback(
     (eventId) => {
       const event = eventById(eventId)
-      if (!event) return { required: 0, filled: 0, short: 0, complete: true, pending: 0 }
+      if (!event) return { required: 0, filled: 0, short: 0, complete: true, pending: 0, draft: 0 }
       let required = 0
       let filled = 0
       let pending = 0
-      for (const segment of event.segments) {
-        const assigned = assignmentList.filter((a) => a.segmentId === segment.id)
-        for (const need of segment.needs) {
-          required += need.count
+      let draft = 0
+      for (const block of event.blocks) {
+        const assigned = assignmentList.filter((a) => a.blockId === block.id)
+        for (const requirement of block.requirements) {
+          required += requirement.count
           filled += Math.min(
-            need.count,
-            assigned.filter((a) => a.role === need.role && a.status === 'accepted').length
+            requirement.count,
+            assigned.filter((a) => a.role === requirement.role && a.status === 'accepted').length
           )
-          pending += assigned.filter((a) => a.role === need.role && a.status === 'pending').length
+          pending += assigned.filter((a) => a.role === requirement.role && a.status === 'pending').length
+          draft += assigned.filter((a) => a.role === requirement.role && a.status === 'draft').length
         }
       }
-      return { required, filled, pending, short: required - filled, complete: filled >= required }
+      return { required, filled, pending, draft, short: required - filled, complete: filled >= required }
     },
     [assignmentList]
   )
@@ -328,25 +448,46 @@ export function StoreProvider({ children }) {
   const attention = useMemo(() => {
     const items = []
 
-    // 1. Coverage gaps
-    for (const gap of gaps) {
-      const who = gap.declinedBy[0]
+    // 1. Open positions
+    for (const openPosition of openPositions) {
+      const who = openPosition.declinedBy[0]
       items.push({
-        id: `gap:${gap.id}`,
+        id: `openPosition:${openPosition.id}`,
         kind: 'staffing',
-        tone: gap.urgency,
-        title: `${gap.event.name} is short ${gap.short} ${pluralRole(gap.role, gap.short)} for ${gap.segment.name}`,
+        tone: openPosition.urgency,
+        title: `${openPosition.block.name} needs ${openPosition.short} more ${pluralRole(openPosition.role, openPosition.short)} · ${openPosition.event.name}`,
         what: who
-          ? `${who.name} declined the ${gap.segment.name.toLowerCase()} shift.`
-          : `${gap.segment.name} has ${gap.accepted} of ${gap.required} ${gap.role} confirmed.`,
-        why: gap.event.primary
-          ? `${gap.event.name} is ${gap.event.status}. Without cover this segment runs understaffed.`
-          : `${gap.event.name} is ${gap.event.status}.`,
-        eventId: gap.event.id,
-        eventName: gap.event.name,
-        meta: `${gap.segment.name} · ${hourLabel(gap.segment.start)}–${hourLabel(gap.segment.end)}`,
-        actionLabel: 'Find replacement',
-        href: `/schedule/gaps/${gap.id}`
+          ? `${who.name} declined the ${openPosition.block.name.toLowerCase()} assignment.`
+          : `${openPosition.block.name} has ${openPosition.accepted} of ${openPosition.required} ${openPosition.role} confirmed.`,
+        why: openPosition.event.primary
+          ? `${openPosition.event.name} is ${daysOutLabel(openPosition.event)}. Filling it keeps this timeline block fully staffed.`
+          : `${openPosition.event.name} is ${daysOutLabel(openPosition.event)}.`,
+        eventId: openPosition.event.id,
+        eventName: openPosition.event.name,
+        meta: `${openPosition.block.name} · ${hourLabel(openPosition.block.start)}–${hourLabel(openPosition.block.end)}`,
+        actionLabel: 'Fill position',
+        href: `/staffing/${openPosition.event.id}?block=${openPosition.block.id}&role=${encodeURIComponent(openPosition.role)}`
+      })
+    }
+
+    // 1b. Assignments saved but never sent to staff
+    for (const event of events) {
+      const drafts = assignmentList.filter(
+        (a) => a.status === 'draft' && event.blocks.some((b) => b.id === a.blockId)
+      ).length
+      if (!drafts) continue
+      items.push({
+        id: `publish:${event.id}`,
+        kind: 'staffing',
+        tone: 'warn',
+        title: `Send ${drafts} staffing ${drafts === 1 ? 'change' : 'changes'} for ${event.name}`,
+        what: 'Assignments are saved, but the team has not been asked to accept them yet.',
+        why: 'Publishing notifies each person so they can accept or decline.',
+        eventId: event.id,
+        eventName: event.name,
+        meta: `${drafts} not sent`,
+        actionLabel: 'Review and publish',
+        href: `/staffing/${event.id}`
       })
     }
 
@@ -358,10 +499,10 @@ export function StoreProvider({ children }) {
         id: `msg:${m.id}`,
         kind: 'message',
         tone: m.priority === 'urgent' ? 'urgent' : 'warn',
-        title: `${m.from} is waiting on a reply`,
+        title: `Reply to ${m.from}`,
         what: `"${m.subject}" — received ${m.received.toLowerCase()}.`,
         why: event
-          ? `Unanswered client and vendor requests are the most common way a detail gets missed before an event.`
+          ? `A quick reply keeps everyone on the same page before the event.`
           : 'No reply has been sent yet.',
         eventId: m.eventId,
         eventName: event ? event.name : 'No event',
@@ -398,9 +539,9 @@ export function StoreProvider({ children }) {
         id: `doc:${d.id}`,
         kind: 'document',
         tone: 'warn',
-        title: `${d.name} is awaiting a signature`,
+        title: `${d.name} is ready for your signature`,
         what: `Last updated ${d.updated}.`,
-        why: 'An unsigned timeline means the client has not formally agreed to the schedule.',
+        why: 'Once it is signed, the couple has formally agreed to the schedule.',
         eventId: d.eventId,
         eventName: event ? event.name : 'No event',
         meta: `${d.kind} · ${d.status}`,
@@ -413,7 +554,7 @@ export function StoreProvider({ children }) {
     return items
       .filter((i) => !state.dismissedAttentionIds.includes(i.id))
       .sort((a, b) => (order[a.tone] ?? 9) - (order[b.tone] ?? 9))
-  }, [gaps, messageList, taskList, documentList, state.dismissedAttentionIds])
+  }, [openPositions, assignmentList, messageList, taskList, documentList, state.dismissedAttentionIds])
 
   const attentionForEvent = useCallback((eventId) => attention.filter((a) => a.eventId === eventId), [attention])
 
@@ -422,6 +563,7 @@ export function StoreProvider({ children }) {
     // raw state
     assignments: state.assignments,
     publishedEventIds: state.publishedEventIds,
+    offers: state.offers,
     seenIntro: state.seenIntro,
     // collections
     taskList,
@@ -429,18 +571,21 @@ export function StoreProvider({ children }) {
     documentList,
     // staffing
     assignmentList,
-    shiftsForSegment,
-    shiftsForStaff,
-    gaps,
-    gapById,
-    replacementsForGap,
+    assignmentsForBlock,
+    assignmentsForStaff,
+    openPositions,
+    openPositionById,
+    candidatesForSlot,
     coverageForEvent,
     // attention
     attention,
     attentionForEvent,
     // actions
-    setShiftStatus,
+    setAssignmentStatus,
     assignStaff,
+    offerPosition,
+    claimOffer,
+    copyStaffing,
     removeAssignment,
     toggleTask,
     markReplied,
@@ -471,4 +616,15 @@ export function hourLabel(h) {
   const suffix = hour24 >= 12 ? 'PM' : 'AM'
   const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12
   return mins ? `${hour12}:${String(mins).padStart(2, '0')} ${suffix}` : `${hour12}:00 ${suffix}`
+}
+
+/**
+ * Calm, priority-first summary of an Up Next list: "2 to do first", else
+ * "5 coming up", else "All caught up". Never a raw alarm count.
+ */
+export function upNextLabel(items) {
+  const first = items.filter((i) => i.tone === 'urgent').length
+  if (first) return `${first} to do first`
+  if (items.length) return `${items.length} coming up`
+  return 'All caught up'
 }

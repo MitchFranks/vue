@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 // SCREEN 26 — Message Detail / Reply.
 //
-// Sending a reply marks the thread replied, which removes its Needs Attention
+// Sending a reply marks the thread replied, which removes its Up Next
 // item. The context panel beside the message exists so the manager does not
 // have to go and look up the event to answer — RECOGNITION OVER RECALL.
 // ---------------------------------------------------------------------------
@@ -79,9 +79,9 @@ export default function MessageDetailPage({ params }) {
       {replied && (
         <Alert tone="done" title="Reply sent">
           <p className="mt-1">
-            This thread is no longer in Needs Attention.{' '}
-            <Link href="/attention" className="underline underline-offset-2">
-              Check the attention list
+            This thread is no longer in Up Next.{' '}
+            <Link href="/up-next" className="underline underline-offset-2">
+              Check Up Next
             </Link>
             .
           </p>
@@ -154,7 +154,7 @@ export default function MessageDetailPage({ params }) {
               </Link>
               <dl className="mt-2 space-y-2">
                 <Field label="Date" value={event.date} />
-                <Field label="Guests" value={`${event.guests}`} />
+                <Field label="Expected guests" value={`${event.expectedGuests}`} />
                 <Field label="Spaces" value={event.spaces} />
               </dl>
               <div className="mt-3 flex flex-wrap gap-2">

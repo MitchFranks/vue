@@ -128,19 +128,19 @@ export function Icon({ name, size = 16, className = '' }) {
 
 /* ---------------------------------------------------------------- Button -- */
 
-// Square, hairline-bordered, brass for the primary action - the reference
-// button language, tightened so it still works at app density.
+// Pill-shaped. Filled accent for the one primary action on a screen, soft
+// outline for everything else. Press lifts 2px up, then settles.
 const BUTTON_VARIANTS = {
-  primary: 'bg-brass text-white border-brass hover:bg-brass-dark',
-  secondary: 'bg-transparent text-ink border-line hover:border-ink hover:bg-sand/60',
-  danger: 'bg-transparent text-urgent border-urgent-line hover:bg-urgent-soft',
-  ghost: 'bg-transparent text-moss border-transparent hover:bg-sand/70'
+  primary: 'bg-accent text-white border-accent shadow-pop hover:bg-accent-dark',
+  secondary: 'bg-surface text-ink border-line hover:border-accent-line hover:bg-accent-soft',
+  danger: 'bg-surface text-urgent border-urgent-line hover:bg-urgent-soft',
+  ghost: 'bg-transparent text-accent border-transparent hover:bg-accent-soft'
 }
 
 const BUTTON_SIZES = {
-  sm: 'px-3 py-1.5 text-[12px] tracking-[0.04em] gap-1.5',
-  md: 'px-4 py-2 text-[13px] tracking-[0.04em] gap-2',
-  lg: 'px-6 py-3 text-[14px] tracking-[0.04em] gap-2.5'
+  sm: 'px-3.5 py-1.5 text-[12px] gap-1.5',
+  md: 'px-5 py-2.5 text-[13px] gap-2',
+  lg: 'px-7 py-3.5 text-[14px] gap-2.5'
 }
 
 export function Button({
@@ -154,7 +154,7 @@ export function Button({
   ...rest
 }) {
   const cls = cx(
-    'inline-flex items-center justify-center border font-semibold',
+    'inline-flex items-center justify-center rounded-full border font-semibold',
     'transition-all duration-200 hover:-translate-y-[2px] active:translate-y-0',
     'disabled:opacity-40 disabled:hover:translate-y-0',
     BUTTON_VARIANTS[variant],
@@ -186,7 +186,7 @@ const TONES = {
   done: { cls: 'bg-done-soft text-done border-done-line', icon: 'check', label: 'Confirmed' },
   info: { cls: 'bg-info-soft text-info border-info-line', icon: 'info', label: 'Info' },
   declined: { cls: 'bg-urgent-soft text-urgent border-urgent-line', icon: 'x', label: 'Declined' },
-  empty: { cls: 'bg-sunken text-muted border-line', icon: 'dash', label: 'Unassigned' }
+  empty: { cls: 'bg-wash-deep text-muted border-line', icon: 'dash', label: 'Unassigned' }
 }
 
 export function StatusBadge({ tone = 'info', children, size = 'md', className = '' }) {
@@ -194,8 +194,8 @@ export function StatusBadge({ tone = 'info', children, size = 'md', className = 
   return (
     <span
       className={cx(
-        'inline-flex items-center gap-1.5 border font-semibold whitespace-nowrap uppercase tracking-[0.06em]',
-        size === 'sm' ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-[11px]',
+        'inline-flex items-center gap-1.5 rounded-full border font-semibold whitespace-nowrap',
+        size === 'sm' ? 'px-2.5 py-0.5 text-[11px]' : 'px-3 py-1 text-[12px]',
         t.cls,
         className
       )}
@@ -213,24 +213,24 @@ export function Card({ title, subtitle, icon, action, children, tone, className 
   return (
     <section
       className={cx(
-        'border bg-paper',
-        tone === 'urgent' ? 'border-urgent-line' : 'border-line',
+        'surface-card overflow-hidden border',
+        tone === 'urgent' ? 'border-urgent-line' : 'border-transparent',
         className
       )}
     >
       {(title || action) && (
-        <header className="flex items-start justify-between gap-3 border-b border-line-soft bg-sand/40 px-4 py-3">
+        <header className="flex items-start justify-between gap-3 border-b border-line-soft bg-wash/60 px-5 py-3.5">
           <div className="min-w-0">
-            <h2 className="flex items-center gap-2 text-[13px] font-semibold tracking-[0.02em] text-ink">
-              {icon && <Icon name={icon} size={14} className="text-brass" />}
+            <h2 className="flex items-center gap-2 text-[14px] font-bold text-ink">
+              {icon && <Icon name={icon} size={14} className="text-accent" />}
               {title}
             </h2>
-            {subtitle && <p className="mt-1 text-xs text-stone">{subtitle}</p>}
+            {subtitle && <p className="mt-1 text-xs text-muted">{subtitle}</p>}
           </div>
           {action}
         </header>
       )}
-      <div className={cx('px-4 py-3', bodyClassName)}>{children}</div>
+      <div className={cx('px-5 py-4', bodyClassName)}>{children}</div>
     </section>
   )
 }
@@ -242,8 +242,8 @@ export function PageHeader({ title, lead, actions, children }) {
     <header className="mb-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="display text-[28px] text-ink sm:text-[34px]">{title}</h1>
-          {lead && <p className="mt-2.5 max-w-[68ch] text-[14px] leading-relaxed text-stone">{lead}</p>}
+          <h1 className="display text-[28px] text-ink sm:text-[36px]">{title}</h1>
+          {lead && <p className="mt-2.5 max-w-[68ch] text-[14px] leading-relaxed text-muted">{lead}</p>}
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
@@ -257,12 +257,12 @@ export function PageHeader({ title, lead, actions, children }) {
 export function Breadcrumbs({ items = [] }) {
   if (!items.length) return null
   return (
-    <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1 text-[11px] tracking-[0.04em] text-stone">
+    <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1 text-[11px] text-muted">
       {items.map((item, i) => (
         <span key={`${item.label}-${i}`} className="flex items-center gap-1">
           {i > 0 && <Icon name="chevronRight" size={12} className="text-faint" />}
           {item.href ? (
-            <Link href={item.href} className="px-1 py-0.5 font-medium text-moss underline-offset-4 hover:underline">
+            <Link href={item.href} className="px-1 py-0.5 font-medium text-ink-2 underline-offset-4 hover:underline">
               {item.label}
             </Link>
           ) : (
@@ -282,7 +282,7 @@ export function Breadcrumbs({ items = [] }) {
 
 export function Tabs({ tabs, active }) {
   return (
-    <div className="-mx-1 mb-4 flex gap-1 overflow-x-auto border-b border-line pb-px" role="tablist">
+    <div className="-mx-1 mb-5 flex gap-2 overflow-x-auto px-1 pb-1" role="tablist">
       {tabs.map((tab) => {
         const isActive = tab.id === active
         return (
@@ -293,20 +293,20 @@ export function Tabs({ tabs, active }) {
             aria-selected={isActive}
             aria-current={isActive ? 'page' : undefined}
             className={cx(
-              'flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px]',
+              'flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-[13px] transition-colors',
               isActive
-                ? 'border-brass font-semibold text-ink'
-                : 'border-transparent text-stone hover:text-ink'
+                ? 'bg-accent font-semibold text-white shadow-pop'
+                : 'bg-surface text-muted hover:bg-accent-soft hover:text-accent'
             )}
           >
             {tab.label}
             {tab.count != null && (
               <span
                 className={cx(
-                  'border px-1.5 text-[10px] font-semibold',
+                  'rounded-full border px-1.5 text-[10px] font-semibold',
                   tab.tone === 'urgent'
                     ? 'border-urgent-line bg-urgent-soft text-urgent'
-                    : 'border-line bg-sand text-stone'
+                    : 'border-line bg-wash text-muted'
                 )}
               >
                 {tab.count}
@@ -323,8 +323,8 @@ export function Tabs({ tabs, active }) {
 
 export function EmptyState({ title, body, action, icon = 'check' }) {
   return (
-    <div className="border border-dashed border-line bg-sand/50 px-4 py-10 text-center">
-      <Icon name={icon} size={20} className="mx-auto mb-3 text-brass" />
+    <div className="rounded-3xl border border-dashed border-accent-line bg-accent-soft/50 px-4 py-10 text-center">
+      <Icon name={icon} size={20} className="mx-auto mb-3 text-accent" />
       <p className="display text-[19px] text-ink">{title}</p>
       {body && <p className="mx-auto mt-1 max-w-[46ch] text-xs text-muted">{body}</p>}
       {action && <div className="mt-3 flex justify-center">{action}</div>}
@@ -337,10 +337,10 @@ export function EmptyState({ title, body, action, icon = 'check' }) {
 export function Alert({ tone = 'info', title, children, action }) {
   const t = TONES[tone] || TONES.info
   return (
-    <div className={cx('flex items-start gap-3 border px-4 py-3', t.cls)}>
+    <div className={cx('flex items-start gap-3 rounded-2xl border px-4 py-3', t.cls)}>
       <Icon name={t.icon} size={16} className="mt-0.5" />
       <div className="min-w-0 flex-1">
-        {title && <p className="text-[14px] font-semibold tracking-[0.01em]">{title}</p>}
+        {title && <p className="text-[14px] font-semibold">{title}</p>}
         {children && <div className="text-xs leading-relaxed opacity-90">{children}</div>}
       </div>
       {action}
@@ -357,7 +357,7 @@ export function ListRow({ href, leading, title, sub, meta, trailing, onClick, cl
       {leading && <div className="shrink-0">{leading}</div>}
       <div className="min-w-0 flex-1">
         <div className="truncate text-[14px] font-medium text-ink">{title}</div>
-        {sub && <div className="mt-0.5 truncate text-xs text-stone">{sub}</div>}
+        {sub && <div className="mt-0.5 truncate text-xs text-muted">{sub}</div>}
         {meta && <div className="mt-1 text-[11px] text-faint">{meta}</div>}
       </div>
       {trailing && <div className="flex shrink-0 items-center gap-2">{trailing}</div>}
@@ -367,7 +367,7 @@ export function ListRow({ href, leading, title, sub, meta, trailing, onClick, cl
 
   const cls = cx(
     'flex w-full items-center gap-3 border-b border-line-soft px-4 py-3 text-left last:border-b-0',
-    (href || onClick) && 'transition-colors hover:bg-sand/60',
+    (href || onClick) && 'transition-colors hover:bg-accent-soft/60',
     className
   )
 
@@ -393,7 +393,7 @@ export function ListRow({ href, leading, title, sub, meta, trailing, onClick, cl
 export function Field({ label, value, children, className = '' }) {
   return (
     <div className={className}>
-      <dt className="eyebrow text-stone">{label}</dt>
+      <dt className="eyebrow text-muted">{label}</dt>
       <dd className="mt-1.5 text-[14px] text-ink">{children || value}</dd>
     </div>
   )
@@ -405,7 +405,7 @@ export function Avatar({ initials, size = 'md' }) {
   return (
     <span
       className={cx(
-        'inline-grid shrink-0 place-items-center rounded-full border border-line bg-sand font-serif text-ink',
+        'inline-grid shrink-0 place-items-center rounded-full bg-blush font-bold text-ink',
         size === 'sm' ? 'h-7 w-7 text-[11px]' : 'h-9 w-9 text-[12px]'
       )}
     >
@@ -419,12 +419,12 @@ export function Avatar({ initials, size = 'md' }) {
 export function TextInput({ label, id, hint, className = '', ...rest }) {
   return (
     <div className={className}>
-      <label htmlFor={id} className="eyebrow block text-moss">
+      <label htmlFor={id} className="eyebrow block text-ink-2">
         {label}
       </label>
       <input
         id={id}
-        className="mt-2 block w-full border-0 border-b border-line bg-transparent px-0 pb-2 pt-1 text-[15px] text-ink placeholder:text-faint focus:border-brass focus:outline-none"
+        className="mt-1.5 block w-full rounded-2xl border border-line bg-surface px-4 py-2.5 text-[15px] text-ink placeholder:text-faint focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft"
         {...rest}
       />
       {hint && <p className="mt-1 text-[11px] text-muted">{hint}</p>}
@@ -435,12 +435,12 @@ export function TextInput({ label, id, hint, className = '', ...rest }) {
 export function Select({ label, id, options = [], hint, className = '', ...rest }) {
   return (
     <div className={className}>
-      <label htmlFor={id} className="eyebrow block text-moss">
+      <label htmlFor={id} className="eyebrow block text-ink-2">
         {label}
       </label>
       <select
         id={id}
-        className="mt-2 block w-full border-0 border-b border-line bg-transparent px-0 pb-2 pt-1 text-[15px] text-ink focus:border-brass focus:outline-none"
+        className="mt-1.5 block w-full rounded-2xl border border-line bg-surface px-4 py-2.5 text-[15px] text-ink focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft"
         {...rest}
       >
         {options.map((o) => (
@@ -457,12 +457,12 @@ export function Select({ label, id, options = [], hint, className = '', ...rest 
 export function Textarea({ label, id, hint, className = '', ...rest }) {
   return (
     <div className={className}>
-      <label htmlFor={id} className="eyebrow block text-moss">
+      <label htmlFor={id} className="eyebrow block text-ink-2">
         {label}
       </label>
       <textarea
         id={id}
-        className="mt-2 block w-full border border-line bg-paper px-3 py-2.5 text-[15px] leading-relaxed text-ink placeholder:text-faint focus:border-brass focus:outline-none"
+        className="mt-1.5 block w-full rounded-2xl border border-line bg-surface px-4 py-3 text-[15px] leading-relaxed text-ink placeholder:text-faint focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft rounded-2xl"
         {...rest}
       />
       {hint && <p className="mt-1 text-[11px] text-muted">{hint}</p>}
@@ -481,22 +481,22 @@ export function SectionNote({ children }) {
 export function MetricTile({ label, value, tone, sub, href }) {
   const body = (
     <>
-      <div className="eyebrow text-stone">{label}</div>
+      <div className="eyebrow text-muted">{label}</div>
       <div
         className={cx(
-          'mt-2 font-serif text-[34px] font-medium leading-none tabular-nums',
+          'mt-2 font-display text-[36px] font-extrabold leading-none tracking-tight tabular-nums',
           tone === 'urgent' ? 'text-urgent' : tone === 'done' ? 'text-done' : 'text-ink'
         )}
       >
         {value}
       </div>
-      {sub && <div className="mt-2 text-xs text-stone">{sub}</div>}
+      {sub && <div className="mt-2 text-xs text-muted">{sub}</div>}
     </>
   )
   const cls = cx(
-    'block border bg-paper px-4 py-4 transition-all duration-200',
-    tone === 'urgent' ? 'border-urgent-line' : 'border-line',
-    href && 'hover:-translate-y-[2px] hover:border-brass'
+    'surface-card block border px-5 py-4 transition-all duration-200',
+    tone === 'urgent' ? 'border-urgent-line' : 'border-transparent',
+    href && 'hover:-translate-y-[2px] hover:border-accent-line'
   )
   return href ? (
     <Link href={href} className={cls}>

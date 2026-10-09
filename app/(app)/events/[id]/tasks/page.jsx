@@ -1,7 +1,7 @@
 'use client'
 
 // SCREEN 7 — Event Tasks.
-// Ticking a task off removes its attention item, because the attention list is
+// Ticking a task off removes its Up Next item, because the Up Next list is
 // derived from task state rather than stored separately.
 
 import { use } from 'react'
@@ -25,7 +25,7 @@ export default function TasksPage({ params }) {
     return (
       <EmptyState
         title="No tasks on this event"
-        body="Tasks added here appear in the attention list once they come due."
+        body="Tasks added here appear in Up Next once they come due."
       />
     )
   }

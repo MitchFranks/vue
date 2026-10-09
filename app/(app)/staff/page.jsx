@@ -10,6 +10,7 @@ import {
   Button,
   Card,
   EmptyState,
+  Icon,
   PageHeader,
   Select,
   StatusBadge,
@@ -18,7 +19,7 @@ import {
 import { StaffCard } from '@/components/ui/domain'
 
 export default function StaffDirectoryPage() {
-  const { shiftsForStaff } = useStore()
+  const { assignmentsForStaff } = useStore()
   const [role, setRole] = useState('All roles')
   const [query, setQuery] = useState('')
 
@@ -35,8 +36,9 @@ export default function StaffDirectoryPage() {
         title="Staff directory"
         lead={`${staff.length} people. Open anyone to see their availability, their shifts, and what they have accepted or declined.`}
         actions={
-          <Button href="/staff/availability" variant="secondary" size="sm">
-            Availability overview
+          <Button href="/staffing/team" variant="primary" size="md">
+            <Icon name="clock" size={14} />
+            View availability
           </Button>
         }
       />
@@ -79,7 +81,7 @@ export default function StaffDirectoryPage() {
       ) : (
         <Card bodyClassName="px-0 py-0">
           {filtered.map((person) => {
-            const shifts = shiftsForStaff(person.id)
+            const shifts = assignmentsForStaff(person.id)
             const declined = shifts.filter((s) => s.status === 'declined').length
             const pending = shifts.filter((s) => s.status === 'pending').length
             return (

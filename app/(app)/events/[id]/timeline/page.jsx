@@ -11,10 +11,10 @@ export default function TimelinePage({ params }) {
   const timeline = timelines[id] || []
 
   return (
-    <Card title="Day-of timeline" icon="clock" subtitle={`${timeline.length} entries`} bodyClassName="px-0 py-0">
+    <Card title="Run of show" icon="clock" subtitle={`${timeline.length} entries`} bodyClassName="px-0 py-0">
       {timeline.length === 0 ? (
         <div className="p-4">
-          <EmptyState title="No timeline yet" body="Add entries once the run-of-show is agreed with the client." />
+          <EmptyState title="No timeline yet" body="Add entries once the run-of-show is agreed with the couple." />
         </div>
       ) : (
         <ol>

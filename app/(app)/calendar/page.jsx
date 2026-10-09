@@ -20,7 +20,7 @@ const TODAY = 17
 
 const EVENTS_BY_DAY = {
   19: ['johnson', 'taylor'],
-  24: ['acme']
+  24: ['shah']
 }
 
 export default function CalendarPage() {
@@ -34,11 +34,11 @@ export default function CalendarPage() {
       <Breadcrumbs items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Calendar' }]} />
       <PageHeader
         title="Calendar"
-        lead="September 2026. Events are colour-flagged by whether anything about them still needs your attention."
+        lead="September 2026. Events are colour-flagged by whether anything still needs doing for them."
       />
 
       <Card bodyClassName="px-2 py-2 sm:px-3 sm:py-3">
-        <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase tracking-wide text-faint">
+        <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold tracking-wide text-faint">
           {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
             <div key={d} className="py-1">
               {d}
@@ -47,7 +47,7 @@ export default function CalendarPage() {
         </div>
         <div className="mt-1 grid grid-cols-7 gap-1">
           {cells.map((day, i) => {
-            if (day === null) return <div key={`blank-${i}`} className="min-h-[72px] rounded border border-transparent" />
+            if (day === null) return <div key={`blank-${i}`} className="min-h-[72px] rounded-xl border border-transparent" />
             const ids = EVENTS_BY_DAY[day] || []
             const isToday = day === TODAY
             return (
@@ -55,8 +55,8 @@ export default function CalendarPage() {
                 key={day}
                 className={
                   isToday
-                    ? 'min-h-[72px] rounded border-2 border-accent bg-accent-soft p-1'
-                    : 'min-h-[72px] rounded border border-line bg-paper p-1'
+                    ? 'min-h-[72px] rounded-xl border-2 border-accent bg-accent-soft p-1'
+                    : 'min-h-[72px] rounded-xl border border-line bg-surface p-1'
                 }
               >
                 <div className={isToday ? 'text-[11px] font-bold text-accent' : 'text-[11px] text-faint'}>
@@ -73,8 +73,8 @@ export default function CalendarPage() {
                         href={`/events/${id}`}
                         className={
                           needs
-                            ? 'block truncate rounded border border-urgent-line bg-urgent-soft px-1 py-0.5 text-[10px] font-medium text-urgent hover:bg-urgent-soft/70'
-                            : 'block truncate rounded border border-done-line bg-done-soft px-1 py-0.5 text-[10px] font-medium text-done'
+                            ? 'block truncate rounded-xl border border-accent-line bg-accent-soft px-1 py-0.5 text-[10px] font-medium text-accent hover:bg-accent-soft/70'
+                            : 'block truncate rounded-xl border border-done-line bg-done-soft px-1 py-0.5 text-[10px] font-medium text-done'
                         }
                         title={event.name}
                       >
@@ -93,7 +93,7 @@ export default function CalendarPage() {
         <Card title="Later in the season" icon="calendar">
           <ul className="space-y-2">
             {events
-              .filter((e) => !['johnson', 'taylor', 'acme'].includes(e.id))
+              .filter((e) => !['johnson', 'taylor', 'shah'].includes(e.id))
               .map((e) => (
                 <li key={e.id}>
                   <Link href={`/events/${e.id}`} className="flex items-center gap-2 text-sm hover:text-accent">
@@ -108,11 +108,11 @@ export default function CalendarPage() {
 
         <Card title="Key" icon="info">
           <div className="flex flex-wrap gap-2">
-            <StatusBadge tone="urgent" size="sm">
-              Needs attention
+            <StatusBadge tone="pending" size="sm">
+              Has things to do
             </StatusBadge>
             <StatusBadge tone="done" size="sm">
-              Nothing outstanding
+              All set
             </StatusBadge>
             <span className="inline-flex items-center gap-1 rounded-pill border-2 border-accent px-2 py-0.5 text-xs text-accent">
               Today

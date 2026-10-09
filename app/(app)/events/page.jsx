@@ -18,7 +18,7 @@ export default function EventsPage() {
       (type === 'All types' || e.type === type) &&
       (query.trim() === '' ||
         e.name.toLowerCase().includes(query.toLowerCase()) ||
-        e.client.toLowerCase().includes(query.toLowerCase()))
+        e.couple.toLowerCase().includes(query.toLowerCase()))
   )
 
   return (
@@ -26,7 +26,7 @@ export default function EventsPage() {
       <Breadcrumbs items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Upcoming Events' }]} />
       <PageHeader
         title="Upcoming events"
-        lead="Every event on the books. The platform is not wedding-only — birthdays, corporate dinners, receptions and anniversaries all use the same structure."
+        lead="Every wedding and wedding-weekend event on the books: the wedding itself, rehearsal dinners, engagement parties, showers, welcome parties and brunches."
         actions={
           <Button href="/events/new" variant="primary" size="md">
             <Icon name="plus" size={14} />
@@ -44,8 +44,8 @@ export default function EventsPage() {
             id="event-search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Event or client name"
-            className="w-full rounded-box border border-line bg-paper px-2.5 py-1.5 text-sm placeholder:text-faint focus:border-accent focus:outline-none"
+            placeholder="Event or couple name"
+            className="w-full rounded-box border border-line bg-surface px-2.5 py-1.5 text-sm placeholder:text-faint focus:border-accent focus:outline-none"
           />
         </div>
         <div>
@@ -56,7 +56,7 @@ export default function EventsPage() {
             id="event-type"
             value={type}
             onChange={(e) => setType(e.target.value)}
-            className="rounded-box border border-line bg-paper px-2.5 py-1.5 text-sm focus:border-accent focus:outline-none"
+            className="rounded-box border border-line bg-surface px-2.5 py-1.5 text-sm focus:border-accent focus:outline-none"
           >
             {['All types', ...EVENT_TYPES].map((t) => (
               <option key={t}>{t}</option>
@@ -104,8 +104,8 @@ export default function EventsPage() {
                 key={t}
                 className={
                   n
-                    ? 'rounded border border-line bg-sunken px-2 py-0.5 text-xs text-ink-2'
-                    : 'rounded border border-dashed border-line px-2 py-0.5 text-xs text-faint'
+                    ? 'rounded-xl border border-line bg-wash-deep px-2 py-0.5 text-xs text-ink-2'
+                    : 'rounded-xl border border-dashed border-line px-2 py-0.5 text-xs text-faint'
                 }
               >
                 {t} {n > 0 && `(${n})`}

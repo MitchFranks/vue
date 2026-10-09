@@ -17,20 +17,21 @@ import {
   PageHeader,
   StatusBadge
 } from '@/components/ui/primitives'
-import { AvailabilityGrid, ShiftCard, useConfirm } from '@/components/ui/domain'
+import { AvailabilityGrid, AssignmentCard, useConfirm } from '@/components/ui/domain'
 
 export default function StaffDetailPage({ params }) {
   const { id } = use(params)
   const person = staffById(id)
-  const { shiftsForStaff, setShiftStatus, toast } = useStore()
+  const { assignmentsForStaff, setAssignmentStatus, toast } = useStore()
   const { confirm, dialog } = useConfirm()
 
   if (!person) return <EmptyState title="No such staff member" />
 
-  const shifts = shiftsForStaff(person.id)
+  const shifts = assignmentsForStaff(person.id)
   const accepted = shifts.filter((s) => s.status === 'accepted')
   const pending = shifts.filter((s) => s.status === 'pending')
   const declined = shifts.filter((s) => s.status === 'declined')
+  const drafts = shifts.filter((s) => s.status === 'draft')
 
   return (
     <div>
@@ -79,7 +80,7 @@ export default function StaffDetailPage({ params }) {
         <Card
           title="Shifts"
           icon="clock"
-          subtitle={`${accepted.length} accepted · ${pending.length} pending · ${declined.length} declined`}
+          subtitle={`${accepted.length} accepted · ${pending.length} pending · ${drafts.length} not sent · ${declined.length} declined`}
           bodyClassName="px-0 py-0"
         >
           {shifts.length === 0 ? (
@@ -88,25 +89,25 @@ export default function StaffDetailPage({ params }) {
             </div>
           ) : (
             shifts.map((s) => (
-              <ShiftCard
+              <AssignmentCard
                 key={s.id}
                 assignment={s}
                 event={s.event}
-                segment={s.segment}
+                block={s.block}
                 showActions
                 onAccept={() => {
-                  setShiftStatus(s.id, 'accepted')
-                  toast(`${person.name} accepted ${s.segment.name} on ${s.event.name}.`)
+                  setAssignmentStatus(s.id, 'accepted')
+                  toast(`${person.name} accepted ${s.block.name} on ${s.event.name}.`)
                 }}
                 onDecline={() =>
                   confirm({
                     title: `Record a decline for ${person.name}?`,
-                    body: `This opens a coverage gap for ${s.segment.name} on ${s.event.name} and raises an item in Needs Attention.`,
+                    body: `This creates an open position for ${s.block.name} on ${s.event.name} and adds an item to Up Next.`,
                     confirmLabel: 'Record decline',
                     danger: true,
                     onConfirm: () => {
-                      setShiftStatus(s.id, 'declined', 'Declined by staff member.')
-                      toast(`${person.name} declined — coverage gap opened.`, 'urgent')
+                      setAssignmentStatus(s.id, 'declined', 'Declined by staff member.')
+                      toast(`${person.name} declined — open position created.`, 'urgent')
                     }
                   })
                 }

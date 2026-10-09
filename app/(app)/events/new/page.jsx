@@ -31,16 +31,11 @@ const EXTRA_FIELDS = {
     { id: 'ceremony-time', label: 'Ceremony time', placeholder: '4:00 PM' },
     { id: 'rehearsal', label: 'Rehearsal date', placeholder: 'Friday before' }
   ],
-  Ceremony: [{ id: 'ceremony-time', label: 'Ceremony time', placeholder: '2:00 PM' }],
-  Reception: [{ id: 'bar', label: 'Bar arrangement', placeholder: 'Open bar / cash bar' }],
-  Birthday: [{ id: 'milestone', label: 'Milestone', placeholder: '40th' }],
-  'Corporate Event': [
-    { id: 'av', label: 'AV requirements', placeholder: 'Projector, handheld mic' },
-    { id: 'invoice-po', label: 'Purchase order number', placeholder: 'PO-00000' }
-  ],
-  Anniversary: [{ id: 'years', label: 'Years celebrated', placeholder: '40' }],
-  Graduation: [{ id: 'school', label: 'School or programme', placeholder: '' }],
-  Other: [{ id: 'describe', label: 'Describe the event', placeholder: '' }]
+  'Rehearsal Dinner': [{ id: 'wedding-date', label: 'Wedding date', placeholder: 'The day after' }],
+  'Engagement Party': [{ id: 'hosted-by', label: 'Hosted by', placeholder: 'Parents of the couple' }],
+  'Bridal Shower': [{ id: 'honoree', label: 'Guest of honour', placeholder: '' }],
+  'Welcome Party': [{ id: 'arrivals', label: 'Out-of-town guests', placeholder: '60' }],
+  'Farewell Brunch': [{ id: 'brunch-time', label: 'Brunch time', placeholder: '10:00 AM' }]
 }
 
 export default function NewEventPage() {
@@ -48,7 +43,7 @@ export default function NewEventPage() {
   const { toast } = useStore()
   const [type, setType] = useState('Wedding')
   const [name, setName] = useState('')
-  const [client, setClient] = useState('')
+  const [couple, setCouple] = useState('')
   const [date, setDate] = useState('')
   const [guests, setGuests] = useState('')
   const [errors, setErrors] = useState({})
@@ -59,7 +54,7 @@ export default function NewEventPage() {
     e.preventDefault()
     const next = {}
     if (!name.trim()) next.name = 'Give the event a name.'
-    if (!client.trim()) next.client = 'Add who the event is for.'
+    if (!couple.trim()) next.couple = 'Add who the event is for.'
     if (!date.trim()) next.date = 'Pick a date.'
     setErrors(next)
     if (Object.keys(next).length > 0) return
@@ -101,13 +96,13 @@ export default function NewEventPage() {
                   hint={errors.name}
                 />
                 <TextInput
-                  label="Client"
-                  id="client"
-                  value={client}
-                  onChange={(e) => setClient(e.target.value)}
+                  label="Couple"
+                  id="couple"
+                  value={couple}
+                  onChange={(e) => setCouple(e.target.value)}
                   placeholder="Who is the event for?"
-                  aria-invalid={!!errors.client}
-                  hint={errors.client}
+                  aria-invalid={!!errors.couple}
+                  hint={errors.couple}
                 />
                 <div className="grid gap-3 sm:grid-cols-2">
                   <TextInput
@@ -146,10 +141,10 @@ export default function NewEventPage() {
             <Card title="What happens next" icon="info">
               <ol className="list-decimal space-y-1.5 pl-4 text-xs text-muted">
                 <li>The event appears in Upcoming Events and on the calendar.</li>
-                <li>You add segments (setup, ceremony, reception, cleanup) and what each needs.</li>
+                <li>You add timeline blocks (setup, ceremony, cocktail hour, reception, teardown) and the staffing requirement for each.</li>
                 <li>The planner suggests staff from their stated availability.</li>
                 <li>You publish, and staff accept or decline.</li>
-                <li>Anything left uncovered shows up in Needs Attention.</li>
+                <li>Any open position shows up in Up Next.</li>
               </ol>
             </Card>
 

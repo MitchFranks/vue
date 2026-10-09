@@ -8,7 +8,7 @@ import { useStore, hourLabel } from '@/lib/store'
 import { eventById } from '@/lib/mock/events'
 import { money, payments, timelines } from '@/lib/mock/records'
 import { Button, Card, Icon, StatusBadge } from '@/components/ui/primitives'
-import { AttentionItem } from '@/components/ui/domain'
+import { UpNextItem } from '@/components/ui/domain'
 
 export default function EventOverviewPage({ params }) {
   const { id } = use(params)
@@ -30,11 +30,11 @@ export default function EventOverviewPage({ params }) {
         <section>
           <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-urgent">
             <Icon name="alert" size={15} />
-            Needs attention on this event ({attention.length})
+            Up next on this event ({attention.length})
           </h2>
           <div className="overflow-hidden rounded-box border border-line">
             {attention.map((item) => (
-              <AttentionItem key={item.id} item={item} />
+              <UpNextItem key={item.id} item={item} />
             ))}
           </div>
         </section>
@@ -49,14 +49,14 @@ export default function EventOverviewPage({ params }) {
           action={<Button href={`/events/${id}/staffing`} size="sm" variant="secondary">Open</Button>}
         >
           <div className="space-y-2">
-            {event.segments.map((segment) => {
-              const need = segment.needs.reduce((n, x) => n + x.count, 0)
+            {event.blocks.map((block) => {
+              const need = block.requirements.reduce((n, x) => n + x.count, 0)
               return (
-                <div key={segment.id} className="flex items-center justify-between gap-2 text-sm">
+                <div key={block.id} className="flex items-center justify-between gap-2 text-sm">
                   <span className="text-ink-2">
-                    {segment.name}{' '}
+                    {block.name}{' '}
                     <span className="text-xs text-faint">
-                      {hourLabel(segment.start)}–{hourLabel(segment.end)}
+                      {hourLabel(block.start)}–{hourLabel(block.end)}
                     </span>
                   </span>
                   <span className="text-xs text-muted">{need} needed</span>
@@ -66,12 +66,12 @@ export default function EventOverviewPage({ params }) {
           </div>
           <div className="mt-3 border-t border-line-soft pt-2">
             {coverage.complete ? (
-              <StatusBadge tone="done">Every segment is covered</StatusBadge>
+              <StatusBadge tone="done">Every timeline block is staffed</StatusBadge>
             ) : (
               <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge tone="urgent">Short {coverage.short}</StatusBadge>
-                <Link href="/schedule/gaps" className="text-xs text-accent underline-offset-2 hover:underline">
-                  View coverage gaps
+                <StatusBadge tone="warn">Needs {coverage.short} more</StatusBadge>
+                <Link href={`/staffing/${id}`} className="text-xs text-accent underline-offset-2 hover:underline">
+                  View open positions
                 </Link>
               </div>
             )}
@@ -109,7 +109,7 @@ export default function EventOverviewPage({ params }) {
             subtitle={`${money(pay.paid)} of ${money(pay.total)} collected`}
             action={<Button href={`/events/${id}/payments`} size="sm" variant="secondary">Open</Button>}
           >
-            <div className="h-2 w-full overflow-hidden rounded-pill border border-line bg-sunken">
+            <div className="h-2 w-full overflow-hidden rounded-pill border border-line bg-wash-deep">
               <div className="h-full bg-done" style={{ width: `${(pay.paid / pay.total) * 100}%` }} />
             </div>
             <p className="mt-2 text-sm text-ink-2">
@@ -119,7 +119,7 @@ export default function EventOverviewPage({ params }) {
         )}
 
         <Card
-          title="Day-of timeline"
+          title="Run of show"
           icon="clock"
           subtitle={`${timeline.length} entries`}
           action={<Button href={`/events/${id}/timeline`} size="sm" variant="secondary">Open</Button>}

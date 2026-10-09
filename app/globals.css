@@ -1,98 +1,94 @@
 /* ==========================================================================
    Vue — design tokens
    --------------------------------------------------------------------------
-   The visual language is taken from the Figma reference ("The Atrium" event
-   house site) and translated for a dense operations app:
+   The full rules live in docs/STYLE-GUIDE.md (and live at /style-guide).
+   Short version:
 
-     cream / sand / ink      the neutral ground, warm rather than grey
-     brass                   the single interactive accent — primary actions,
-                             active navigation, focus rings. Nothing else.
-     moss                    links and secondary emphasis
-     Playfair Display        page titles, section headings, large figures
-     DM Sans                 all UI text
+     COLOUR   five hues, no more
+              accent (violet)   the one interactive colour: buttons, links,
+                                active navigation, focus rings
+              blush  (pink)     decoration and warmth only, never a status
+              done   (mint)     confirmed / settled
+              warn   (sunshine) due soon
+              urgent (coral)    act now
+              + ink (text) and warm neutrals for surfaces
 
-   Carried over verbatim from the reference: square corners (no radius), 1px
-   hairline borders, wide-tracked uppercase eyebrows, bottom-border-only
-   inputs, the brass focus ring, and the -2px hover lift.
+     SHAPE    everything is soft: pill buttons and badges, 16–28px cards,
+              rounded inputs. Nothing has a sharp corner.
 
-   What had to change: the reference is a marketing site with 7rem headlines
-   and full-bleed photography. An operations screen cannot carry that, so the
-   type scale is compressed and photography is confined to the welcome screen.
+     TYPE     Plus Jakarta Sans only. Weight and size carry hierarchy,
+              not a second typeface, not uppercase tracking.
 
-   STATUS COLOURS are deliberately distinct in hue from brass, because brass
-   is an *interaction* colour and must never be mistaken for a status. Every
-   status also carries an icon and a word — never colour alone.
+   Status colours are never used for interaction and accent is never used for
+   status, so a coloured thing always means one thing. Every status also
+   carries an icon and a word — never colour alone.
    ========================================================================== */
 
 @import 'tailwindcss';
 
 @theme {
-  /* ---- Neutral ground ---- */
-  --color-cream: #f8f6f0;
-  --color-paper: #fffefb;
-  --color-sand: #eee9df;
-  --color-sunken: #e7e2d7;
-  --color-line: #dcded8;
-  --color-line-soft: #e8e7e0;
-  --color-ink: #17231f;
-  --color-ink-2: #3a4a44;
-  --color-moss: #314a41;
-  --color-stone: #66716c;
-  --color-muted: #66716c;
-  --color-faint: #929a95;
-  --color-sage-light: #c7d4c6;
+  /* ---- Surfaces ---- */
+  --color-canvas: #fff8f5;
+  --color-surface: #ffffff;
+  --color-wash: #f7f2ff;
+  --color-wash-deep: #eee7fd;
+  --color-line: #e7dff5;
+  --color-line-soft: #f0ebf9;
 
-  /* ---- The single interactive accent ---- */
-  --color-brass: #ae7950;
-  --color-brass-dark: #956441;
-  --color-brass-soft: #f3e9df;
-  --color-brass-line: #e0c8b0;
+  /* ---- Text ---- */
+  --color-ink: #2a2145;
+  --color-ink-2: #4a4268;
+  --color-muted: #6b6485;
+  --color-faint: #9a94b3;
 
-  /* Aliases so component code can say "accent" and stay palette-agnostic */
-  --color-accent: #ae7950;
-  --color-accent-dark: #956441;
-  --color-accent-soft: #f3e9df;
-  --color-accent-line: #e0c8b0;
+  /* ---- Accent: the one interactive colour ---- */
+  --color-accent: #6b4bf0;
+  --color-accent-dark: #5636d6;
+  --color-accent-soft: #efeaff;
+  --color-accent-line: #d5caff;
 
-  /* ---- Status: distinct hues, none of them brass ---- */
-  --color-urgent: #9b2c20;
-  --color-urgent-soft: #f8e9e6;
-  --color-urgent-line: #e8c4bd;
+  /* ---- Blush: decoration only ---- */
+  --color-blush: #ffd9e6;
+  --color-blush-deep: #ff8fb3;
 
-  --color-warn: #7d6412;
-  --color-warn-soft: #f6f0dc;
-  --color-warn-line: #ded3a9;
+  /* ---- Status ---- */
+  --color-urgent: #c8372f;
+  --color-urgent-soft: #ffece9;
+  --color-urgent-line: #ffc9c2;
 
-  --color-pending: #3f5e78;
-  --color-pending-soft: #e9eff4;
-  --color-pending-line: #c3d3df;
+  --color-warn: #86560a;
+  --color-warn-soft: #fff4d4;
+  --color-warn-line: #ffdf8f;
 
-  --color-done: #35624a;
-  --color-done-soft: #e7efe9;
-  --color-done-line: #c2d6c8;
+  --color-pending: #5636d6;
+  --color-pending-soft: #efeaff;
+  --color-pending-line: #d5caff;
 
-  --color-info: #66716c;
-  --color-info-soft: #eceae4;
-  --color-info-line: #d8d8d2;
+  --color-done: #0c7358;
+  --color-done-soft: #dff8ee;
+  --color-done-line: #a6ebd0;
 
-  /* ---- Welcome screen only ---- */
-  --color-night: #131d1a;
-  --color-parchment: #e3dbcd;
+  --color-info: #6b6485;
+  --color-info-soft: #f4f0fa;
+  --color-info-line: #e3dcef;
 
   /* ---- Type ---- */
-  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-playfair), 'Iowan Old Style', Georgia, serif;
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-sans);
-  --font-display: var(--font-serif);
 
-  /* ---- Square, like the reference ---- */
-  --radius-box: 0px;
-  --radius-pill: 0px;
+  /* ---- Shape ---- */
+  --radius-box: 1.25rem;
+  --radius-pill: 999px;
+
+  /* ---- Depth ---- */
+  --shadow-card: 0 1px 2px rgb(42 33 69 / 0.04), 0 10px 28px -8px rgb(107 75 240 / 0.12);
+  --shadow-pop: 0 14px 34px -10px rgb(107 75 240 / 0.35);
 }
 
 @layer base {
   html {
-    background: var(--color-cream);
+    background: var(--color-canvas);
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-size: 15px;
@@ -102,6 +98,11 @@
 
   body {
     margin: 0;
+    background:
+      radial-gradient(60rem 30rem at 100% -10%, rgb(255 217 230 / 0.55), transparent 60%),
+      radial-gradient(50rem 28rem at -10% 0%, rgb(223 212 255 / 0.5), transparent 60%),
+      var(--color-canvas);
+    background-attachment: fixed;
   }
 
   button,
@@ -123,10 +124,10 @@
     text-decoration: none;
   }
 
-  /* Brass focus ring, offset — straight from the reference. */
+  /* Accent focus ring, offset. */
   :focus-visible {
-    outline: 2px solid var(--color-brass);
-    outline-offset: 3px;
+    outline: 3px solid var(--color-accent-line);
+    outline-offset: 2px;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -143,44 +144,26 @@
 }
 
 @layer components {
-  /* The wide-tracked uppercase label used for eyebrows and field labels. */
+  /* Small label used above values and on form fields. Sentence case. */
   .eyebrow {
-    font-size: 0.64rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
+    letter-spacing: 0;
   }
 
-  /* Serif display heading. */
+  /* Page and section headings. */
   .display {
-    font-family: var(--font-serif);
-    font-weight: 500;
+    font-family: var(--font-display);
+    font-weight: 800;
     letter-spacing: -0.03em;
-    line-height: 1.08;
+    line-height: 1.1;
   }
 
-  /* Underline that grows from the left — the reference's nav treatment. */
-  .nav-underline {
-    position: relative;
-  }
-
-  .nav-underline::after {
-    position: absolute;
-    right: 0;
-    bottom: -2px;
-    left: 0;
-    height: 1px;
-    background: currentColor;
-    content: '';
-    transform: scaleX(0);
-    transform-origin: right;
-    transition: transform 0.3s ease;
-  }
-
-  .nav-underline:hover::after,
-  .nav-underline.is-active::after {
-    transform: scaleX(1);
-    transform-origin: left;
+  /* Soft raised surface used by cards and tiles. */
+  .surface-card {
+    background: var(--color-surface);
+    border-radius: 1.5rem;
+    box-shadow: var(--shadow-card);
   }
 }
 
@@ -197,9 +180,9 @@
     border: 0;
   }
 
-  /* The -2px lift the reference uses on every interactive surface. */
+  /* Gentle lift on every interactive surface. */
   .lift {
-    transition: transform 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
   }
 
   .lift:hover {

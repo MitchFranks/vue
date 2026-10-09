@@ -16,7 +16,7 @@ export default function EventMessagesPage({ params }) {
     <Card
       title="Messages filed to this event"
       icon="mail"
-      subtitle={`${msgs.length} threads · client, vendor and staff`}
+      subtitle={`${msgs.length} threads · couple, vendor and staff`}
       bodyClassName="px-0 py-0"
     >
       {msgs.length === 0 ? (

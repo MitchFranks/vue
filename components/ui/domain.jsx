@@ -12,43 +12,45 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { cx } from '@/lib/cx'
 import { hourLabel } from '@/lib/store'
+import { daysOutLabel } from '@/lib/mock/events'
 import { Avatar, Button, Card, Icon, ListRow, StatusBadge } from './primitives'
 
-/* ---------------------------------------------------------- AttentionItem --
+/* ---------------------------------------------------------- UpNextItem --
  *
  * The single most important component in the product. It answers, in order:
  *   what happened  ->  which event  ->  why it matters  ->  what you can do.
  *
- * GUIDE ATTENTION: urgent items get a thick left rule, a tinted ground and the
- * only filled button in the list. Lower-priority items are visually quieter.
+ * GUIDE THE EYE: "do first" items get a thick accent rule and the
+ * only filled button in the list. "Coming up" items are quieter. No red: priority
+ * is shown by order and wording, so the list informs without alarming.
  */
 
-export function AttentionItem({ item, compact = false }) {
+export function UpNextItem({ item, compact = false }) {
   const urgent = item.tone === 'urgent'
   return (
     <article
       className={cx(
-        'border-l-[3px] bg-paper transition-colors',
-        urgent ? 'border-l-urgent' : item.tone === 'warn' ? 'border-l-warn' : 'border-l-line',
-        'border-y border-r border-line-soft hover:bg-sand/40'
+        'border-l-[3px] bg-surface transition-colors',
+        urgent ? 'border-l-accent' : item.tone === 'warn' ? 'border-l-warn' : 'border-l-line',
+        'border-y border-r border-line-soft hover:bg-wash/40'
       )}
     >
       <div className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-start sm:gap-4">
         <div className="min-w-0 flex-1">
           <div className="mb-1.5 flex flex-wrap items-center gap-2">
-            <StatusBadge tone={item.tone} size="sm">
-              {urgent ? 'Needs action' : 'Due soon'}
+            <StatusBadge tone={urgent ? 'pending' : 'warn'} size="sm">
+              {urgent ? 'Do first' : 'Coming up'}
             </StatusBadge>
             <Link
               href={`/events/${item.eventId}`}
-              className="border border-line bg-sand px-2 py-0.5 text-[10px] uppercase tracking-[0.08em] text-moss transition-colors hover:border-brass hover:text-brass"
+              className="border border-line bg-wash px-2 py-0.5 text-[10px] text-ink-2 transition-colors hover:border-accent hover:text-accent rounded-2xl"
             >
               {item.eventName}
             </Link>
             <span className="text-[11px] text-faint">{item.meta}</span>
           </div>
 
-          <h3 className={cx('font-serif text-[18px] font-medium leading-snug text-ink', urgent && 'sm:text-[20px]')}>
+          <h3 className={cx('font-display text-[18px] font-bold leading-snug text-ink', urgent && 'sm:text-[20px]')}>
             {item.title}
           </h3>
 
@@ -56,11 +58,11 @@ export function AttentionItem({ item, compact = false }) {
             <dl className="mt-1.5 space-y-1">
               <div className="flex gap-3 text-xs">
                 <dt className="eyebrow w-28 shrink-0 text-faint">What</dt>
-                <dd className="leading-relaxed text-stone">{item.what}</dd>
+                <dd className="leading-relaxed text-muted">{item.what}</dd>
               </div>
               <div className="flex gap-3 text-xs">
                 <dt className="eyebrow w-28 shrink-0 text-faint">Why it matters</dt>
-                <dd className="leading-relaxed text-stone">{item.why}</dd>
+                <dd className="leading-relaxed text-muted">{item.why}</dd>
               </div>
             </dl>
           )}
@@ -83,18 +85,18 @@ export function EventCard({ event, coverage, attentionCount = 0 }) {
   return (
     <Link
       href={`/events/${event.id}`}
-      className="block border border-line bg-paper px-4 py-4 transition-all duration-200 hover:-translate-y-[2px] hover:border-brass"
+      className="surface-card block border border-transparent px-5 py-5 transition-all duration-200 hover:-translate-y-[2px] hover:border-accent-line"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-serif text-[20px] font-medium text-ink">{event.name}</h3>
-            <span className="border border-line bg-sand px-2 py-0.5 text-[10px] uppercase tracking-[0.08em] text-stone">
+            <h3 className="font-display text-[20px] font-bold text-ink">{event.name}</h3>
+            <span className="rounded-full bg-blush px-2.5 py-0.5 text-[11px] font-semibold text-ink-2">
               {event.type}
             </span>
           </div>
           <p className="mt-1 text-xs text-muted">
-            {event.dateShort} · {event.headline} · {event.guests} guests
+            {event.dateShort} · {event.headline} · {event.expectedGuests} expected
           </p>
           <p className="mt-0.5 text-[11px] text-faint">{event.spaces}</p>
         </div>
@@ -103,12 +105,12 @@ export function EventCard({ event, coverage, attentionCount = 0 }) {
 
       <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-line-soft pt-2.5">
         {attentionCount > 0 ? (
-          <StatusBadge tone="urgent" size="sm">
-            {attentionCount} need{attentionCount === 1 ? 's' : ''} attention
+          <StatusBadge tone="pending" size="sm">
+            {attentionCount} up next
           </StatusBadge>
         ) : (
           <StatusBadge tone="done" size="sm">
-            Nothing outstanding
+            All set
           </StatusBadge>
         )}
         {coverage &&
@@ -117,11 +119,11 @@ export function EventCard({ event, coverage, attentionCount = 0 }) {
               Fully staffed
             </StatusBadge>
           ) : (
-            <StatusBadge tone="urgent" size="sm">
-              Short {coverage.short} staff
+            <StatusBadge tone="warn" size="sm">
+              Needs {coverage.short} more
             </StatusBadge>
           ))}
-        <span className="ml-auto text-[11px] text-faint">{event.status}</span>
+        <span className="ml-auto text-[11px] text-faint">{event.bookingStatus} · {daysOutLabel(event)}</span>
       </div>
     </Link>
   )
@@ -134,7 +136,7 @@ export function EventRow({ event, coverage, attentionCount = 0 }) {
     <ListRow
       href={`/events/${event.id}`}
       title={event.name}
-      sub={`${event.dateShort} · ${event.type} · ${event.guests} guests`}
+      sub={`${event.dateShort} · ${event.type} · ${event.expectedGuests} expected`}
       meta={event.spaces}
       trailing={
         <div className="hidden items-center gap-2 sm:flex">
@@ -144,8 +146,8 @@ export function EventRow({ event, coverage, attentionCount = 0 }) {
             </StatusBadge>
           )}
           {coverage && !coverage.complete && (
-            <StatusBadge tone="urgent" size="sm">
-              Short {coverage.short}
+            <StatusBadge tone="warn" size="sm">
+              Needs {coverage.short} more
             </StatusBadge>
           )}
           {coverage && coverage.complete && (
@@ -174,13 +176,19 @@ export function StaffCard({ person, shiftCount, trailing }) {
   )
 }
 
-/* -------------------------------------------------------------- ShiftCard -- */
+/* -------------------------------------------------------------- AssignmentCard -- */
 // Used in staff detail and shift lists. Shows status with a badge, and the
 // accept/decline controls when the viewer can act on them.
 
-export function ShiftCard({ assignment, event, segment, onAccept, onDecline, showActions }) {
+export function AssignmentCard({ assignment, event, block, onAccept, onDecline, showActions }) {
   const tone =
-    assignment.status === 'accepted' ? 'done' : assignment.status === 'declined' ? 'declined' : 'pending'
+    assignment.status === 'accepted'
+      ? 'done'
+      : assignment.status === 'declined'
+        ? 'declined'
+        : assignment.status === 'draft'
+          ? 'info'
+          : 'pending'
   return (
     <div className="border-b border-line-soft px-3 py-2.5 last:border-b-0">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -189,7 +197,7 @@ export function ShiftCard({ assignment, event, segment, onAccept, onDecline, sho
             {event.name}
           </Link>
           <p className="mt-0.5 text-xs text-muted">
-            {segment.name} · {event.dateShort} · {hourLabel(segment.start)}–{hourLabel(segment.end)}
+            {block.name} · {event.dateShort} · {hourLabel(block.start)}–{hourLabel(block.end)}
           </p>
           <p className="mt-0.5 text-[11px] text-faint">Role: {assignment.role}</p>
           {assignment.status === 'declined' && assignment.declineReason && (
@@ -202,7 +210,9 @@ export function ShiftCard({ assignment, event, segment, onAccept, onDecline, sho
               ? 'Accepted'
               : assignment.status === 'declined'
                 ? 'Declined'
-                : 'Pending'}
+                : assignment.status === 'draft'
+                  ? 'Not sent'
+                  : 'Pending'}
           </StatusBadge>
           {showActions && assignment.status !== 'declined' && (
             <div className="flex gap-1.5">
@@ -220,57 +230,57 @@ export function ShiftCard({ assignment, event, segment, onAccept, onDecline, sho
       </div>
       <div className="mt-2">
         <Link
-          href={`/schedule/shifts/${assignment.id}`}
+          href={`/staffing/${event.id}?block=${block.id}&role=${encodeURIComponent(assignment.role)}`}
           className="text-[11px] text-accent underline-offset-2 hover:underline"
         >
-          Open shift detail
+          Open on the board
         </Link>
       </div>
     </div>
   )
 }
 
-/* ----------------------------------------------------------- EventSegment -- */
-// One block of an event (Setup / Ceremony / Reception / Cleanup) with its
+/* ----------------------------------------------------------- EventBlock -- */
+// One block of an event (Setup / Ceremony / Reception / Teardown) with its
 // staffing requirement and who is currently on it.
 
-export function EventSegment({ event, segment, assignments, gaps, children }) {
-  const segGaps = gaps.filter((g) => g.segment.id === segment.id)
+export function EventBlock({ event, block, assignments, openPositions, children }) {
+  const blockPositions = openPositions.filter((g) => g.block.id === block.id)
   return (
     <Card
-      title={segment.name}
-      subtitle={`${hourLabel(segment.start)} – ${hourLabel(segment.end)}`}
-      tone={segGaps.length ? 'urgent' : undefined}
+      title={block.name}
+      subtitle={`${hourLabel(block.start)} – ${hourLabel(block.end)}${block.kind === 'setup' ? ' · Load-in / setup (operations)' : block.kind === 'teardown' ? ' · Teardown (operations)' : ''}`}
+      tone={blockPositions.length ? 'urgent' : undefined}
       action={
-        segGaps.length ? (
-          <StatusBadge tone="urgent" size="sm">
-            Short {segGaps.reduce((n, g) => n + g.short, 0)}
+        blockPositions.length ? (
+          <StatusBadge tone="warn" size="sm">
+            Needs {blockPositions.reduce((n, g) => n + g.short, 0)}
           </StatusBadge>
         ) : (
           <StatusBadge tone="done" size="sm">
-            Covered
+            Staffed
           </StatusBadge>
         )
       }
       bodyClassName="px-0 py-0"
     >
-      <p className="border-b border-line-soft px-4 py-2.5 text-xs leading-relaxed text-stone">{segment.note}</p>
+      <p className="border-b border-line-soft px-4 py-2.5 text-xs leading-relaxed text-muted">{block.note}</p>
 
       <div className="border-b border-line-soft px-4 py-2">
         <div className="eyebrow text-faint">Requires</div>
         <div className="mt-1 flex flex-wrap gap-1.5">
-          {segment.needs.map((need) => {
-            const filled = assignments.filter((a) => a.role === need.role && a.status === 'accepted').length
-            const ok = filled >= need.count
+          {block.requirements.map((requirement) => {
+            const filled = assignments.filter((a) => a.role === requirement.role && a.status === 'accepted').length
+            const ok = filled >= requirement.count
             return (
               <span
-                key={need.role}
+                key={requirement.role}
                 className={cx(
-                  'border px-2 py-0.5 text-[11px] font-medium',
+                  'border px-2 py-0.5 text-[11px] font-medium rounded-2xl',
                   ok ? 'border-done-line bg-done-soft text-done' : 'border-urgent-line bg-urgent-soft text-urgent'
                 )}
               >
-                {need.role}: {filled}/{need.count}
+                {requirement.role}: {filled}/{requirement.count}
               </span>
             )
           })}
@@ -300,11 +310,11 @@ export function AvailabilityGrid({ person, highlight }) {
         <caption className="sr-only">{person.name} weekly availability</caption>
         <thead>
           <tr>
-            <th scope="col" className="w-10 border border-line bg-sunken p-1 text-left font-semibold text-muted">
+            <th scope="col" className="w-10 border border-line bg-wash-deep p-1 text-left font-semibold text-muted rounded-2xl">
               Day
             </th>
             {hours.map((h) => (
-              <th key={h} scope="col" className="border border-line bg-sunken p-1 font-normal text-faint">
+              <th key={h} scope="col" className="border border-line bg-wash-deep p-1 font-normal text-faint rounded-2xl">
                 {h % 12 === 0 ? 12 : h % 12}
               </th>
             ))}
@@ -313,7 +323,7 @@ export function AvailabilityGrid({ person, highlight }) {
         <tbody>
           {days.map((day) => (
             <tr key={day}>
-              <th scope="row" className="border border-line bg-sunken p-1 text-left font-semibold text-ink-2">
+              <th scope="row" className="border border-line bg-wash-deep p-1 text-left font-semibold text-ink-2 rounded-2xl">
                 {day}
               </th>
               {hours.map((h) => {
@@ -324,9 +334,9 @@ export function AvailabilityGrid({ person, highlight }) {
                   <td
                     key={h}
                     className={cx(
-                      'border border-line p-0',
-                      free ? 'bg-done-soft' : 'bg-paper',
-                      isHighlight && 'outline-2 outline-offset-[-2px] outline-brass'
+                      'border border-line p-0 rounded-2xl',
+                      free ? 'bg-done-soft' : 'bg-surface',
+                      isHighlight && 'outline-2 outline-offset-[-2px] outline-accent'
                     )}
                   >
                     <span className="sr-only">
@@ -342,14 +352,14 @@ export function AvailabilityGrid({ person, highlight }) {
       </table>
       <p className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-muted">
         <span className="flex items-center gap-1">
-          <span className="inline-block h-3 w-3 border border-line bg-done-soft" /> Available
+          <span className="inline-block h-3 w-3 border border-line bg-done-soft rounded-2xl" /> Available
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-3 w-3 border border-line bg-paper" /> Not available
+          <span className="inline-block h-3 w-3 border border-line bg-surface rounded-2xl" /> Not available
         </span>
         {highlight && (
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 border-2 border-brass" /> Shift being filled
+            <span className="inline-block h-3 w-3 border-2 border-accent rounded-2xl" /> Position being filled
           </span>
         )}
       </p>
@@ -367,7 +377,7 @@ export function TaskRow({ task, onToggle }) {
         id={`task-${task.id}`}
         checked={task.done}
         onChange={onToggle}
-        className="mt-1 h-4 w-4 shrink-0 accent-[var(--color-brass)]"
+        className="mt-1 h-4 w-4 shrink-0 accent-[var(--color-accent)]"
       />
       <div className="min-w-0 flex-1">
         <label
@@ -424,17 +434,17 @@ export function Modal({ open, onClose, title, children, footer, labelledBy = 'mo
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto border border-line bg-paper shadow-[0_24px_60px_rgba(12,21,18,.22)]"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto border border-line bg-surface shadow-[0_24px_60px_rgba(12,21,18,.22)] rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <header className="flex items-start justify-between gap-3 border-b border-line px-4 py-3">
-          <h2 id={labelledBy} className="font-serif text-[22px] font-medium text-ink">
+          <h2 id={labelledBy} className="font-display text-[22px] font-bold text-ink">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="border border-line px-2 py-1.5 text-stone transition-colors hover:border-ink hover:text-ink"
+            className="border border-line px-2 py-1.5 text-muted transition-colors hover:border-ink hover:text-ink rounded-2xl"
           >
             <Icon name="x" size={14} />
             <span className="sr-only">Close</span>
@@ -462,7 +472,7 @@ export function ToastHost({ toasts, onDismiss }) {
         <div
           key={t.id}
           className={cx(
-            'pointer-events-auto flex w-full max-w-md items-start gap-2.5 border px-4 py-3 text-sm shadow-[0_12px_35px_rgba(12,21,18,.18)]',
+            'pointer-events-auto flex w-full max-w-md items-start gap-2.5 border px-4 py-3 text-sm shadow-[0_12px_35px_rgba(12,21,18,.18)] rounded-2xl',
             t.tone === 'urgent'
               ? 'border-urgent-line bg-urgent-soft text-urgent'
               : 'border-done-line bg-done-soft text-done'

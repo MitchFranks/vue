@@ -33,7 +33,7 @@ export default function InboxPage() {
       <Breadcrumbs items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Messages' }]} />
       <PageHeader
         title="Messages"
-        lead="Client, vendor and staff messages, filed to the event they belong to. Anything still waiting on a reply also shows in Needs Attention."
+        lead="Couple, vendor and staff messages, filed to the event they belong to. Anything still waiting on a reply also shows in Up Next."
       />
 
       <div className="mb-3 flex flex-wrap gap-1.5">
@@ -46,7 +46,7 @@ export default function InboxPage() {
             className={
               filter === f.id
                 ? 'rounded-box border border-accent bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent'
-                : 'rounded-box border border-line bg-paper px-2.5 py-1 text-xs text-ink-2 hover:bg-sunken'
+                : 'rounded-box border border-line bg-surface px-2.5 py-1 text-xs text-ink-2 hover:bg-wash-deep'
             }
           >
             {f.label} ({counts[f.id]})
@@ -60,7 +60,7 @@ export default function InboxPage() {
           title={filter === 'needs-reply' ? 'Nothing waiting on a reply' : 'Nothing here'}
           body={
             filter === 'needs-reply'
-              ? 'Every client and vendor message has been answered.'
+              ? 'Every couple and vendor message has been answered.'
               : 'Try a different filter.'
           }
           action={

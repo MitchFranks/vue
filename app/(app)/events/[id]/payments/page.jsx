@@ -26,7 +26,7 @@ export default function PaymentsPage({ params }) {
             <span className={outstanding > 0 ? 'font-semibold text-warn' : 'text-done'}>{money(outstanding)}</span>
           </Field>
         </dl>
-        <div className="mt-3 h-2 w-full overflow-hidden rounded-pill border border-line bg-sunken">
+        <div className="mt-3 h-2 w-full overflow-hidden rounded-pill border border-line bg-wash-deep">
           <div className="h-full bg-done" style={{ width: `${(pay.paid / pay.total) * 100}%` }} />
         </div>
       </Card>
@@ -36,7 +36,7 @@ export default function PaymentsPage({ params }) {
           <table className="w-full min-w-[480px] text-sm">
             <caption className="sr-only">Payment schedule</caption>
             <thead>
-              <tr className="border-b border-line bg-sunken text-left text-xs uppercase tracking-wide text-faint">
+              <tr className="border-b border-line bg-wash-deep text-left text-xs tracking-wide text-faint">
                 <th scope="col" className="px-4 py-2 font-semibold">
                   Instalment
                 </th>
