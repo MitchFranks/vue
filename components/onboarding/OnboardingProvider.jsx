@@ -183,7 +183,7 @@ export function OnboardingProvider({ children }) {
 
   const consumeArrival = useCallback(() => setArrivedFromGuide(false), [])
 
-  const reset = useCallback(() => {
+  const reset = useCallback((to = '/dashboard') => {
     writeJson(GUIDE_KEY, null)
     writeJson(THEME_KEY, null)
     paint(null)
@@ -193,7 +193,7 @@ export function OnboardingProvider({ children }) {
     setFlowIndex(0)
     setArrivedFromGuide(false)
     setStep('welcome')
-    router.push('/dashboard')
+    router.push(to)
   }, [router])
 
   // Which sidebar item the guide is pointing at, so it can wear the user's colour.

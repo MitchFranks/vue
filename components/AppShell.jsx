@@ -17,7 +17,7 @@ import { usePathname } from 'next/navigation'
 import { cx } from '@/lib/cx'
 import { upNextLabel, useStore } from '@/lib/store'
 import { venue } from '@/lib/mock/events'
-import { Button, Icon } from './ui/primitives'
+import { Icon } from './ui/primitives'
 import { ToastHost } from './ui/domain'
 import { useOnboarding } from './onboarding/OnboardingProvider'
 import { AccountMenu } from './AccountMenu'
@@ -31,7 +31,7 @@ const NAV = [
       { href: '/dashboard', label: 'Dashboard', icon: 'home', exact: true },
       { href: '/up-next', label: 'Up Next', icon: 'check', badge: 'attention', onboarding: 'up-next' },
       { href: '/calendar', label: 'Calendar', icon: 'calendar', onboarding: 'calendar' },
-      { href: '/events', label: 'Events', icon: 'list' }
+      { href: '/events', label: 'Events', icon: 'list', onboarding: 'events' }
     ]
   },
   {
@@ -186,10 +186,6 @@ export function AppShell({ children }) {
             ))}
 
             <div className="mt-6 border-t border-line-soft pt-3">
-              <Button href="/events/new" variant="primary" size="md" className="w-full" data-onboarding="new-event">
-                <Icon name="plus" size={13} />
-                New event
-              </Button>
               <button
                 type="button"
                 onClick={() => {
@@ -201,6 +197,19 @@ export function AppShell({ children }) {
                 className="mt-2 w-full rounded-full border border-line px-3 py-2 text-[12px] font-medium text-muted transition-colors hover:border-accent-line hover:bg-accent-soft hover:text-accent"
               >
                 Reset prototype data
+              </button>
+              {/* Back to a true first visit: the same reset, every user guide, and the home page. */}
+              <button
+                type="button"
+                onClick={() => {
+                  reset()
+                  resetGuide('/')
+                  clearPlannerGuide()
+                  clearEventsGuide()
+                }}
+                className="mt-2 w-full rounded-full border border-accent-line bg-accent-soft px-3 py-2 text-[12px] font-semibold text-accent transition-colors hover:bg-accent hover:text-on-accent"
+              >
+                Reset Me
               </button>
               <Link href="/style-guide" className="mt-2 block rounded-full px-3 py-2 text-center text-[12px] font-medium text-faint transition-colors hover:bg-accent-soft hover:text-accent">
                 Style guide
