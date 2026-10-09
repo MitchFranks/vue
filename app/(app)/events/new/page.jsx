@@ -140,8 +140,8 @@ export default function NewEventPage() {
           <div className="space-y-4">
             <Card title="What happens next" icon="info">
               <ol className="list-decimal space-y-1.5 pl-4 text-xs text-muted">
-                <li>The event appears in Upcoming Events and on the calendar.</li>
-                <li>You add timeline blocks (setup, ceremony, cocktail hour, reception, teardown) and the staffing requirement for each.</li>
+                <li>The event appears in Events and on the calendar.</li>
+                <li>You add staffable blocks (setup, ceremony, cocktail hour, reception, teardown) and the staffing requirement for each.</li>
                 <li>The planner suggests staff from their stated availability.</li>
                 <li>You publish, and staff accept or decline.</li>
                 <li>Any open position shows up in Up Next.</li>

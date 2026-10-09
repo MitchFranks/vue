@@ -76,7 +76,7 @@ export default function CoupleDetailPage({ params }) {
                   key={e.id}
                   href={`/events/${e.id}`}
                   title={e.name}
-                  sub={`${e.dateShort} · ${e.type} · ${e.expectedGuests} expected`}
+                  sub={`${e.dateShort} · ${e.type} · ${e.guests} expected`}
                   trailing={
                     <div className="hidden gap-1.5 sm:flex">
                       {needs > 0 && (

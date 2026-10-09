@@ -77,7 +77,7 @@ export default function StyleGuidePage() {
             </div>
             <div>
               <p className="eyebrow text-muted">Card title · 700 · 14px</p>
-              <p className="text-[14px] font-bold text-ink">Timeline blocks</p>
+              <p className="text-[14px] font-bold text-ink">Staffable blocks</p>
             </div>
             <div>
               <p className="eyebrow text-muted">Body · 400 · 14–15px</p>
@@ -131,14 +131,14 @@ export default function StyleGuidePage() {
               title="Emily & Marcus Johnson"
               sub="Johnson Wedding · Sat, Sep 19"
               trailing={<StatusBadge tone="warn" size="sm">Needs 1 more</StatusBadge>}
-              href="/couples/johnson-emily"
+              href="/couples/cpl-2001"
             />
             <ListRow
               leading={<Avatar initials="AM" />}
               title="Ana & Diego Martinez"
               sub="Martinez Wedding Reception · Sat, Oct 3"
               trailing={<StatusBadge tone="done" size="sm">Staffed</StatusBadge>}
-              href="/couples/martinez-ana"
+              href="/couples/cpl-2004"
             />
           </Card>
 

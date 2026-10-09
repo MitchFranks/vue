@@ -1,338 +1,340 @@
 'use client'
 
 // ---------------------------------------------------------------------------
-// Staff Planner · Event board. The primary screen.
-//
-// One row per timeline block; inside it, one group per required role with that
-// many slots. A slot is Open, Not sent, Pending, Accepted or Declined, and every
-// state carries an icon and a word. Clicking an open slot opens the assign
-// panel; clicking a person opens their actions (Mark accepted/declined,
-// Replace, Remove). Structure follows Planning Center's per-event "needed
-// positions"; see docs/STAFF-PLANNER-SPEC.md.
+// Staffing Planner · Event crew (spec §B.2). The screen that does the whole
+// job: needs, people, replies, warnings and backups, inline. Ask, reply,
+// backfill, once per wedding.
 // ---------------------------------------------------------------------------
 
-import { Suspense, use, useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { events, eventById } from '@/lib/mock/events'
-import { staffById } from '@/lib/mock/staff'
-import { hourLabel, positionIdFor, useStore } from '@/lib/store'
-import { Alert, Breadcrumbs, Button, Card, EmptyState, Icon, PageHeader, Select, StatusBadge } from '@/components/ui/primitives'
-import { AssignPanel } from '@/components/AssignPanel'
-import { DeclineDialog } from '@/components/DeclineDialog'
-import { PublishDialog } from '@/components/PublishDialog'
-import { LAST_EVENT_KEY } from '@/components/StaffTabs'
-import { cx } from '@/lib/cx'
+import { Suspense, use, useCallback, useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { pluralRole } from '@/lib/mock/staff'
+import { Alert, Breadcrumbs, Button, Card, EmptyState, Icon, PageHeader } from '@/components/ui/primitives'
+import { SkeletonCards } from '@/components/staffing/Nav'
+import { Chip } from '@/components/staffing/StatusChip'
+import { BlockCard } from '@/components/staffing/RoleCard'
+import { TimeChart } from '@/components/staffing/TimeChart'
+import { AskPanel } from '@/components/staffing/AskPanel'
+import { SendReview } from '@/components/staffing/SendReview'
+import { ChangeTimes, MarkOkDialog } from '@/components/staffing/ChangeTimes'
+import { EditNeeds } from '@/components/staffing/EditNeeds'
+import { WORLD } from '@/lib/staffing/adapter'
+import {
+  coverage,
+  daysOutText,
+  eventOf,
+  eventRoles,
+  eventSummary,
+  firstName,
+  fmtH,
+  rolesOf,
+  stampLabel,
+  weekdayOf
+} from '@/lib/staffing/derive'
+import { useStaffing2 } from '@/lib/staffing/store'
 
-const CHIP = {
-  draft: { cls: 'border-accent-line bg-surface text-ink-2', icon: 'dash', label: 'Not sent' },
-  pending: { cls: 'border-accent-line bg-accent-soft text-accent', icon: 'clock', label: 'Pending' },
-  accepted: { cls: 'border-done-line bg-done-soft text-done', icon: 'check', label: 'Accepted' },
-  declined: { cls: 'border-urgent-line bg-urgent-soft text-urgent', icon: 'x', label: 'Declined' }
-}
-
-function Board({ eventId }) {
-  const router = useRouter()
+function Crew({ eventId }) {
   const params = useSearchParams()
-  const event = eventById(eventId)
-  const {
-    assignmentList,
-    openPositions,
-    coverageForEvent,
-    publishedEventIds,
-    setAssignmentStatus,
-    removeAssignment,
-    copyStaffing,
-    toast
-  } = useStore()
+  const store = useStaffing2()
+  const { state, hydrated } = store
+  const [ask, setAsk] = useState(null)
+  const [review, setReview] = useState(null)
+  const [editing, setEditing] = useState(false)
+  const [changing, setChanging] = useState(null)
+  const [marking, setMarking] = useState(null)
+  const [highlight, setHighlight] = useState(null)
+  const deepLinked = useRef(false)
 
-  const [panel, setPanel] = useState(null) // { blockId, role, replaceId }
-  const [selected, setSelected] = useState(null) // assignment id whose actions are showing
-  const [declining, setDeclining] = useState(null) // assignment being declined
-  const [publishing, setPublishing] = useState(false)
-  const [copyFrom, setCopyFrom] = useState('')
+  const closeAsk = useCallback(() => setAsk(null), [])
+  const closeReview = useCallback(() => setReview(null), [])
+  const doneReview = useCallback(() => {
+    setReview(null)
+    setAsk(null)
+  }, [])
+  const closeEditing = useCallback(() => setEditing(false), [])
+  const closeChanging = useCallback(() => setChanging(null), [])
+  const closeMarking = useCallback(() => setMarking(null), [])
+  const changeFromReview = useCallback((id) => {
+    setReview(null)
+    setChanging(id)
+  }, [])
 
-  // Remember the board for the tab bar's "Event board" link.
+  const base = WORLD.eventMap[eventId]
+  const summary = base && hydrated ? eventSummary(eventId, state) : null
+
+  // Deep links from the events list: ?send=1 opens Send review, ?ask=1 the Ask panel.
   useEffect(() => {
-    try {
-      window.localStorage.setItem(LAST_EVENT_KEY, eventId)
-    } catch {
-      /* ignore */
+    if (!hydrated || !base || deepLinked.current) return
+    deepLinked.current = true
+    const s = eventSummary(eventId, state)
+    if (params.get('send')) {
+      const ids = s.unsent.length ? s.unsent.map((r) => r.id) : s.overdueRs.map((r) => r.id)
+      if (ids.length) setReview({ ids })
+    } else if (params.get('ask')) {
+      const role = Object.keys(s.findByRole)[0]
+      if (role) setAsk({ eventId, role, mode: 'ask' })
     }
-  }, [eventId])
+  }, [hydrated, base, eventId, params, state])
 
-  // Deep link: /staffing/<event>?block=<blockId>&role=<role> opens the panel on that slot.
-  const wantBlock = params.get('block')
-  const wantRole = params.get('role')
-  useEffect(() => {
-    if (wantBlock && wantRole) setPanel({ blockId: wantBlock, role: wantRole, replaceId: null })
-  }, [wantBlock, wantRole])
-
-  if (!event) return <EmptyState title="No such event" />
-
-  const coverage = coverageForEvent(eventId)
-  const eventPositions = openPositions.filter((p) => p.eventId === eventId)
-  const drafts = assignmentList.filter((a) => a.status === 'draft' && event.blocks.some((b) => b.id === a.blockId))
-  const published = publishedEventIds.includes(eventId)
-  const emptyBlocks = event.blocks.filter(
-    (b) => !assignmentList.some((a) => a.blockId === b.id && a.status !== 'declined')
-  )
-  const panelBlock = panel ? event.blocks.find((b) => b.id === panel.blockId) : null
-
-  const closePanel = () => {
-    setPanel(null)
-    // Drop the deep-link params so a refresh does not reopen the panel.
-    if (wantBlock || wantRole) router.replace(`/staffing/${eventId}`)
+  if (!base) {
+    return (
+      <EmptyState
+        title="We couldn't find that event"
+        icon="calendar"
+        action={
+          <Button href="/staffing" variant="primary">
+            Back to events
+          </Button>
+        }
+      />
+    )
   }
+
+  const ev = eventOf(state, eventId)
+  const crumbs = <Breadcrumbs items={[{ label: 'Staffing Planner', href: '/staffing' }, { label: ev.name }]} />
+  if (!hydrated) {
+    return (
+      <div>
+        {crumbs}
+        <SkeletonCards />
+      </div>
+    )
+  }
+
+  const roles = eventRoles(eventId, state)
+  const rs = Object.values(state.requests).filter((r) => r.eventId === eventId)
+
+  // ---- Notices (at most 3; priority order) ----
+  const notices = []
+  const dropped = rs
+    .filter((r) => r.droppedOut)
+    .filter((r) => r.blockIds.some((b) => coverage(eventId, WORLD.blockMap[b].block, r.role, state).toFind > 0))
+    .sort((a, b) => (a.respondedAt < b.respondedAt ? 1 : -1))[0]
+  if (dropped) {
+    const gaps = dropped.blockIds
+      .map((b) => ({ b: WORLD.blockMap[b].block, n: coverage(eventId, WORLD.blockMap[b].block, dropped.role, state).toFind }))
+      .filter((x) => x.n > 0)
+    const same = gaps.every((g) => g.n === gaps[0].n)
+    const names = gaps.map((g) => g.b.name).join(' and ')
+    const what = same
+      ? `${names} ${gaps.length > 1 ? 'each need' : 'needs'} ${gaps[0].n} more ${pluralRole(dropped.role, gaps[0].n)}.`
+      : gaps.map((g) => `${g.b.name} needs ${g.n} more`).join(', ') + ` ${pluralRole(dropped.role, 2)}.`
+    const why = [dropped.reason, dropped.hoursBefore != null ? `told you ${dropped.hoursBefore} hours before call time` : null].filter(Boolean).join(', ')
+    notices.push({
+      key: 'drop',
+      tone: 'warn',
+      text: `${firstName(dropped.staffId)} can't make it anymore${why ? ` (${why})` : ''}. ${what}`,
+      action: (
+        <Button
+          size="sm"
+          variant="primary"
+          onClick={() => setAsk({ eventId, role: dropped.role, blockIds: gaps.map((g) => g.b.id), mode: 'backups', dropped })}
+        >
+          Ask backups
+        </Button>
+      )
+    })
+  }
+  if (summary.toCheck.length) {
+    const n = summary.toCheck.length
+    const allSeed = summary.toCheck.every((r) => r.source === 'seed')
+    notices.push({
+      key: 'check',
+      tone: 'info',
+      text: allSeed
+        ? `${n} ${n === 1 ? 'person has' : 'people have'} something to check, such as times outside what they usually work. These were set up before the planner checked.`
+        : `${n} ${n === 1 ? 'person has' : 'people have'} something to check before the day.`,
+      action: (
+        <Button
+          size="sm"
+          onClick={() => {
+            setHighlight(null)
+            setTimeout(() => setHighlight(summary.toCheck[0].id), 0)
+          }}
+        >
+          Show {n === 1 ? 'them' : 'them'}
+        </Button>
+      )
+    })
+  }
+  if (summary.overdueRs.length) {
+    const r = summary.overdueRs[0]
+    const more = summary.overdueRs.length - 1
+    notices.push({
+      key: 'reply',
+      tone: 'info',
+      text: `${firstName(r.staffId)} hasn't replied since ${weekdayOf(r.sentAt)}.${more > 0 ? ` ${more} more waiting past their reply-by time.` : ''}`,
+      action: (
+        <Button size="sm" onClick={() => setReview({ ids: summary.overdueRs.map((x) => x.id) })}>
+          Remind
+        </Button>
+      )
+    })
+  }
+
+  const act = {
+    ask: (role, blockIds) => setAsk({ eventId, role, blockIds, mode: 'ask' }),
+    remind: (r) => setReview({ ids: [r.id] }),
+    changeTimes: (r) => setChanging(r.id),
+    record: (r, yes) => store.recordReply(r.id, yes),
+    markOk: (r, hard) => (hard ? setMarking(r.id) : store.markOk(r.id, null)),
+    phone: (r) => store.openPhone(r.staffId),
+    remove: (r) => store.remove(r.id),
+    promote: (r) => store.promote(r.id),
+    applySuggestion: (s) => store.applySuggestion(eventId, s.blockId, s.role, s.suggested)
+  }
+  const noticePrimary = notices.some((n) => n.key === 'drop')
+  const blocksInOrder = base.blocks.slice().sort((x, y) => x.start - y.start)
+  let firstFindBlock = null
+  // The guide points at the first open spot, or at the first Ask people if everything is filled.
+  let guideAsk = null
+  for (const b of blocksInOrder) {
+    const role = rolesOf(b, state).find((r) => coverage(eventId, b, r, state).toFind > 0)
+    if (role) {
+      firstFindBlock = { id: b.id, role }
+      break
+    }
+  }
+  if (firstFindBlock) guideAsk = firstFindBlock
+  else {
+    const b = blocksInOrder.find((x) => rolesOf(x, state).length)
+    if (b) guideAsk = { id: b.id, role: rolesOf(b, state)[0] }
+  }
+  const unsentN = summary.unsent.length
+  const activity = state.activity.filter((a) => a.eventId === eventId).slice(0, 10)
+  const allSet = summary.filled === summary.spots && !summary.toFind && !summary.waiting && !unsentN && !summary.toCheck.length
 
   return (
     <div>
-      <Breadcrumbs
-        items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Staff Planner', href: '/staffing' }, { label: event.name }]}
-      />
+      {crumbs}
       <PageHeader
-        title={event.name}
-        lead={`${event.couple} · ${event.date} · ${event.spaces}`}
+        title={ev.name}
+        lead={`${ev.couple} · ${ev.dateShort} · ${daysOutText(ev)} · ${ev.expectedGuests} guests${ev.guaranteedCount ? ` (guarantee ${ev.guaranteedCount})` : ' (no guarantee yet)'}`}
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            {coverage.complete ? (
-              <StatusBadge tone="done">Fully staffed</StatusBadge>
-            ) : (
-              <StatusBadge tone="warn">Needs {coverage.short} more</StatusBadge>
+          <>
+            {unsentN > 0 && (
+              <Button variant="primary" onClick={() => setReview({ ids: summary.unsent.map((r) => r.id) })}>
+                <Icon name="send" size={13} />
+                Send {unsentN} text{unsentN === 1 ? '' : 's'}
+              </Button>
             )}
-            {drafts.length > 0 ? (
-              <StatusBadge tone="pending">{drafts.length} not sent</StatusBadge>
-            ) : (
-              <StatusBadge tone="info">{published ? 'Published' : 'Draft'}</StatusBadge>
-            )}
-            <Button variant="primary" size="md" onClick={() => setPublishing(true)}>
-              <Icon name="send" size={14} />
-              Publish and notify
-            </Button>
-          </div>
+            <Button onClick={() => setEditing(true)}>Edit needs</Button>
+          </>
         }
-      />
+      >
+        <div className="mt-4 flex flex-wrap gap-2">
+          {allSet || summary.filled === summary.spots ? (
+            <Chip tone="done" icon="check" title="Only people who said yes count as filled">
+              All {summary.spots} spots filled
+            </Chip>
+          ) : (
+            <Chip tone="neutral" icon="check" title="Filled: people who said yes. Only Confirmed counts.">
+              {summary.filled} of {summary.spots} spots filled
+            </Chip>
+          )}
+          {summary.waiting > 0 && (
+            <Chip tone="pending" icon="clock" title="Waiting: asked, no reply yet">
+              {summary.waiting} waiting
+            </Chip>
+          )}
+          {summary.toFind > 0 && (
+            <Chip tone="warn" icon="plus" title="To find: open spots nobody has been asked for yet">
+              {summary.toFind} to find
+            </Chip>
+          )}
+          {summary.toCheck.length > 0 && (
+            <Chip tone="warn" icon="alert" title="To check: people with something to look at, like times outside their usual hours">
+              {summary.toCheck.length} to check
+            </Chip>
+          )}
+          {unsentN > 0 && (
+            <Chip tone="empty" icon="dash" title="Not sent: saved or changed, and the text has not gone out">
+              {unsentN} not sent
+            </Chip>
+          )}
+        </div>
+      </PageHeader>
 
-      <div className="mb-5 flex flex-wrap items-end gap-3">
-        <Select
-          label="Event"
-          id="board-event"
-          options={events.map((e) => e.name)}
-          value={event.name}
-          onChange={(e) => {
-            const next = events.find((x) => x.name === e.target.value)
-            if (next) router.push(`/staffing/${next.id}`)
-          }}
-        />
-        {emptyBlocks.length > 0 && (
-          <div className="flex flex-wrap items-end gap-2">
-            <Select
-              label="Copy staffing from"
-              id="board-copy"
-              options={['Choose an event', ...events.filter((e) => e.id !== eventId).map((e) => e.name)]}
-              value={copyFrom || 'Choose an event'}
-              onChange={(e) => setCopyFrom(e.target.value === 'Choose an event' ? '' : e.target.value)}
-            />
-            <Button
-              variant="secondary"
-              size="md"
-              disabled={!copyFrom}
-              onClick={() => {
-                const from = events.find((e) => e.name === copyFrom)
-                const n = from ? copyStaffing(from.id, eventId) : 0
-                toast(n ? `Copied ${n} assignments from ${copyFrom}. Saved as not sent.` : 'Nothing matching to copy.')
-                setCopyFrom('')
-              }}
-            >
-              Copy
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {eventPositions.length === 0 && (
-        <div className="mb-5">
-          <Alert tone="done" title="Every timeline block has the people it needs">
-            Publish when you are ready so the team can accept.
-          </Alert>
+      {notices.length > 0 && (
+        <div className="mb-5 space-y-2">
+          {notices.slice(0, 3).map((n) => (
+            <Alert key={n.key} tone={n.tone} action={n.action}>
+              <span className="text-[13px]">{n.text}</span>
+            </Alert>
+          ))}
         </div>
       )}
 
-      <div className="space-y-4">
-        {event.blocks.map((block) => {
-          const here = assignmentList.filter((a) => a.blockId === block.id)
-          return (
-            <Card
-              key={block.id}
-              title={block.name}
-              subtitle={`${hourLabel(block.start)} – ${hourLabel(block.end)}${
-                block.kind === 'setup' ? ' · Load-in / setup (operations)' : block.kind === 'teardown' ? ' · Teardown (operations)' : ''
-              }`}
-            >
-              {block.note && <p className="mb-3 text-xs text-muted">{block.note}</p>}
-              <div className="space-y-4">
-                {block.requirements.map((req) => {
-                  const people = here.filter((a) => a.role === req.role)
-                  const occupying = people.filter((a) => a.status !== 'declined')
-                  const declined = people.filter((a) => a.status === 'declined')
-                  const openSlots = Math.max(0, req.count - occupying.length)
-                  const accepted = people.filter((a) => a.status === 'accepted').length
-                  const short = req.count - accepted
-                  const sel = people.find((a) => a.id === selected)
-                  return (
-                    <div key={req.role}>
-                      <div className="mb-2 flex flex-wrap items-center gap-2">
-                        <span className="text-[13px] font-bold text-ink">{req.role}</span>
-                        <span className="text-xs text-muted">
-                          {accepted} of {req.count} accepted
-                        </span>
-                        {short > 0 ? (
-                          <StatusBadge tone="warn" size="sm">
-                            Needs {short} more
-                          </StatusBadge>
-                        ) : (
-                          <StatusBadge tone="done" size="sm">
-                            Fully staffed
-                          </StatusBadge>
-                        )}
-                      </div>
+      
 
-                      <div className="flex flex-wrap gap-2">
-                        {[...occupying, ...declined].map((a) => {
-                          const person = staffById(a.staffId)
-                          const c = CHIP[a.status] || CHIP.draft
-                          return (
-                            <button
-                              key={a.id}
-                              type="button"
-                              onClick={() => setSelected(selected === a.id ? null : a.id)}
-                              aria-expanded={selected === a.id}
-                              title={
-                                a.status === 'declined' && a.declineReason
-                                  ? `Declined: ${a.declineReason}`
-                                  : a.overridden
-                                    ? `Assigned despite: ${a.warning}`
-                                    : undefined
-                              }
-                              className={cx(
-                                'inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[13px] transition-colors hover:shadow-card',
-                                c.cls,
-                                selected === a.id && 'ring-4 ring-accent-soft'
-                              )}
-                            >
-                              <Icon name={c.icon} size={12} />
-                              <span className={cx('font-semibold', a.status === 'declined' && 'line-through')}>
-                                {person?.name}
-                              </span>
-                              <span className="text-[11px] font-bold">{c.label}</span>
-                              {a.overridden && <Icon name="alert" size={12} className="text-warn" />}
-                            </button>
-                          )
-                        })}
+      {!roles.length ? (
+        <EmptyState
+          title="No crew needs yet."
+          body="Add the roles this event needs, block by block."
+          icon="users"
+          action={
+            <Button variant="primary" onClick={() => setEditing(true)}>
+              Edit needs
+            </Button>
+          }
+        />
+      ) : (
+        <>
+          <TimeChart eventId={eventId} blocks={blocksInOrder} roles={roles} st={state} />
+          <div className="space-y-4">
+            {blocksInOrder.map((b) => (
+              <BlockCard
+                key={b.id}
+                eventId={eventId}
+                block={b}
+                st={state}
+                primaryRole={!noticePrimary && b.id === firstFindBlock?.id ? firstFindBlock.role : null}
+                guideRole={b.id === guideAsk?.id ? guideAsk.role : null}
+                highlightId={highlight}
+                act={act}
+              />
+            ))}
+          </div>
+        </>
+      )}
 
-                        {Array.from({ length: openSlots }).map((_, i) => (
-                          <button
-                            key={`open-${i}`}
-                            type="button"
-                            onClick={() => setPanel({ blockId: block.id, role: req.role, replaceId: null })}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-accent-line px-3.5 py-1.5 text-[13px] font-semibold text-accent transition-colors hover:bg-accent-soft"
-                          >
-                            <Icon name="plus" size={12} />
-                            Open: {req.role}
-                          </button>
-                        ))}
-                      </div>
+      <details className="surface-card mt-5 px-5 py-3.5">
+        <summary className="cursor-pointer text-[14px] font-bold text-ink">Replies and changes ({activity.length})</summary>
+        {activity.length ? (
+          <ul className="mt-2 space-y-1.5 text-[13px] text-ink-2">
+            {activity.map((a) => (
+              <li key={a.id}>
+                <span className="text-muted">{stampLabel(a.at)} ·</span> {a.text}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-[13px] text-muted">Nothing yet. Asks, replies and changes show up here.</p>
+        )}
+      </details>
 
-                      {sel && (
-                        <div className="mt-2.5 flex flex-wrap items-center gap-2 rounded-2xl bg-wash px-4 py-3">
-                          <span className="mr-1 text-[13px] font-semibold text-ink">{staffById(sel.staffId)?.name}</span>
-                          {sel.status === 'declined' && sel.declineReason && (
-                            <span className="text-xs text-urgent">Reason: {sel.declineReason}</span>
-                          )}
-                          {sel.overridden && <span className="text-xs text-warn">Assigned despite: {sel.warning}</span>}
-                          <span className="ml-auto flex flex-wrap gap-2">
-                            {sel.status !== 'accepted' && sel.status !== 'declined' && (
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                onClick={() => {
-                                  setAssignmentStatus(sel.id, 'accepted')
-                                  toast(`${staffById(sel.staffId)?.name} accepted ${block.name}.`)
-                                  setSelected(null)
-                                }}
-                              >
-                                Mark accepted
-                              </Button>
-                            )}
-                            {sel.status !== 'declined' && (
-                              <Button size="sm" variant="danger" onClick={() => setDeclining(sel)}>
-                                Mark declined
-                              </Button>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => setPanel({ blockId: block.id, role: req.role, replaceId: sel.id })}
-                            >
-                              Replace
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                removeAssignment(sel.id)
-                                toast(`${staffById(sel.staffId)?.name} removed from ${block.name}.`)
-                                setSelected(null)
-                              }}
-                            >
-                              Remove
-                            </Button>
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </Card>
-          )
-        })}
-      </div>
-
-      <p className="mt-4 text-xs text-muted">
-        Only <strong>accepted</strong> people count toward a block. Not sent and pending assignments stay open until the
-        person says yes.
-      </p>
-
-      <AssignPanel
-        open={!!panel && !!panelBlock}
-        onClose={closePanel}
-        event={event}
-        block={panelBlock}
-        role={panel?.role}
-        replaceId={panel?.replaceId}
-      />
-      <DeclineDialog
-        open={!!declining}
-        personName={declining ? staffById(declining.staffId)?.name : ''}
-        slotLabel={declining ? `${declining.role}` : ''}
-        onClose={() => setDeclining(null)}
-        onConfirm={(reason) => {
-          setAssignmentStatus(declining.id, 'declined', reason)
-          toast(`${staffById(declining.staffId)?.name} declined. The position is open again.`, 'urgent')
-          setDeclining(null)
-          setSelected(null)
-        }}
-      />
-      <PublishDialog open={publishing} onClose={() => setPublishing(false)} eventIds={[eventId]} />
+      {ask && (
+        <AskPanel
+          key={`${ask.role}-${ask.mode}-${(ask.blockIds || []).join()}`}
+          config={ask}
+          hidden={!!review}
+          onClose={closeAsk}
+          onAsk={(spec, opts) => setReview({ askSpec: spec, opts })}
+        />
+      )}
+      {review && <SendReview prepared={review} onClose={closeReview} onDone={doneReview} onChangeTimes={changeFromReview} />}
+      {editing && <EditNeeds eventId={eventId} onClose={closeEditing} />}
+      {changing && <ChangeTimes requestId={changing} onClose={closeChanging} />}
+      {marking && <MarkOkDialog requestId={marking} onClose={closeMarking} />}
     </div>
   )
 }
 
-export default function EventBoardPage({ params }) {
+export default function Staffing2EventPage({ params }) {
   const { eventId } = use(params)
   return (
     <Suspense fallback={null}>
-      <Board eventId={eventId} />
+      <Crew eventId={eventId} />
     </Suspense>
   )
 }

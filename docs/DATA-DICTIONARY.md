@@ -42,7 +42,7 @@ dates are **pre-formatted strings**, not date values.
 
 ## 2. Seed entities
 
-### Event &nbsp; `lib/mock/events.js` · screens: *Upcoming Events*, *Calendar*, event workspace
+### Event &nbsp; `lib/mock/events.js` · screens: *Events*, *Calendar*, event workspace
 
 | Field | Type | Meaning / example |
 |---|---|---|
@@ -307,7 +307,7 @@ Built fresh on every state change from four sources, then sorted `urgent → war
 |---|---|
 | Staff Planner (one sidebar item, four tabs: Week · Event board · Team availability · Staff replies) | The staffing feature, `/staffing/*`. The Event board (`/staffing/<eventId>`) is the primary screen: one row per timeline block, slots per required role, an assign panel with soft warnings, and a Publish and notify dialog |
 | Up Next | Attention items (derived) |
-| Upcoming Events | `events` |
+| Events | `events` |
 | Week tab | Events in one week with staffing and unsent-change badges |
 | Event board tab | Timeline blocks + Staffing requirements + Assignments, with the assign panel |
 | Team availability tab | `staff.availability` plus the week's assignments |

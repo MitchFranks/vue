@@ -24,16 +24,9 @@ export function EventHeader({ event }) {
 
   const base = `/events/${event.id}`
   const tabs = [
-    { id: 'overview', label: 'Overview', href: base },
-    { id: 'timeline', label: 'Timeline', href: `${base}/timeline` },
+    { id: 'overview', label: 'Up Next', href: base, count: attention.length || null, tone: attention.length ? 'urgent' : null },
+    { id: 'timeline', label: 'Run of show', href: `${base}/timeline`, guide: 'tab-timeline' },
     { id: 'tasks', label: 'Tasks', href: `${base}/tasks`, count: openTasks || null, tone: openTasks ? 'urgent' : null },
-    {
-      id: 'staffing',
-      label: 'Staffing',
-      href: `${base}/staffing`,
-      count: coverage.short || null,
-      tone: coverage.short ? 'urgent' : null
-    },
     { id: 'vendors', label: 'Vendors', href: `${base}/vendors` },
     { id: 'payments', label: 'Payments', href: `${base}/payments` },
     {
@@ -88,7 +81,7 @@ export function EventHeader({ event }) {
           <Field label="Schedule" value={event.headline} />
           <Field
             label="Guests"
-            value={`${event.expectedGuests} expected · ${event.guaranteedCount ? `${event.guaranteedCount} guaranteed` : 'guarantee due'}`}
+            value={`${event.guests} expected · ${event.guarantee ? `${event.guarantee} guaranteed` : 'guarantee due'}`}
            />
           <Field label="Spaces" value={event.spaces} />
         </dl>

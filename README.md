@@ -160,7 +160,7 @@ The modal does **not** say which buttons to press. The seeded scenario supportin
 | 1 | `/` | Dashboard (entry) |
 | 2 | `/up-next` | Up Next Center |
 | 3 | `/calendar` | Calendar |
-| 4 | `/events` | Upcoming Events |
+| 4 | `/events` | Events |
 
 ### Event management
 | # | Route | Screen |
@@ -168,7 +168,6 @@ The modal does **not** say which buttons to press. The seeded scenario supportin
 | 5 | `/events/[id]` | Event Overview |
 | 6 | `/events/[id]/timeline` | Event Timeline |
 | 7 | `/events/[id]/tasks` | Event Tasks |
-| 8 | `/events/[id]/staffing` | Event Staffing |
 | 9 | `/events/[id]/vendors` | Event Vendors |
 | 10 | `/events/[id]/payments` | Event Payments |
 | 11 | `/events/[id]/messages` | Event Messages |
@@ -181,10 +180,10 @@ The modal does **not** say which buttons to press. The seeded scenario supportin
 |---|---|---|
 | 15 | `/staff` | Staff Directory |
 | 16 | `/staff/[id]` | Staff Member Detail |
-| 17 | `/staffing` | Staff Planner: Week |
-| 18 | `/staffing/[eventId]` | Staff Planner: Event board |
-| 19 | `/staffing/team` | Staff Planner: Team availability |
-| 20 | `/staffing/replies` | Staff Planner: Staff replies |
+| 17 | `/staffing` | Staffing Planner: Events |
+| 18 | `/staffing/[eventId]` | Staffing Planner: Event crew |
+| 19 | `/staffing/team` | Staffing Planner: Team |
+| 20 | `/staffing/phone` | Staffing Planner: Staff phone |
 
 ### Communication & people
 | # | Route | Screen |

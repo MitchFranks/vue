@@ -19,8 +19,8 @@ const LEADING_BLANKS = 1
 const TODAY = 17
 
 const EVENTS_BY_DAY = {
-  19: ['johnson', 'taylor'],
-  24: ['shah']
+  19: ['evt-1001'],
+  24: ['evt-1002']
 }
 
 export default function CalendarPage() {
@@ -93,7 +93,7 @@ export default function CalendarPage() {
         <Card title="Later in the season" icon="calendar">
           <ul className="space-y-2">
             {events
-              .filter((e) => !['johnson', 'taylor', 'shah'].includes(e.id))
+              .filter((e) => !['evt-1001', 'evt-1002'].includes(e.id))
               .map((e) => (
                 <li key={e.id}>
                   <Link href={`/events/${e.id}`} className="flex items-center gap-2 text-sm hover:text-accent">

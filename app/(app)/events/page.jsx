@@ -1,6 +1,6 @@
 'use client'
 
-// SCREEN 4 — Upcoming Events (list).
+// SCREEN 4 — Events (list).
 
 import { useState } from 'react'
 import { useStore } from '@/lib/store'
@@ -12,6 +12,7 @@ export default function EventsPage() {
   const { coverageForEvent, attentionForEvent } = useStore()
   const [type, setType] = useState('All types')
   const [query, setQuery] = useState('')
+  const [sort, setSort] = useState('soonest')
 
   const filtered = events.filter(
     (e) =>
@@ -21,11 +22,18 @@ export default function EventsPage() {
         e.couple.toLowerCase().includes(query.toLowerCase()))
   )
 
+  // Chronological by default, so the next wedding is first.
+  const sorted = filtered.slice().sort((a, b) => {
+    if (sort === 'name') return a.name.localeCompare(b.name)
+    const diff = a.dateKey.localeCompare(b.dateKey)
+    return sort === 'latest' ? -diff : diff
+  })
+
   return (
     <div>
-      <Breadcrumbs items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Upcoming Events' }]} />
+      <Breadcrumbs items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Events' }]} />
       <PageHeader
-        title="Upcoming events"
+        title="Events"
         lead="Every wedding and wedding-weekend event on the books: the wedding itself, rehearsal dinners, engagement parties, showers, welcome parties and brunches."
         actions={
           <Button href="/events/new" variant="primary" size="md">
@@ -63,6 +71,21 @@ export default function EventsPage() {
             ))}
           </select>
         </div>
+        <div>
+          <label htmlFor="event-sort" className="mb-1 block text-xs font-semibold text-ink-2">
+            Sort by
+          </label>
+          <select
+            id="event-sort"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="rounded-box border border-line bg-surface px-2.5 py-1.5 text-sm focus:border-accent focus:outline-none"
+          >
+            <option value="soonest">Date: soonest first</option>
+            <option value="latest">Date: latest first</option>
+            <option value="name">Name: A to Z</option>
+          </select>
+        </div>
       </div>
 
       {filtered.length === 0 ? (
@@ -84,10 +107,11 @@ export default function EventsPage() {
         />
       ) : (
         <div className="grid gap-2.5 sm:grid-cols-2">
-          {filtered.map((event) => (
+          {sorted.map((event, i) => (
             <EventCard
               key={event.id}
               event={event}
+              guide={i === 0}
               coverage={coverageForEvent(event.id)}
               attentionCount={attentionForEvent(event.id).length}
             />

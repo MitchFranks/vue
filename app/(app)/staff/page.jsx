@@ -36,7 +36,7 @@ export default function StaffDirectoryPage() {
         title="Staff directory"
         lead={`${staff.length} people. Open anyone to see their availability, their shifts, and what they have accepted or declined.`}
         actions={
-          <Button href="/staffing/team" variant="primary" size="md">
+          <Button href="/staffing/team" variant="primary" size="md" data-guide="view-availability">
             <Icon name="clock" size={14} />
             View availability
           </Button>

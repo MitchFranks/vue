@@ -21,6 +21,8 @@ import { Button, Icon } from './ui/primitives'
 import { ToastHost } from './ui/domain'
 import { useOnboarding } from './onboarding/OnboardingProvider'
 import { AccountMenu } from './AccountMenu'
+import { PlannerGuide, clearPlannerGuide } from './onboarding/PlannerGuide'
+import { EventsGuide, clearEventsGuide } from './onboarding/EventsGuide'
 
 const NAV = [
   {
@@ -28,8 +30,8 @@ const NAV = [
     items: [
       { href: '/dashboard', label: 'Dashboard', icon: 'home', exact: true },
       { href: '/up-next', label: 'Up Next', icon: 'check', badge: 'attention', onboarding: 'up-next' },
-      { href: '/calendar', label: 'Calendar', icon: 'calendar' },
-      { href: '/events', label: 'Upcoming Events', icon: 'list' }
+      { href: '/calendar', label: 'Calendar', icon: 'calendar', onboarding: 'calendar' },
+      { href: '/events', label: 'Events', icon: 'list' }
     ]
   },
   {
@@ -41,26 +43,18 @@ const NAV = [
         match: '/staffing',
         label: 'Staffing Planner',
         icon: 'users',
-        badge: 'openPositions'
-      },
-      // Parallel changeover: a second, independently researched and built
-      // Staff Planner so the two can be compared side by side. Lives under
-      // /staffing2 and does not touch the first one.
-      {
-        href: '/staffing2',
-        match: '/staffing2',
-        label: 'Staffing Planner 2',
-        icon: 'users'
+        badge: 'openPositions',
+        onboarding: 'staffing'
       }
     ]
   },
   {
     heading: 'People & Comms',
     items: [
-      { href: '/staff', label: 'Staff Directory', icon: 'user' },
-      { href: '/messages', label: 'Messages', icon: 'mail', badge: 'messages' },
+      { href: '/staff', label: 'Staff Directory', icon: 'user', onboarding: 'staff' },
+      { href: '/messages', label: 'Messages', icon: 'mail', badge: 'messages', onboarding: 'messages' },
       { href: '/couples', label: 'Couples', icon: 'users' },
-      { href: '/vendors', label: 'Vendors', icon: 'truck' }
+      { href: '/vendors', label: 'Vendors', icon: 'truck', onboarding: 'vendors' }
     ]
   }
 ]
@@ -69,7 +63,7 @@ export function AppShell({ children }) {
   const pathname = usePathname()
   const [navOpen, setNavOpen] = useState(false)
   const { attention, openPositions, messageList, toasts, dismissToast, reset } = useStore()
-  const { reset: resetGuide, step: guideStep, finish: finishGuide } = useOnboarding()
+  const { reset: resetGuide, guideTarget } = useOnboarding()
 
   const unreplied = messageList.filter((m) => m.needsReply && !m.replied).length
   const counts = { attention: attention.filter((a) => a.tone === 'urgent').length, openPositions: openPositions.length, messages: unreplied }
@@ -154,7 +148,7 @@ export function AppShell({ children }) {
                   {group.items.map((item) => {
                     const active = item.href === activeHref
                     // Step 3 of the first-run guide: the Up Next item wears the user's colour.
-                    const guided = guideStep === 'coach' && item.onboarding === 'up-next' && !active
+                    const guided = guideTarget && item.onboarding === guideTarget && !active
                     const count = item.badge ? counts[item.badge] : 0
                     return (
                       <li key={item.href}>
@@ -162,7 +156,6 @@ export function AppShell({ children }) {
                           href={item.href}
                           aria-current={active ? 'page' : undefined}
                           data-onboarding={item.onboarding}
-                          onClick={guideStep === 'coach' && item.onboarding === 'up-next' ? finishGuide : undefined}
                           className={cx(
                             'flex items-center gap-2.5 rounded-full py-2.5 pl-3.5 pr-3 text-[13px] transition-colors',
                             active
@@ -193,7 +186,7 @@ export function AppShell({ children }) {
             ))}
 
             <div className="mt-6 border-t border-line-soft pt-3">
-              <Button href="/events/new" variant="primary" size="md" className="w-full">
+              <Button href="/events/new" variant="primary" size="md" className="w-full" data-onboarding="new-event">
                 <Icon name="plus" size={13} />
                 New event
               </Button>
@@ -202,6 +195,8 @@ export function AppShell({ children }) {
                 onClick={() => {
                   reset()
                   resetGuide()
+                  clearPlannerGuide()
+                  clearEventsGuide()
                 }}
                 className="mt-2 w-full rounded-full border border-line px-3 py-2 text-[12px] font-medium text-muted transition-colors hover:border-accent-line hover:bg-accent-soft hover:text-accent"
               >
@@ -232,6 +227,8 @@ export function AppShell({ children }) {
       </div>
 
       <ToastHost toasts={toasts} onDismiss={dismissToast} />
+      <PlannerGuide />
+      <EventsGuide />
     </div>
   )
 }

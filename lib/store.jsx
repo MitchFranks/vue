@@ -18,6 +18,7 @@
 // reload) without losing their progress. "Reset prototype" clears it.
 // ---------------------------------------------------------------------------
 
+import { useTimelineVersion } from '@/lib/timelineEdits'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { events, eventById, seedAssignments, blockById, daysOutLabel } from './mock/events.js'
 import { documents, messages, tasks } from './mock/records.js'
@@ -38,7 +39,7 @@ export function parsePositionId(positionId) {
   )
   return { blockId, role: requirement ? requirement.role : null }
 }
-const STORAGE_KEY = 'vue-lowfi-prototype-v3'
+const STORAGE_KEY = 'vue-lowfi-prototype-v5'
 
 function initialState() {
   return {
@@ -51,7 +52,7 @@ function initialState() {
     repliedMessageIds: [],
     readMessageIds: [],
     signedDocumentIds: [],
-    publishedEventIds: ['johnson', 'taylor'],
+    publishedEventIds: ['evt-1001'],
     // positionId -> { staffIds }  who an open position was offered to
     offers: {},
     dismissedAttentionIds: [],
@@ -271,7 +272,8 @@ export function StoreProvider({ children }) {
 
   // ---- derived: assignments ----------------------------------------------------
 
-  const assignmentList = useMemo(() => Object.values(state.assignments), [state.assignments])
+  const timelineVersion = useTimelineVersion()
+  const assignmentList = useMemo(() => Object.values(state.assignments), [state.assignments, timelineVersion])
 
   const assignmentsForBlock = useCallback(
     (blockId) => assignmentList.filter((a) => a.blockId === blockId),
@@ -606,6 +608,7 @@ export function StoreProvider({ children }) {
 
 export function useStore() {
   const ctx = useContext(StoreContext)
+  useTimelineVersion() // draw again after a timeline edit
   if (!ctx) throw new Error('useStore must be used inside <StoreProvider>')
   return ctx
 }

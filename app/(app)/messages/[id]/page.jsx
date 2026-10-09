@@ -154,14 +154,14 @@ export default function MessageDetailPage({ params }) {
               </Link>
               <dl className="mt-2 space-y-2">
                 <Field label="Date" value={event.date} />
-                <Field label="Expected guests" value={`${event.expectedGuests}`} />
+                <Field label="Expected guests" value={`${event.guests}`} />
                 <Field label="Spaces" value={event.spaces} />
               </dl>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button href={`/events/${event.id}`} variant="secondary" size="sm">
                   Open event
                 </Button>
-                <Button href={`/events/${event.id}/staffing`} variant="secondary" size="sm">
+                <Button href={`/staffing/${event.id}`} variant="secondary" size="sm">
                   Staffing
                 </Button>
               </div>

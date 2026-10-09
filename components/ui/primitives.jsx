@@ -81,6 +81,9 @@ const PATHS = {
   chevronRight: <path d="m9.5 5.5 7 6.5-7 6.5" />,
   chevronDown: <path d="M5.5 9.5 12 16.5l6.5-7" />,
   plus: <path d="M12 5v14M5 12h14" />,
+  minus: <path d="M5 12h14" />,
+  grip: <path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" strokeWidth="3" />,
+  trash: <path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l.8 12a1.5 1.5 0 0 0 1.5 1.4h6.4a1.5 1.5 0 0 0 1.5-1.4L17.5 7M10 11v5.5M14 11v5.5" />,
   search: (
     <>
       <circle cx="11" cy="11" r="7" />
@@ -289,6 +292,7 @@ export function Tabs({ tabs, active }) {
           <Link
             key={tab.id}
             href={tab.href}
+            data-guide={tab.guide}
             role="tab"
             aria-selected={isActive}
             aria-current={isActive ? 'page' : undefined}

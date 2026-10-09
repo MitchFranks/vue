@@ -1,12 +1,15 @@
-import { StaffTabs } from '@/components/StaffTabs'
+import { Staffing2Provider } from '@/lib/staffing/store'
+import { UndoToast } from '@/components/staffing/UndoToast'
+import { PhoneDrawer } from '@/components/staffing/StaffPhone'
 
-// Every Staff Planner screen sits under the same tab bar, so any screen is one
-// click from any other.
-export default function StaffingLayout({ children }) {
+// Staffing Planner has its own state (key vue-lowfi-staffing2-v1), its own
+// toast with Undo, and the phone drawer that any screen can open.
+export default function Staffing2Layout({ children }) {
   return (
-    <>
-      <StaffTabs />
+    <Staffing2Provider>
       {children}
-    </>
+      <PhoneDrawer />
+      <UndoToast />
+    </Staffing2Provider>
   )
 }

@@ -1,34 +1,41 @@
 'use client'
 
 // ---------------------------------------------------------------------------
-// First-run guide: three steps, then one small win.
+// First-run guide: three standalone steps, then a short flow to the first win.
 //
 //   1/3  Welcome       what Vue is, that the guide is short, that it is skippable
 //   2/3  Your colour   pick an accent; the whole app switches to it live
-//   3/3  Coach-mark    a spotlight on the Up Next menu item, now in their colour
-//   then Up Next       the first item is "Add your couple's names": one field,
-//                      one button, a small celebration, and the couple is real
+//   3/3  What first?   three likely tasks and a "More options" list. The choice
+//                      decides which flow comes next.
+//   then the flow      one or two "click this next" steps (FLOWS in
+//                      lib/onboarding.js), each pointing at the button to click
+//                      with the glowing CoachPopover. The last click ends the
+//                      guide. Choosing "Staff an upcoming wedding" hands over to
+//                      the Staffing Planner guide; "Add my first couple" lands
+//                      on Up Next with the add-couple field focused.
 //
 // Shown once per browser (GUIDE_KEY in localStorage). "Reset prototype data"
-// in the sidebar calls reset() here, which brings the guide back and restores
-// the default colour. Every step can be left with Skip, the close button or Esc,
-// and the app is fully usable afterwards. Replaces the old IntroModal, so a new
-// user only ever sees one pop-up.
+// in the sidebar calls reset() here, which brings the guide back, restores the
+// default colour and returns to the dashboard. Every step can be left with
+// Skip, the close button or Esc, and the app is fully usable afterwards.
 // ---------------------------------------------------------------------------
 
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   ACCENT_VARS,
   DEFAULT_ACCENT,
+  FLOWS,
   GUIDE_KEY,
+  PLANNER_GUIDE_KEY,
+  PLANNER_REPLAY_EVENT,
   THEME_KEY,
   deriveAccent,
   isHex,
   makeCouple
 } from '@/lib/onboarding'
 import { GuideDialog } from './GuideDialog'
-import { CoachMark } from './CoachMark'
+import { CoachPopover } from './CoachPopover'
 
 const OnboardingContext = createContext(null)
 
@@ -58,14 +65,16 @@ function paint(vars) {
 }
 
 export function OnboardingProvider({ children }) {
-  const pathname = usePathname()
   const router = useRouter()
   const [hydrated, setHydrated] = useState(false)
-  // welcome | theme | coach | done | skipped
+  // welcome | theme | choose | flow | done | skipped
   const [step, setStep] = useState(null)
   const [couple, setCouple] = useState(null)
+  // Which first task they chose, and where they are in its flow.
+  const [choice, setChoice] = useState(null)
+  const [flowIndex, setFlowIndex] = useState(0)
   const [accent, setAccentState] = useState(DEFAULT_ACCENT)
-  // One-shot: the user arrived on Up Next from the coach-mark, so focus the field.
+  // One-shot: the user arrived on Up Next from the guide, so focus the field.
   const [arrivedFromGuide, setArrivedFromGuide] = useState(false)
 
   // Read before paint. The inline script in app/layout.jsx already painted the
@@ -78,32 +87,19 @@ export function OnboardingProvider({ children }) {
       setAccentState(theme.hex)
     }
     const guide = readJson(GUIDE_KEY)
-    setStep(guide?.step || 'welcome')
+    // An older save that was mid-way through the old step 3 simply asks again.
+    const saved = guide?.step === 'coach' ? 'choose' : guide?.step
+    const flowOk = saved !== 'flow' || (guide?.choice && FLOWS[guide.choice])
+    setStep(flowOk ? saved || 'welcome' : 'choose')
+    setChoice(flowOk ? guide?.choice || null : null)
+    setFlowIndex(flowOk ? guide?.flowIndex || 0 : 0)
     setCouple(guide?.couple || null)
     setHydrated(true)
   }, [])
 
   useEffect(() => {
-    if (hydrated) writeJson(GUIDE_KEY, { step, couple })
-  }, [hydrated, step, couple])
-
-  // The guide ENDS the moment the user takes the final step: clicking the
-  // spotlighted Up Next item or the popover's button calls finish(). As a
-  // safety net, arriving at Up Next while on step 3 (a path change, so a
-  // trailing slash "/up-next/" counts) ends it too. Done is saved at once, so
-  // it can never come back on reload.
-  const finish = useCallback(() => {
-    setArrivedFromGuide(true)
-    setStep((s) => (s === 'coach' ? 'done' : s))
-  }, [])
-
-  const lastPath = useRef(pathname)
-  useEffect(() => {
-    const was = lastPath.current
-    lastPath.current = pathname
-    const isUpNext = (p) => p?.replace(/\/+$/, '') === '/up-next'
-    if (step === 'coach' && isUpNext(pathname) && !isUpNext(was)) finish()
-  }, [step, pathname, finish])
+    if (hydrated) writeJson(GUIDE_KEY, { step, couple, choice, flowIndex })
+  }, [hydrated, step, couple, choice, flowIndex])
 
   const setAccent = useCallback((hex) => {
     if (!isHex(hex)) return
@@ -119,21 +115,64 @@ export function OnboardingProvider({ children }) {
     setAccentState(DEFAULT_ACCENT)
   }, [])
 
-  /** Settings: show the welcome guide again. Keeps their colour and couple. */
+  /** Settings: show the welcome guide again, from the dashboard. Keeps their colour and couple. */
   const replay = useCallback(() => {
     setArrivedFromGuide(false)
+    setChoice(null)
+    setFlowIndex(0)
     setStep('welcome')
-  }, [])
+    router.push('/dashboard')
+  }, [router])
 
   const skip = useCallback(() => setStep('skipped'), [])
   const start = useCallback(() => setStep('theme'), [])
 
   const finishTheme = useCallback(() => {
-    setStep('coach')
-    // The Up Next menu item lives in the product sidebar. The welcome screen
-    // has no sidebar, so step 3 takes the user into the product first.
+    setStep('choose')
+    // The menu items the flows point at live in the product sidebar. The
+    // welcome screen has no sidebar, so step 3 takes the user into the product.
     if (!document.querySelector('[data-onboarding="up-next"]')) router.push('/dashboard')
   }, [router])
+
+  const back = useCallback(() => setStep((s) => (s === 'choose' ? 'theme' : s === 'theme' ? 'welcome' : s)), [])
+
+  /** Step 3: they picked what to do first. Start that flow. */
+  const choose = useCallback((id) => {
+    if (!FLOWS[id]) return
+    // The planner has its own guide; make sure it shows even if it was seen before.
+    if (id === 'staffing') {
+      try {
+        window.localStorage.removeItem(PLANNER_GUIDE_KEY)
+      } catch {
+        /* blocked storage */
+      }
+      window.dispatchEvent(new Event(PLANNER_REPLAY_EVENT))
+    }
+    setChoice(id)
+    setFlowIndex(0)
+    setStep('flow')
+  }, [])
+
+  const flow = step === 'flow' && choice ? FLOWS[choice] : null
+  const flowStep = flow ? flow[Math.min(flowIndex, flow.length - 1)] : null
+
+  // The target was clicked: next step of the flow, or the end of the guide.
+  const advance = useCallback(() => {
+    if (!flow) return
+    if (flowIndex < flow.length - 1) {
+      setFlowIndex((i) => i + 1)
+      return
+    }
+    // The guide ends the instant the last button is clicked, and is saved as
+    // done at once so it can never come back on reload.
+    if (choice === 'couple') setArrivedFromGuide(true)
+    setStep('done')
+  }, [flow, flowIndex, choice])
+
+  const flowBack = useCallback(() => {
+    if (flowIndex > 0) setFlowIndex((i) => i - 1)
+    else setStep('choose')
+  }, [flowIndex])
 
   const addCouple = useCallback((names) => {
     const record = makeCouple(names)
@@ -150,42 +189,63 @@ export function OnboardingProvider({ children }) {
     paint(null)
     setAccentState(DEFAULT_ACCENT)
     setCouple(null)
+    setChoice(null)
+    setFlowIndex(0)
     setArrivedFromGuide(false)
     setStep('welcome')
-  }, [])
+    router.push('/dashboard')
+  }, [router])
+
+  // Which sidebar item the guide is pointing at, so it can wear the user's colour.
+  const guideTarget = flowStep?.target.match(/data-onboarding="([^"]+)"/)?.[1] || null
 
   const value = useMemo(
     () => ({
       hydrated,
       step,
+      choice,
+      guideTarget,
       accent,
       couple,
       arrivedFromGuide,
       setAccent,
       resetAccent,
       replay,
-      finish,
       addCouple,
       consumeArrival,
       skip,
       reset
     }),
-    [hydrated, step, accent, couple, arrivedFromGuide, setAccent, resetAccent, replay, finish, addCouple, consumeArrival, skip, reset]
+    [hydrated, step, choice, guideTarget, accent, couple, arrivedFromGuide, setAccent, resetAccent, replay, addCouple, consumeArrival, skip, reset]
   )
 
   return (
     <OnboardingContext.Provider value={value}>
       {children}
-      {hydrated && (step === 'welcome' || step === 'theme') && (
+      {hydrated && (step === 'welcome' || step === 'theme' || step === 'choose') && (
         <GuideDialog
           step={step}
           accent={accent}
           onAccent={setAccent}
           onNext={step === 'welcome' ? start : finishTheme}
+          onBack={back}
+          onChoose={choose}
           onSkip={skip}
         />
       )}
-      {hydrated && step === 'coach' && <CoachMark onSkip={skip} onFinish={finish} />}
+      {hydrated && flowStep && (
+        <CoachPopover
+          key={`${choice}-${flowIndex}`}
+          target={flowStep.target}
+          n={flowIndex + 1}
+          total={flow.length}
+          title={flowStep.title}
+          body={flowStep.body}
+          onBack={flowBack}
+          onSkip={skip}
+          onTargetClick={advance}
+        />
+      )}
     </OnboardingContext.Provider>
   )
 }

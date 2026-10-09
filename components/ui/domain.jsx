@@ -25,14 +25,15 @@ import { Avatar, Button, Card, Icon, ListRow, StatusBadge } from './primitives'
  * is shown by order and wording, so the list informs without alarming.
  */
 
-export function UpNextItem({ item, compact = false }) {
+export function UpNextItem({ item, compact = false, first = false }) {
   const urgent = item.tone === 'urgent'
   return (
     <article
       className={cx(
         'border-l-[3px] bg-surface transition-colors',
         urgent ? 'border-l-accent' : item.tone === 'warn' ? 'border-l-warn' : 'border-l-line',
-        'border-y border-r border-line-soft hover:bg-wash/40'
+        'border-y border-r border-line-soft hover:bg-wash/40',
+        first && 'ring-2 ring-inset ring-accent'
       )}
     >
       <div className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-start sm:gap-4">
@@ -81,10 +82,11 @@ export function UpNextItem({ item, compact = false }) {
 
 /* -------------------------------------------------------------- EventCard -- */
 
-export function EventCard({ event, coverage, attentionCount = 0 }) {
+export function EventCard({ event, coverage, attentionCount = 0, guide = false }) {
   return (
     <Link
       href={`/events/${event.id}`}
+      data-guide={guide ? 'events-first' : undefined}
       className="surface-card block border border-transparent px-5 py-5 transition-all duration-200 hover:-translate-y-[2px] hover:border-accent-line"
     >
       <div className="flex items-start justify-between gap-3">
@@ -96,7 +98,7 @@ export function EventCard({ event, coverage, attentionCount = 0 }) {
             </span>
           </div>
           <p className="mt-1 text-xs text-muted">
-            {event.dateShort} · {event.headline} · {event.expectedGuests} expected
+            {event.dateShort} · {event.headline} · {event.guests} expected
           </p>
           <p className="mt-0.5 text-[11px] text-faint">{event.spaces}</p>
         </div>
@@ -136,7 +138,7 @@ export function EventRow({ event, coverage, attentionCount = 0 }) {
     <ListRow
       href={`/events/${event.id}`}
       title={event.name}
-      sub={`${event.dateShort} · ${event.type} · ${event.expectedGuests} expected`}
+      sub={`${event.dateShort} · ${event.type} · ${event.guests} expected`}
       meta={event.spaces}
       trailing={
         <div className="hidden items-center gap-2 sm:flex">
@@ -193,7 +195,7 @@ export function AssignmentCard({ assignment, event, block, onAccept, onDecline, 
     <div className="border-b border-line-soft px-3 py-2.5 last:border-b-0">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <Link href={`/events/${event.id}/staffing`} className="text-sm font-medium text-ink hover:text-accent">
+          <Link href={`/staffing/${event.id}`} className="text-sm font-medium text-ink hover:text-accent">
             {event.name}
           </Link>
           <p className="mt-0.5 text-xs text-muted">

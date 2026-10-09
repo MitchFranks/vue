@@ -60,7 +60,7 @@ export default function DashboardPage() {
           sub="Couple and vendor messages"
           href="/messages"
         />
-        <MetricTile label="Open tasks" value={openTasks} sub="Across all events" href="/events/johnson/tasks" />
+        <MetricTile label="Open tasks" value={openTasks} sub="Across all events" href="/events/evt-1001/tasks" />
       </div>
 
       {/* ---- THE up-next block. Visually dominant by design. ---- */}
@@ -88,11 +88,11 @@ export default function DashboardPage() {
           </Card>
         ) : (
           <div className="overflow-hidden rounded-box border border-line">
-            {urgent.slice(0, 3).map((item) => (
-              <UpNextItem key={item.id} item={item} />
+            {urgent.slice(0, 3).map((item, i) => (
+              <UpNextItem key={item.id} item={item} first={i === 0} />
             ))}
-            {soon.slice(0, 2).map((item) => (
-              <UpNextItem key={item.id} item={item} compact />
+            {soon.slice(0, 2).map((item, i) => (
+              <UpNextItem key={item.id} item={item} compact first={urgent.length === 0 && i === 0} />
             ))}
           </div>
         )}
@@ -133,7 +133,7 @@ export default function DashboardPage() {
               return (
                 <Link
                   key={event.id}
-                  href={`/events/${event.id}/staffing`}
+                  href={`/staffing/${event.id}`}
                   className="flex items-center gap-3 border-b border-line-soft px-3 py-2.5 last:border-b-0 hover:bg-wash-deep"
                 >
                   <div className="min-w-0 flex-1">

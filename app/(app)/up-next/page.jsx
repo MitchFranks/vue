@@ -129,9 +129,9 @@ export default function UpNextPage() {
                 Do first ({urgent.length})
               </h2>
               <div className="overflow-hidden rounded-box border border-line">
-                {urgent.map((item) => (
+                {urgent.map((item, i) => (
                   <div key={item.id} className="relative">
-                    <UpNextItem item={item} />
+                    <UpNextItem item={item} first={i === 0} />
                     <button
                       type="button"
                       onClick={() => {
@@ -155,8 +155,8 @@ export default function UpNextPage() {
                 Coming up ({rest.length})
               </h2>
               <div className="overflow-hidden rounded-box border border-line">
-                {rest.map((item) => (
-                  <UpNextItem key={item.id} item={item} />
+                {rest.map((item, i) => (
+                  <UpNextItem key={item.id} item={item} first={urgent.length === 0 && i === 0} />
                 ))}
               </div>
             </section>

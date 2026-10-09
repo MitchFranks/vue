@@ -1,6 +1,7 @@
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { StoreProvider } from '@/lib/store'
+import { TimelineEditsProvider } from '@/lib/timelineEdits'
 import { THEME_BOOT_SCRIPT } from '@/lib/onboarding'
 import { OnboardingProvider } from '@/components/onboarding/OnboardingProvider'
 
@@ -31,9 +32,11 @@ export default function RootLayout({ children }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>
       <body>
-        <StoreProvider>
-          <OnboardingProvider>{children}</OnboardingProvider>
-        </StoreProvider>
+        <TimelineEditsProvider>
+          <StoreProvider>
+            <OnboardingProvider>{children}</OnboardingProvider>
+          </StoreProvider>
+        </TimelineEditsProvider>
       </body>
     </html>
   )

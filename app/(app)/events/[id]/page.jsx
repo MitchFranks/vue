@@ -1,179 +1,124 @@
 'use client'
 
-// SCREEN 5 — Event Overview. The summary that points at every other tab.
+// SCREEN 5 — Event Up Next.
+//
+// The same queue as the Up Next page, scoped to this one event: what to do
+// first, and what is coming up, for this wedding only.
 
-import { use } from 'react'
-import Link from 'next/link'
-import { useStore, hourLabel } from '@/lib/store'
-import { eventById } from '@/lib/mock/events'
-import { money, payments, timelines } from '@/lib/mock/records'
-import { Button, Card, Icon, StatusBadge } from '@/components/ui/primitives'
+import { use, useState } from 'react'
+import { useStore } from '@/lib/store'
+import { Button, Card, EmptyState, Icon } from '@/components/ui/primitives'
 import { UpNextItem } from '@/components/ui/domain'
 
-export default function EventOverviewPage({ params }) {
-  const { id } = use(params)
-  const event = eventById(id)
-  const { attentionForEvent, coverageForEvent, taskList, messageList, documentList } = useStore()
+const KINDS = [
+  { id: 'all', label: 'Everything' },
+  { id: 'staffing', label: 'Staffing' },
+  { id: 'message', label: 'Messages' },
+  { id: 'task', label: 'Tasks' },
+  { id: 'document', label: 'Documents' }
+]
 
-  const attention = attentionForEvent(id)
-  const coverage = coverageForEvent(id)
-  const tasks = taskList.filter((t) => t.eventId === id)
-  const openTasks = tasks.filter((t) => !t.done)
-  const pay = payments[id]
-  const timeline = timelines[id] || []
-  const docs = documentList.filter((d) => d.eventId === id)
-  const msgs = messageList.filter((m) => m.eventId === id)
+export default function EventUpNextPage({ params }) {
+  const { id } = use(params)
+  const { attentionForEvent, dismissAttention, toast } = useStore()
+  const [kind, setKind] = useState('all')
+
+  const all = attentionForEvent(id)
+  const filtered = all.filter((a) => kind === 'all' || a.kind === kind)
+  const urgent = filtered.filter((a) => a.tone === 'urgent')
+  const rest = filtered.filter((a) => a.tone !== 'urgent')
 
   return (
-    <div className="space-y-4">
-      {attention.length > 0 && (
-        <section>
-          <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-urgent">
-            <Icon name="alert" size={15} />
-            Up next on this event ({attention.length})
-          </h2>
-          <div className="overflow-hidden rounded-box border border-line">
-            {attention.map((item) => (
-              <UpNextItem key={item.id} item={item} />
-            ))}
-          </div>
-        </section>
+    <div>
+      {all.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-1.5">
+          {KINDS.map((k) => {
+            const n = k.id === 'all' ? all.length : all.filter((a) => a.kind === k.id).length
+            if (k.id !== 'all' && n === 0) return null
+            return (
+              <button
+                key={k.id}
+                type="button"
+                onClick={() => setKind(k.id)}
+                aria-pressed={kind === k.id}
+                className={
+                  kind === k.id
+                    ? 'rounded-box border border-accent bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent'
+                    : 'rounded-box border border-line bg-surface px-2.5 py-1 text-xs text-ink-2 hover:bg-wash-deep'
+                }
+              >
+                {k.label} ({n})
+              </button>
+            )
+          })}
+        </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card
-          title="Staffing"
-          icon="users"
-          subtitle={`${coverage.filled} of ${coverage.required} roles confirmed`}
-          tone={coverage.complete ? undefined : 'urgent'}
-          action={<Button href={`/events/${id}/staffing`} size="sm" variant="secondary">Open</Button>}
-        >
-          <div className="space-y-2">
-            {event.blocks.map((block) => {
-              const need = block.requirements.reduce((n, x) => n + x.count, 0)
-              return (
-                <div key={block.id} className="flex items-center justify-between gap-2 text-sm">
-                  <span className="text-ink-2">
-                    {block.name}{' '}
-                    <span className="text-xs text-faint">
-                      {hourLabel(block.start)}–{hourLabel(block.end)}
-                    </span>
-                  </span>
-                  <span className="text-xs text-muted">{need} needed</span>
-                </div>
-              )
-            })}
-          </div>
-          <div className="mt-3 border-t border-line-soft pt-2">
-            {coverage.complete ? (
-              <StatusBadge tone="done">Every timeline block is staffed</StatusBadge>
-            ) : (
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge tone="warn">Needs {coverage.short} more</StatusBadge>
-                <Link href={`/staffing/${id}`} className="text-xs text-accent underline-offset-2 hover:underline">
-                  View open positions
-                </Link>
-              </div>
-            )}
-          </div>
-        </Card>
-
-        <Card
-          title="Tasks"
+      {all.length === 0 ? (
+        <EmptyState
+          title="All caught up"
+          body="Nothing needs you on this event right now. New items appear here as soon as something changes."
           icon="check"
-          subtitle={`${openTasks.length} open · ${tasks.length - openTasks.length} complete`}
-          action={<Button href={`/events/${id}/tasks`} size="sm" variant="secondary">Open</Button>}
-        >
-          {tasks.length === 0 ? (
-            <p className="text-sm text-muted">No tasks on this event yet.</p>
-          ) : (
-            <ul className="space-y-1.5">
-              {tasks.slice(0, 4).map((t) => (
-                <li key={t.id} className="flex items-start gap-2 text-sm">
-                  <Icon
-                    name={t.done ? 'check' : 'dash'}
-                    size={14}
-                    className={t.done ? 'mt-1 text-done' : 'mt-1 text-faint'}
-                  />
-                  <span className={t.done ? 'text-muted line-through' : 'text-ink-2'}>{t.title}</span>
-                </li>
-              ))}
-            </ul>
+        />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          title="Nothing in this view"
+          body="Switch back to Everything to see the rest."
+          action={
+            <Button variant="secondary" size="sm" onClick={() => setKind('all')}>
+              Show everything
+            </Button>
+          }
+        />
+      ) : (
+        <>
+          {urgent.length > 0 && (
+            <section className="mb-5">
+              <h2 className="mb-2 flex items-center gap-2 text-sm font-bold text-accent">
+                <Icon name="check" size={15} />
+                Do first ({urgent.length})
+              </h2>
+              <div className="overflow-hidden rounded-box border border-line">
+                {urgent.map((item, i) => (
+                  <div key={item.id} className="relative">
+                    <UpNextItem item={item} first={i === 0} />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        dismissAttention(item.id)
+                        toast('Moved out of Up Next.')
+                      }}
+                      className="absolute bottom-2 right-3 rounded-full border border-line bg-surface px-2.5 py-0.5 text-[11px] font-medium text-muted hover:bg-accent-soft hover:text-accent"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
           )}
-        </Card>
 
-        {pay && (
-          <Card
-            title="Payments"
-            icon="dollar"
-            subtitle={`${money(pay.paid)} of ${money(pay.total)} collected`}
-            action={<Button href={`/events/${id}/payments`} size="sm" variant="secondary">Open</Button>}
-          >
-            <div className="h-2 w-full overflow-hidden rounded-pill border border-line bg-wash-deep">
-              <div className="h-full bg-done" style={{ width: `${(pay.paid / pay.total) * 100}%` }} />
-            </div>
-            <p className="mt-2 text-sm text-ink-2">
-              Outstanding: <strong>{money(pay.total - pay.paid)}</strong>
-            </p>
-          </Card>
-        )}
-
-        <Card
-          title="Run of show"
-          icon="clock"
-          subtitle={`${timeline.length} entries`}
-          action={<Button href={`/events/${id}/timeline`} size="sm" variant="secondary">Open</Button>}
-        >
-          <ul className="space-y-1.5">
-            {timeline.slice(0, 4).map((t) => (
-              <li key={t.id} className="flex gap-2 text-sm">
-                <span className="w-20 shrink-0 text-xs font-medium text-ink-2">{t.time}</span>
-                <span className="text-ink-2">{t.title}</span>
-              </li>
-            ))}
-          </ul>
-        </Card>
-
-        <Card
-          title="Messages"
-          icon="mail"
-          subtitle={`${msgs.length} filed to this event`}
-          action={<Button href={`/events/${id}/messages`} size="sm" variant="secondary">Open</Button>}
-        >
-          {msgs.length === 0 ? (
-            <p className="text-sm text-muted">Nothing filed yet.</p>
-          ) : (
-            <ul className="space-y-1.5 text-sm">
-              {msgs.slice(0, 3).map((m) => (
-                <li key={m.id} className="flex items-center justify-between gap-2">
-                  <Link href={`/messages/${m.id}`} className="truncate text-ink-2 hover:text-accent">
-                    {m.from}: {m.subject}
-                  </Link>
-                  {m.needsReply && !m.replied && <StatusBadge tone="urgent" size="sm">Reply</StatusBadge>}
-                </li>
-              ))}
-            </ul>
+          {rest.length > 0 && (
+            <section>
+              <h2 className="mb-2 flex items-center gap-2 text-sm font-bold text-muted">
+                <Icon name="clock" size={15} />
+                Coming up ({rest.length})
+              </h2>
+              <div className="overflow-hidden rounded-box border border-line">
+                {rest.map((item, i) => (
+                  <UpNextItem key={item.id} item={item} first={urgent.length === 0 && i === 0} />
+                ))}
+              </div>
+            </section>
           )}
-        </Card>
+        </>
+      )}
 
-        <Card
-          title="Documents"
-          icon="file"
-          subtitle={`${docs.length} files`}
-          action={<Button href={`/events/${id}/documents`} size="sm" variant="secondary">Open</Button>}
-        >
-          <ul className="space-y-1.5 text-sm">
-            {docs.slice(0, 4).map((d) => (
-              <li key={d.id} className="flex items-center justify-between gap-2">
-                <span className="truncate text-ink-2">{d.name}</span>
-                <StatusBadge tone={d.tone} size="sm">
-                  {d.status}
-                </StatusBadge>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      </div>
+      <Card className="mt-5" title="About this list" icon="info">
+        <p className="text-xs text-muted">
+          These are the items from your Up Next page that belong to this event. Dismissing one here moves it out of Up Next everywhere.
+        </p>
+      </Card>
     </div>
   )
 }
