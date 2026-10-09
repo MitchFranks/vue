@@ -87,7 +87,7 @@ export default function DashboardPage() {
             </p>
           </Card>
         ) : (
-          <div className="overflow-hidden rounded-box border border-line">
+          <div className="divide-y divide-line overflow-hidden rounded-md border border-line bg-surface shadow-raised">
             {urgent.slice(0, 3).map((item, i) => (
               <UpNextItem key={item.id} item={item} first={i === 0} />
             ))}

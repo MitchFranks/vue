@@ -128,7 +128,7 @@ export default function UpNextPage() {
                 <Icon name="check" size={15} />
                 Do first ({urgent.length})
               </h2>
-              <div className="overflow-hidden rounded-box border border-line">
+              <div className="divide-y divide-line overflow-hidden rounded-md border border-line bg-surface shadow-raised">
                 {urgent.map((item, i) => (
                   <div key={item.id} className="relative">
                     <UpNextItem item={item} first={i === 0} />
@@ -154,7 +154,7 @@ export default function UpNextPage() {
                 <Icon name="clock" size={15} />
                 Coming up ({rest.length})
               </h2>
-              <div className="overflow-hidden rounded-box border border-line">
+              <div className="divide-y divide-line overflow-hidden rounded-md border border-line bg-surface shadow-raised">
                 {rest.map((item, i) => (
                   <UpNextItem key={item.id} item={item} first={urgent.length === 0 && i === 0} />
                 ))}

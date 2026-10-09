@@ -8,16 +8,20 @@
 //
 // SIMILARITY  One component per job, so anything with the same function looks
 //             identical everywhere in the product.
-// SIGNIFIERS  Buttons look raised and bordered at rest, not only on hover.
+// SIGNIFIERS  Buttons are filled or bordered at rest, not only on hover.
 // NEVER COLOUR ALONE  StatusBadge always pairs a colour with a glyph and a word.
+// QUIET BY DEFAULT  Ink on surface. Colour only for status, selection and focus.
+//
+// The rules behind every class here are in docs/STYLE-GUIDE.md.
 // ---------------------------------------------------------------------------
 
 import Link from 'next/link'
 import { cx } from '@/lib/cx'
 
 /* ------------------------------------------------------------------ Icon -- */
-// Deliberately simple monochrome glyphs — a low-fidelity prototype should not
-// look like it has a bespoke icon set.
+// One outline set: 1.5px stroke on a 24px grid, drawn in the current text
+// colour. Status icons have fixed jobs: alert = act now, clock = coming up,
+// check = handled.
 
 const PATHS = {
   alert: <path d="M12 3.6 2.8 19.6h18.4L12 3.6Zm0 5.8v4.4m0 3h.01" />,
@@ -118,7 +122,7 @@ export function Icon({ name, size = 16, className = '' }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
@@ -130,20 +134,21 @@ export function Icon({ name, size = 16, className = '' }) {
 }
 
 /* ---------------------------------------------------------------- Button -- */
+// Every action is one of these. `primary` (ink fill) is the one action a
+// region exists for: one per region. Buttons never take a status colour,
+// except `danger`, whose text says the action destroys something.
 
-// Pill-shaped. Filled accent for the one primary action on a screen, soft
-// outline for everything else. Press lifts 2px up, then settles.
 const BUTTON_VARIANTS = {
-  primary: 'bg-accent text-on-accent border-accent shadow-pop hover:bg-accent-dark',
-  secondary: 'bg-surface text-ink border-line hover:border-accent-line hover:bg-accent-soft',
-  danger: 'bg-surface text-urgent border-urgent-line hover:bg-urgent-soft',
-  ghost: 'bg-transparent text-accent border-transparent hover:bg-accent-soft'
+  primary: 'border-transparent bg-ink text-on-ink hover:bg-ink/85',
+  secondary: 'border-line-strong bg-surface text-ink hover:bg-surface-sunken',
+  danger: 'border-line-strong bg-surface text-status-now hover:bg-status-now-soft',
+  ghost: 'border-transparent bg-transparent text-ink hover:bg-surface-sunken'
 }
 
 const BUTTON_SIZES = {
-  sm: 'px-3.5 py-1.5 text-[12px] gap-1.5',
-  md: 'px-5 py-2.5 text-[13px] gap-2',
-  lg: 'px-7 py-3.5 text-[14px] gap-2.5'
+  sm: 'h-8 px-3 text-small gap-1.5',
+  md: 'h-9 px-4 text-small gap-2',
+  lg: 'h-11 px-5 text-body gap-2'
 }
 
 export function Button({
@@ -157,9 +162,9 @@ export function Button({
   ...rest
 }) {
   const cls = cx(
-    'inline-flex items-center justify-center rounded-full border font-semibold',
-    'transition-all duration-200 hover:-translate-y-[2px] active:translate-y-0',
-    'disabled:opacity-40 disabled:hover:translate-y-0',
+    'inline-flex items-center justify-center whitespace-nowrap rounded-sm border font-medium',
+    'transition-[background-color,border-color,transform] duration-150 ease-calm active:translate-y-px',
+    'disabled:pointer-events-none disabled:opacity-50',
     BUTTON_VARIANTS[variant],
     BUTTON_SIZES[size],
     className
@@ -179,17 +184,21 @@ export function Button({
 }
 
 /* ----------------------------------------------------------- StatusBadge -- */
-// NEVER COLOUR ALONE: tone -> {colour, glyph, default label}. Callers may pass
-// their own text but they can never drop the glyph.
+// The triage language. NEVER COLOUR ALONE: tone -> {colours, glyph, default
+// label}. Callers may pass their own words but can never drop the glyph.
+//   urgent   status-now    act today or it slips
+//   warn     status-soon   coming up this week
+//   done     status-clear  handled or on track
+//   pending / info / empty  neutral: plain information, waiting, nothing yet
 
 const TONES = {
-  urgent: { cls: 'bg-urgent-soft text-urgent border-urgent-line', icon: 'alert', label: 'Urgent' },
-  warn: { cls: 'bg-warn-soft text-warn border-warn-line', icon: 'clock', label: 'Due soon' },
-  pending: { cls: 'bg-pending-soft text-pending border-pending-line', icon: 'clock', label: 'Pending' },
-  done: { cls: 'bg-done-soft text-done border-done-line', icon: 'check', label: 'Confirmed' },
-  info: { cls: 'bg-info-soft text-info border-info-line', icon: 'info', label: 'Info' },
-  declined: { cls: 'bg-urgent-soft text-urgent border-urgent-line', icon: 'x', label: 'Declined' },
-  empty: { cls: 'bg-wash-deep text-muted border-line', icon: 'dash', label: 'Unassigned' }
+  urgent: { cls: 'bg-status-now-soft text-status-now', icon: 'alert', label: 'Urgent' },
+  warn: { cls: 'bg-status-soon-soft text-status-soon', icon: 'clock', label: 'Due soon' },
+  pending: { cls: 'bg-surface-sunken text-ink-muted', icon: 'clock', label: 'Pending' },
+  done: { cls: 'bg-status-clear-soft text-status-clear', icon: 'check', label: 'Confirmed' },
+  info: { cls: 'bg-surface-sunken text-ink-muted', icon: 'info', label: 'Info' },
+  declined: { cls: 'bg-status-now-soft text-status-now', icon: 'x', label: 'Declined' },
+  empty: { cls: 'bg-surface-sunken text-ink-muted', icon: 'dash', label: 'Unassigned' }
 }
 
 export function StatusBadge({ tone = 'info', children, size = 'md', className = '' }) {
@@ -197,56 +206,53 @@ export function StatusBadge({ tone = 'info', children, size = 'md', className = 
   return (
     <span
       className={cx(
-        'inline-flex items-center gap-1.5 rounded-full border font-semibold whitespace-nowrap',
-        size === 'sm' ? 'px-2.5 py-0.5 text-[11px]' : 'px-3 py-1 text-[12px]',
+        'inline-flex items-center gap-1 whitespace-nowrap rounded-full text-label font-medium',
+        size === 'sm' ? 'h-5 px-2' : 'h-6 pl-2 pr-2.5',
         t.cls,
         className
       )}
     >
-      <Icon name={t.icon} size={size === 'sm' ? 11 : 12} />
+      <Icon name={t.icon} size={size === 'sm' ? 12 : 13} />
       {children || t.label}
     </span>
   )
 }
 
 /* ------------------------------------------------------------------ Card -- */
-// COMMON REGION: one card = one subject, always inside a visible boundary.
+// COMMON REGION: one card = one subject inside a hairline boundary. The
+// border never takes a status colour; urgency lives in the rows, not the frame.
 
-export function Card({ title, subtitle, icon, action, children, tone, className = '', bodyClassName = '' }) {
+export function Card({ title, subtitle, icon, action, children, className = '', bodyClassName = '' }) {
   return (
-    <section
-      className={cx(
-        'surface-card overflow-hidden border',
-        tone === 'urgent' ? 'border-urgent-line' : 'border-transparent',
-        className
-      )}
-    >
+    <section className={cx('overflow-hidden rounded-md border border-line bg-surface shadow-raised', className)}>
       {(title || action) && (
-        <header className="flex items-start justify-between gap-3 border-b border-line-soft bg-wash/60 px-5 py-3.5">
+        <header className="flex items-start justify-between gap-3 border-b border-line px-4 py-4 sm:px-6">
           <div className="min-w-0">
-            <h2 className="flex items-center gap-2 text-[14px] font-bold text-ink">
-              {icon && <Icon name={icon} size={14} className="text-accent" />}
+            <h2 className="flex items-center gap-2 text-heading font-medium text-ink">
+              {icon && <Icon name={icon} size={16} className="text-ink-muted" />}
               {title}
             </h2>
-            {subtitle && <p className="mt-1 text-xs text-muted">{subtitle}</p>}
+            {subtitle && <p className="mt-0.5 text-small text-ink-muted">{subtitle}</p>}
           </div>
           {action}
         </header>
       )}
-      <div className={cx('px-5 py-4', bodyClassName)}>{children}</div>
+      <div className={cx('px-4 py-4 sm:px-6', bodyClassName)}>{children}</div>
     </section>
   )
 }
 
 /* ------------------------------------------------------------ PageHeader -- */
+// The one display-size anchor of a screen. A light weight at size reads as
+// expensive; the lead stays in muted body text.
 
 export function PageHeader({ title, lead, actions, children }) {
   return (
-    <header className="mb-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <header className="mb-8">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="display text-[28px] text-ink sm:text-[36px]">{title}</h1>
-          {lead && <p className="mt-2.5 max-w-[68ch] text-[14px] leading-relaxed text-muted">{lead}</p>}
+          <h1 className="text-title font-light text-balance text-ink sm:text-display">{title}</h1>
+          {lead && <p className="mt-3 max-w-prose text-heading text-ink-muted">{lead}</p>}
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
@@ -260,16 +266,16 @@ export function PageHeader({ title, lead, actions, children }) {
 export function Breadcrumbs({ items = [] }) {
   if (!items.length) return null
   return (
-    <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1 text-[11px] text-muted">
+    <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1 text-small text-ink-muted">
       {items.map((item, i) => (
         <span key={`${item.label}-${i}`} className="flex items-center gap-1">
-          {i > 0 && <Icon name="chevronRight" size={12} className="text-faint" />}
+          {i > 0 && <Icon name="chevronRight" size={12} />}
           {item.href ? (
-            <Link href={item.href} className="px-1 py-0.5 font-medium text-ink-2 underline-offset-4 hover:underline">
+            <Link href={item.href} className="rounded-sm px-1 py-0.5 transition-colors hover:text-ink">
               {item.label}
             </Link>
           ) : (
-            <span aria-current="page" className="px-1 py-0.5 text-ink-2">
+            <span aria-current="page" className="px-1 py-0.5 text-ink">
               {item.label}
             </span>
           )}
@@ -281,11 +287,12 @@ export function Breadcrumbs({ items = [] }) {
 
 /* ------------------------------------------------------------------ Tabs -- */
 // Rendered as real links so every tab is its own URL — that is what makes the
-// navigation non-linear and deep-linkable.
+// navigation non-linear and deep-linkable. The active tab is ink with a Laurel
+// underline; a count announces what sits behind a tab without opening it.
 
 export function Tabs({ tabs, active }) {
   return (
-    <div className="-mx-1 mb-5 flex gap-2 overflow-x-auto px-1 pb-1" role="tablist">
+    <div className="mb-6 flex gap-6 overflow-x-auto border-b border-line" role="tablist">
       {tabs.map((tab) => {
         const isActive = tab.id === active
         return (
@@ -297,25 +304,12 @@ export function Tabs({ tabs, active }) {
             aria-selected={isActive}
             aria-current={isActive ? 'page' : undefined}
             className={cx(
-              'flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-[13px] transition-colors',
-              isActive
-                ? 'bg-accent font-semibold text-on-accent shadow-pop'
-                : 'bg-surface text-muted hover:bg-accent-soft hover:text-accent'
+              '-mb-px flex items-center gap-2 whitespace-nowrap border-b-2 py-3 text-small font-medium transition-colors duration-150',
+              isActive ? 'border-accent text-ink' : 'border-transparent text-ink-muted hover:text-ink'
             )}
           >
             {tab.label}
-            {tab.count != null && (
-              <span
-                className={cx(
-                  'rounded-full border px-1.5 text-[10px] font-semibold',
-                  tab.tone === 'urgent'
-                    ? 'border-urgent-line bg-urgent-soft text-urgent'
-                    : 'border-line bg-wash text-muted'
-                )}
-              >
-                {tab.count}
-              </span>
-            )}
+            {tab.count != null && <Count tone={tab.tone}>{tab.count}</Count>}
           </Link>
         )
       })}
@@ -323,29 +317,55 @@ export function Tabs({ tabs, active }) {
   )
 }
 
+/** A small number that announces hidden content. `urgent` when the number is the reason to look. */
+export function Count({ tone, children }) {
+  return (
+    <span
+      className={cx(
+        'inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 font-mono text-label tabular-nums',
+        tone === 'urgent' ? 'bg-status-now-soft text-status-now' : 'bg-surface-sunken text-ink-muted'
+      )}
+    >
+      {children}
+    </span>
+  )
+}
+
 /* ------------------------------------------------------------ EmptyState -- */
 
 export function EmptyState({ title, body, action, icon = 'check' }) {
   return (
-    <div className="rounded-3xl border border-dashed border-accent-line bg-accent-soft/50 px-4 py-10 text-center">
-      <Icon name={icon} size={20} className="mx-auto mb-3 text-accent" />
-      <p className="display text-[19px] text-ink">{title}</p>
-      {body && <p className="mx-auto mt-1 max-w-[46ch] text-xs text-muted">{body}</p>}
-      {action && <div className="mt-3 flex justify-center">{action}</div>}
+    <div className="rounded-md border border-dashed border-line-strong px-4 py-12 text-center">
+      <Icon name={icon} size={20} className="mx-auto mb-3 text-ink-muted" />
+      <p className="text-heading font-medium text-ink">{title}</p>
+      {body && <p className="mx-auto mt-1 max-w-prose text-small text-ink-muted">{body}</p>}
+      {action && <div className="mt-4 flex justify-center">{action}</div>}
     </div>
   )
 }
 
 /* ----------------------------------------------------------------- Alert -- */
+// An inline moment placed where the user is looking. Tones follow StatusBadge.
+
+const ALERT_TONES = {
+  urgent: ['bg-status-now-soft', 'text-status-now'],
+  declined: ['bg-status-now-soft', 'text-status-now'],
+  warn: ['bg-status-soon-soft', 'text-status-soon'],
+  done: ['bg-status-clear-soft', 'text-status-clear'],
+  pending: ['bg-surface-sunken', 'text-ink-muted'],
+  info: ['bg-surface-sunken', 'text-ink-muted'],
+  empty: ['bg-surface-sunken', 'text-ink-muted']
+}
 
 export function Alert({ tone = 'info', title, children, action }) {
   const t = TONES[tone] || TONES.info
+  const [bg, fg] = ALERT_TONES[tone] || ALERT_TONES.info
   return (
-    <div className={cx('flex items-start gap-3 rounded-2xl border px-4 py-3', t.cls)}>
-      <Icon name={t.icon} size={16} className="mt-0.5" />
+    <div className={cx('flex flex-wrap items-start gap-3 rounded-md px-4 py-3', bg)} role={tone === 'urgent' ? 'alert' : 'status'}>
+      <Icon name={t.icon} size={16} className={cx('mt-0.5', fg)} />
       <div className="min-w-0 flex-1">
-        {title && <p className="text-[14px] font-semibold">{title}</p>}
-        {children && <div className="text-xs leading-relaxed opacity-90">{children}</div>}
+        {title && <p className="font-medium text-ink">{title}</p>}
+        {children && <div className={cx('text-small', title ? 'mt-0.5 text-ink-muted' : 'text-ink')}>{children}</div>}
       </div>
       {action}
     </div>
@@ -353,25 +373,26 @@ export function Alert({ tone = 'info', title, children, action }) {
 }
 
 /* --------------------------------------------------------------- ListRow -- */
-// The generic row used by every list in the product.
+// The generic row used by every list in the product. Rows are separated by
+// hairlines rather than boxed one by one, so the exception stands out.
 
 export function ListRow({ href, leading, title, sub, meta, trailing, onClick, className = '' }) {
   const inner = (
     <>
-      {leading && <div className="shrink-0">{leading}</div>}
+      {leading && <div className="shrink-0 text-ink-muted">{leading}</div>}
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[14px] font-medium text-ink">{title}</div>
-        {sub && <div className="mt-0.5 truncate text-xs text-muted">{sub}</div>}
-        {meta && <div className="mt-1 text-[11px] text-faint">{meta}</div>}
+        <div className="truncate font-medium text-ink">{title}</div>
+        {sub && <div className="truncate text-small text-ink-muted">{sub}</div>}
+        {meta && <div className="text-small text-ink-muted">{meta}</div>}
       </div>
-      {trailing && <div className="flex shrink-0 items-center gap-2">{trailing}</div>}
-      {(href || onClick) && <Icon name="chevronRight" size={15} className="shrink-0 text-faint" />}
+      {trailing && <div className="flex shrink-0 items-center gap-2 text-small text-ink-muted">{trailing}</div>}
+      {(href || onClick) && <Icon name="chevronRight" size={16} className="shrink-0 text-ink-muted" />}
     </>
   )
 
   const cls = cx(
-    'flex w-full items-center gap-3 border-b border-line-soft px-4 py-3 text-left last:border-b-0',
-    (href || onClick) && 'transition-colors hover:bg-accent-soft/60',
+    'flex w-full items-center gap-3 border-b border-line px-4 py-3 text-left last:border-b-0 sm:px-6',
+    (href || onClick) && 'transition-colors duration-150 hover:bg-surface-sunken/60',
     className
   )
 
@@ -393,24 +414,26 @@ export function ListRow({ href, leading, title, sub, meta, trailing, onClick, cl
 }
 
 /* ----------------------------------------------------------------- Field -- */
+// A labelled value: label in muted small text, value in ink.
 
 export function Field({ label, value, children, className = '' }) {
   return (
     <div className={className}>
-      <dt className="eyebrow text-muted">{label}</dt>
-      <dd className="mt-1.5 text-[14px] text-ink">{children || value}</dd>
+      <dt className="text-small text-ink-muted">{label}</dt>
+      <dd className="mt-0.5 text-ink">{children || value}</dd>
     </div>
   )
 }
 
 /* --------------------------------------------------------------- Avatar --- */
+// Initials in a circle. No photos of people, no colour per person.
 
 export function Avatar({ initials, size = 'md' }) {
   return (
     <span
       className={cx(
-        'inline-grid shrink-0 place-items-center rounded-full bg-blush font-bold text-ink',
-        size === 'sm' ? 'h-7 w-7 text-[11px]' : 'h-9 w-9 text-[12px]'
+        'inline-grid shrink-0 place-items-center rounded-full bg-surface-sunken font-medium tracking-wide text-ink ring-1 ring-line ring-inset',
+        size === 'sm' ? 'h-7 w-7 text-label' : 'h-9 w-9 text-label'
       )}
     >
       {initials}
@@ -420,18 +443,19 @@ export function Avatar({ initials, size = 'md' }) {
 
 /* ------------------------------------------------------------ Form bits --- */
 
+const LABEL = 'mb-1.5 block text-small text-ink-muted'
+const CONTROL =
+  'block w-full rounded-sm border border-line-strong bg-surface px-3 text-body text-ink placeholder:text-ink-muted/70 transition-colors focus:border-accent focus-visible:outline-offset-0'
+const HINT = 'mt-1.5 text-small text-ink-muted'
+
 export function TextInput({ label, id, hint, className = '', ...rest }) {
   return (
     <div className={className}>
-      <label htmlFor={id} className="eyebrow block text-ink-2">
+      <label htmlFor={id} className={LABEL}>
         {label}
       </label>
-      <input
-        id={id}
-        className="mt-1.5 block w-full rounded-2xl border border-line bg-surface px-4 py-2.5 text-[15px] text-ink placeholder:text-faint focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft"
-        {...rest}
-      />
-      {hint && <p className="mt-1 text-[11px] text-muted">{hint}</p>}
+      <input id={id} className={cx(CONTROL, 'h-9')} {...rest} />
+      {hint && <p className={HINT}>{hint}</p>}
     </div>
   )
 }
@@ -439,21 +463,17 @@ export function TextInput({ label, id, hint, className = '', ...rest }) {
 export function Select({ label, id, options = [], hint, className = '', ...rest }) {
   return (
     <div className={className}>
-      <label htmlFor={id} className="eyebrow block text-ink-2">
+      <label htmlFor={id} className={LABEL}>
         {label}
       </label>
-      <select
-        id={id}
-        className="mt-1.5 block w-full rounded-2xl border border-line bg-surface px-4 py-2.5 text-[15px] text-ink focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft"
-        {...rest}
-      >
+      <select id={id} className={cx(CONTROL, 'h-9')} {...rest}>
         {options.map((o) => (
           <option key={o} value={o}>
             {o}
           </option>
         ))}
       </select>
-      {hint && <p className="mt-1 text-[11px] text-muted">{hint}</p>}
+      {hint && <p className={HINT}>{hint}</p>}
     </div>
   )
 }
@@ -461,15 +481,11 @@ export function Select({ label, id, options = [], hint, className = '', ...rest 
 export function Textarea({ label, id, hint, className = '', ...rest }) {
   return (
     <div className={className}>
-      <label htmlFor={id} className="eyebrow block text-ink-2">
+      <label htmlFor={id} className={LABEL}>
         {label}
       </label>
-      <textarea
-        id={id}
-        className="mt-1.5 block w-full rounded-2xl border border-line bg-surface px-4 py-3 text-[15px] leading-relaxed text-ink placeholder:text-faint focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft rounded-2xl"
-        {...rest}
-      />
-      {hint && <p className="mt-1 text-[11px] text-muted">{hint}</p>}
+      <textarea id={id} className={cx(CONTROL, 'py-2 leading-6')} {...rest} />
+      {hint && <p className={HINT}>{hint}</p>}
     </div>
   )
 }
@@ -477,30 +493,31 @@ export function Textarea({ label, id, hint, className = '', ...rest }) {
 /* ------------------------------------------------------------ SectionNote -- */
 
 export function SectionNote({ children }) {
-  return <p className="mb-3 text-xs leading-relaxed text-muted">{children}</p>
+  return <p className="mb-3 max-w-prose text-small text-ink-muted">{children}</p>
 }
 
 /* ----------------------------------------------------------- MetricTile --- */
+// One number that matters, set large and light. The label carries the
+// meaning; an urgent or done tone only tints the number.
 
 export function MetricTile({ label, value, tone, sub, href }) {
   const body = (
     <>
-      <div className="eyebrow text-muted">{label}</div>
+      <div className="text-small text-ink-muted">{label}</div>
       <div
         className={cx(
-          'mt-2 font-display text-[36px] font-extrabold leading-none tracking-tight tabular-nums',
-          tone === 'urgent' ? 'text-urgent' : tone === 'done' ? 'text-done' : 'text-ink'
+          'mt-2 text-display font-light tabular-nums',
+          tone === 'urgent' ? 'text-status-now' : tone === 'done' ? 'text-status-clear' : 'text-ink'
         )}
       >
         {value}
       </div>
-      {sub && <div className="mt-2 text-xs text-muted">{sub}</div>}
+      {sub && <div className="mt-2 text-small text-ink-muted">{sub}</div>}
     </>
   )
   const cls = cx(
-    'surface-card block border px-5 py-4 transition-all duration-200',
-    tone === 'urgent' ? 'border-urgent-line' : 'border-transparent',
-    href && 'hover:-translate-y-[2px] hover:border-accent-line'
+    'block rounded-md border border-line bg-surface px-6 py-4 shadow-raised',
+    href && 'transition-colors duration-150 hover:border-line-strong'
   )
   return href ? (
     <Link href={href} className={cls}>
