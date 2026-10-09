@@ -7,8 +7,8 @@
 //
 //   1/3  events list     points at the first event; opening it moves on
 //   2/3  event overview  points at the Run of show tab; opening it moves on
-//   3/3  run of show     points at a "Needs staff" tick; ticking it ends the
-//                        guide (that row now shows up in the Staffing Planner)
+//   3/3  run of show     points at Create; clicking it starts a new block and ends
+//                        the guide (tick Needs staff there to staff it)
 //
 // Settings can bring it back with clearEventsGuide(). Skip, the close button
 // and Esc all end it; it is remembered per browser.
@@ -105,11 +105,11 @@ export function EventsGuide() {
   return (
     <CoachPopover
       key="events-3"
-      target='[data-guide="needs-staff"]'
+      target='[data-guide="run-create"]'
       n={3}
       total={3}
-      title="Tick Needs staff"
-      body="Any row you tick appears in the Staffing Planner, ready for you to fill. Drag a row by its handle to reorder the day."
+      title="Add something to the day"
+      body="Click Create to add your first block. Tick Needs staff on it and it appears in the Staffing Planner."
       onBack={() => router.push(`/events/${eventId}`)}
       onSkip={close}
       onTargetClick={close}

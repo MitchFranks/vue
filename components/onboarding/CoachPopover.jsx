@@ -24,7 +24,7 @@ import { StepPill } from './GuideDialog'
 const POPOVER_W = 300
 
 function sameRect(a, b) {
-  return a && b && a.top === b.top && a.left === b.left && a.width === b.width && a.height === b.height
+  return a && b && a.top === b.top && a.left === b.left && a.width === b.width && a.height === b.height && a.radius === b.radius
 }
 
 export function CoachPopover({ target, n, total, title, body, onBack, onSkip, onTargetClick, skipLabel = 'Skip guide' }) {
@@ -48,7 +48,15 @@ export function CoachPopover({ target, n, total, title, body, onBack, onSkip, on
       const el = document.querySelector(target)
       const r = el?.getBoundingClientRect()
       const visible = r && r.width > 0 && r.right > 0 && r.left < window.innerWidth && r.top >= 0 && r.bottom <= window.innerHeight - 8
-      const next = visible ? { top: r.top, left: r.left, width: r.width, height: r.height } : null
+      // The ring copies the target's own corner shape, so a pill gets a pill ring
+      // and a card gets a card ring, never an oval stretched over a rectangle.
+      let radius = 0
+      if (visible) {
+        const css = parseFloat(window.getComputedStyle(el).borderTopLeftRadius)
+        radius = Math.min(Number.isFinite(css) ? css : 0, Math.min(r.width, r.height) / 2)
+        if (radius < 6) radius = 8
+      }
+      const next = visible ? { top: r.top, left: r.left, width: r.width, height: r.height, radius } : null
       setRect((prev) => (sameRect(prev, next) ? prev : next))
       setHint(!visible && r && r.width > 0 ? (r.bottom > window.innerHeight - 8 ? 'down' : r.top < 0 ? 'up' : null) : null)
       if (el && !el.hasAttribute('aria-describedby')) el.setAttribute('aria-describedby', 'coach-body')
@@ -182,12 +190,13 @@ export function CoachPopover({ target, n, total, title, body, onBack, onSkip, on
         // pointer-events-none, so the target underneath is still the thing you click.
         <div
           aria-hidden="true"
-          className="pointer-events-none fixed z-[55] rounded-full motion-safe:animate-[vue-glow_1.8s_ease-in-out_infinite]"
+          className="pointer-events-none fixed z-[55] motion-safe:animate-[vue-glow_1.8s_ease-in-out_infinite]"
           style={{
             top: rect.top - 5,
             left: rect.left - 5,
             width: rect.width + 10,
             height: rect.height + 10,
+            borderRadius: rect.radius + 5,
             boxShadow: '0 0 0 4px var(--color-accent-line), 0 0 0 200vmax rgb(42 33 69 / 0.32)'
           }}
         />

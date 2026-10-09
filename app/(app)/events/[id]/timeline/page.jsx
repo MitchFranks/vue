@@ -1,424 +1,529 @@
 'use client'
 
-// SCREEN 6 — Run of show.
+// SCREEN 6 — Run of show, as a day calendar.
 //
-// One list for the whole day. A row that "Needs staff" is also a block in the
-// Staffing Planner. Rows can be dragged into a new order, added below any row
-// with +, deleted with − (after a small confirmation), and selected with the
-// checkbox on the left for a bulk move or delete. Edits save as you make them.
+// Modelled on the things people do all day in Google Calendar:
+//   • click an empty slot to start a new block, or drag across the grid to
+//     make one of exactly the length you want
+//   • click a block to open its editor (title, start, end, note, Needs staff)
+//   • drag a block to move it; drag its top or bottom edge to resize it
+//   • delete from the editor or with the Delete key, with an Undo afterwards
+//   • overlapping blocks sit side by side, and a Create button for the keyboard
+// A block with Needs staff ticked is also a block in the Staffing Planner.
+// Everything snaps to 15 minutes and saves as you go.
 
-import { use, useEffect, useRef, useState } from 'react'
+import { use, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { events } from '@/lib/mock/events'
 import { clockLabel, fromInputValue, parseClock, toInputValue, useTimelineEdits } from '@/lib/timelineEdits'
-import { Button, Card, EmptyState, Icon, StatusBadge } from '@/components/ui/primitives'
+import { Button, Card, EmptyState, Icon } from '@/components/ui/primitives'
+
+const PX = 56 // pixels per hour
+const SNAP = 15 // minutes
+const DEFAULT_LEN = 60
+const MIN_LEN = 15
 
 const INPUT =
-  'w-full rounded-2xl border border-line bg-surface px-3 py-2 text-[14px] text-ink placeholder:text-faint focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft'
-const ICON_BTN =
-  'grid h-9 w-9 shrink-0 place-items-center rounded-full border border-line bg-surface text-ink-2 transition-colors hover:border-accent-line hover:bg-accent-soft hover:text-accent'
+  'w-full rounded-xl border border-line bg-surface px-3 py-2 text-[14px] text-ink placeholder:text-faint focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft'
 
-/** A small pop-up that sits under its button. Esc or a click elsewhere closes it. */
-function Popover({ onClose, children, align = 'right' }) {
-  const ref = useRef(null)
+const snap = (m) => Math.round(m / SNAP) * SNAP
+const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi)
+
+/** Start and end in minutes for display. A row with no end shows as 30 minutes. */
+function span(row) {
+  const s = parseClock(row.time) ?? 0
+  let e = parseClock(row.end)
+  if (e == null) e = s + 30
+  if (e <= s) e += 1440
+  return { s, e }
+}
+
+/** Side-by-side columns for blocks that overlap, like a calendar day view. */
+function layout(items) {
+  const sorted = [...items].sort((a, b) => a.s - b.s || b.e - a.e)
+  const out = {}
+  let cluster = []
+  let clusterEnd = -1
+  const flush = () => {
+    const lanes = Math.max(1, ...cluster.map((c) => c.lane + 1))
+    for (const c of cluster) out[c.id] = { lane: c.lane, lanes }
+    cluster = []
+  }
+  for (const item of sorted) {
+    if (cluster.length && item.s >= clusterEnd) {
+      flush()
+      clusterEnd = -1
+    }
+    const used = cluster.filter((c) => c.e > item.s).map((c) => c.lane)
+    let lane = 0
+    while (used.includes(lane)) lane += 1
+    cluster.push({ ...item, lane })
+    clusterEnd = Math.max(clusterEnd, item.e)
+  }
+  flush()
+  return out
+}
+
+const sortRows = (rows) =>
+  rows
+    .map((row, i) => ({ row, i }))
+    .sort((a, b) => (parseClock(a.row.time) ?? 0) - (parseClock(b.row.time) ?? 0) || a.i - b.i)
+    .map((x) => x.row)
+
+const range = (s, e) => `${clockLabel(s)} – ${clockLabel(e)}`
+
+/* ---------------------------------------------------------------- editor -- */
+
+function Editor({ value, isNew, anchorId, onSave, onDelete, onClose }) {
+  const [form, setForm] = useState(value)
+  const [pos, setPos] = useState(null)
+  const titleRef = useRef(null)
+  const set = (patch) => setForm((f) => ({ ...f, ...patch }))
+
+  // Sit beside the block, like Google Calendar's pop-over.
+  const place = useCallback(() => {
+    const el = document.querySelector(`[data-row="${anchorId}"]`)
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    const W = 340
+    const room = window.innerWidth - r.right > W + 24
+    setPos({
+      left: room ? r.right + 10 : Math.max(12, r.left - W - 10),
+      top: clamp(r.top, 72, Math.max(72, window.innerHeight - 440))
+    })
+  }, [anchorId])
+
+  useLayoutEffect(() => {
+    place()
+    window.addEventListener('scroll', place, true)
+    window.addEventListener('resize', place)
+    return () => {
+      window.removeEventListener('scroll', place, true)
+      window.removeEventListener('resize', place)
+    }
+  }, [place])
+
+  // The click that opened this editor ends after it mounts and would pull focus
+  // back to the page, so take focus once that has settled.
+  useEffect(() => {
+    const t = setTimeout(() => titleRef.current?.focus(), 40)
+    return () => clearTimeout(t)
+  }, [])
+
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose()
-    const onDown = (e) => ref.current && !ref.current.contains(e.target) && onClose()
     document.addEventListener('keydown', onKey)
-    document.addEventListener('mousedown', onDown)
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.removeEventListener('mousedown', onDown)
-    }
+    return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
+
+  const save = () => {
+    const s = parseClock(form.time)
+    let e = parseClock(form.end)
+    if (s == null) return
+    if (e == null || e <= s) e = s + DEFAULT_LEN
+    onSave({ ...form, time: clockLabel(s), end: clockLabel(e), title: form.title.trim() || '(No title)' })
+  }
+
   return (
     <div
-      ref={ref}
       role="dialog"
-      className={`absolute top-full z-30 mt-1.5 w-60 rounded-2xl border border-line bg-surface p-3 shadow-pop ${align === 'right' ? 'right-0' : 'left-0'}`}
+      aria-label={isNew ? 'New block' : 'Edit block'}
+      style={pos ? { left: pos.left, top: pos.top, width: 340 } : { visibility: 'hidden' }}
+      className="fixed z-40 rounded-2xl border border-line bg-surface p-4 shadow-pop"
     >
-      {children}
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-faint">{isNew ? 'New block' : 'Edit block'}</span>
+        <button type="button" onClick={onClose} className="rounded-full p-1.5 text-muted hover:bg-accent-soft hover:text-accent" aria-label="Close">
+          <Icon name="x" size={14} />
+        </button>
+      </div>
+
+      <label htmlFor="blk-title" className="sr-only">
+        Title
+      </label>
+      <input
+        id="blk-title"
+        ref={titleRef}
+        value={form.title}
+        onChange={(e) => set({ title: e.target.value })}
+        onKeyDown={(e) => e.key === 'Enter' && save()}
+        placeholder="Add title"
+        className="w-full border-0 border-b-2 border-line bg-transparent px-0 pb-1.5 text-[20px] font-semibold text-ink placeholder:text-faint focus:border-accent focus:outline-none"
+      />
+
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <div>
+          <label htmlFor="blk-start" className="mb-1 block text-xs font-semibold text-ink-2">
+            Starts
+          </label>
+          <input
+            id="blk-start"
+            type="time"
+            value={toInputValue(form.time)}
+            onChange={(e) => fromInputValue(e.target.value) && set({ time: fromInputValue(e.target.value) })}
+            className={INPUT}
+          />
+        </div>
+        <div>
+          <label htmlFor="blk-end" className="mb-1 block text-xs font-semibold text-ink-2">
+            Ends
+          </label>
+          <input
+            id="blk-end"
+            type="time"
+            value={toInputValue(form.end)}
+            onChange={(e) => fromInputValue(e.target.value) && set({ end: fromInputValue(e.target.value) })}
+            className={INPUT}
+          />
+        </div>
+      </div>
+
+      <label className="mt-3 flex items-start gap-2.5 rounded-xl bg-accent-soft/50 px-3 py-2.5">
+        <input
+          type="checkbox"
+          checked={form.needsStaff}
+          onChange={(e) => set({ needsStaff: e.target.checked })}
+          className="mt-0.5 h-4 w-4 accent-[var(--color-accent)]"
+        />
+        <span>
+          <span className="block text-[13px] font-semibold text-ink">Needs staff</span>
+          <span className="block text-[12px] text-muted">Shows up in the Staffing Planner so you can fill it.</span>
+        </span>
+      </label>
+
+      <div className="mt-3">
+        <label htmlFor="blk-note" className="mb-1 block text-xs font-semibold text-ink-2">
+          Note
+        </label>
+        <textarea id="blk-note" rows={2} value={form.note} onChange={(e) => set({ note: e.target.value })} placeholder="Optional" className={INPUT} />
+      </div>
+
+      <div className="mt-4 flex items-center justify-between gap-2">
+        {isNew ? (
+          <span />
+        ) : (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-semibold text-urgent hover:bg-urgent-soft"
+          >
+            <Icon name="trash" size={15} />
+            Delete
+          </button>
+        )}
+        <Button variant="primary" onClick={save}>
+          Save
+        </Button>
+      </div>
     </div>
   )
 }
 
-function ConfirmDelete({ text, onCancel, onConfirm, align }) {
-  return (
-    <Popover onClose={onCancel} align={align}>
-      <p className="text-[13px] font-semibold text-ink">{text}</p>
-      <div className="mt-2.5 flex justify-end gap-2">
-        <Button size="sm" variant="secondary" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button size="sm" variant="danger" onClick={onConfirm} autoFocus>
-          Delete
-        </Button>
-      </div>
-    </Popover>
-  )
-}
+/* ------------------------------------------------------------------ page -- */
 
-function Row({ row, guide, selected, focus, dropMark, onSelect, onChange, onAddBelow, onAskDelete, confirming, onCancelDelete, onConfirmDelete, drag }) {
-  return (
-    <li
-      onDragOver={drag.over}
-      onDrop={drag.drop}
-      className={[
-        'relative border-b border-line-soft px-3 py-3 last:border-b-0',
-        row.needsStaff ? 'bg-accent-soft/30' : '',
-        row.tone === 'urgent' ? 'bg-urgent-soft' : '',
-        dropMark === 'before' ? 'shadow-[inset_0_3px_0_0_var(--color-accent)]' : '',
-        dropMark === 'after' ? 'shadow-[inset_0_-3px_0_0_var(--color-accent)]' : ''
-      ].join(' ')}
-    >
-      <div className="grid items-end gap-2 sm:grid-cols-[auto_120px_120px_1.2fr_1.2fr_auto_auto_auto]">
-        <div className="flex items-center gap-2 self-center">
-          <input
-            type="checkbox"
-            checked={selected}
-            onChange={onSelect}
-            aria-label={`Select ${row.title || 'row'}`}
-            className="h-4 w-4 accent-[var(--color-accent)]"
-          />
-          <span
-            draggable
-            onDragStart={drag.start}
-            onDragEnd={drag.end}
-            title="Drag to move this row"
-            aria-label="Drag to move this row"
-            className="grid h-9 w-6 cursor-grab place-items-center text-faint hover:text-accent active:cursor-grabbing"
-          >
-            <Icon name="grip" size={18} />
-          </span>
-        </div>
-
-        <div>
-          <label htmlFor={`time-${row.id}`} className="mb-1 block text-xs font-semibold text-ink-2">
-            {row.needsStaff ? 'Starts' : 'Time'}
-          </label>
-          <input
-            id={`time-${row.id}`}
-            type="time"
-            key={`${row.id}-${row.time}`}
-            defaultValue={toInputValue(row.time)}
-            onBlur={(e) => {
-              const label = fromInputValue(e.target.value)
-              if (label && label !== row.time) onChange({ time: label })
-            }}
-            className={INPUT}
-          />
-        </div>
-
-        <div>
-          {row.needsStaff && (
-            <>
-              <label htmlFor={`end-${row.id}`} className="mb-1 block text-xs font-semibold text-ink-2">
-                Ends
-              </label>
-              <input
-                id={`end-${row.id}`}
-                type="time"
-                key={`${row.id}-end-${row.end}`}
-                defaultValue={toInputValue(row.end)}
-                onBlur={(e) => {
-                  const label = fromInputValue(e.target.value)
-                  if (label && label !== row.end) onChange({ end: label })
-                }}
-                className={INPUT}
-              />
-            </>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor={`title-${row.id}`} className="mb-1 block text-xs font-semibold text-ink-2">
-            What happens
-          </label>
-          <input
-            id={`title-${row.id}`}
-            autoFocus={focus}
-            key={`${row.id}-title-${row.title}`}
-            defaultValue={row.title}
-            placeholder="Describe this moment"
-            onBlur={(e) => e.target.value !== row.title && onChange({ title: e.target.value.trim() })}
-            className={INPUT}
-          />
-        </div>
-
-        <div>
-          <label htmlFor={`note-${row.id}`} className="mb-1 block text-xs font-semibold text-ink-2">
-            Note
-          </label>
-          <input
-            id={`note-${row.id}`}
-            key={`${row.id}-note-${row.note}`}
-            defaultValue={row.note}
-            placeholder="Optional"
-            onBlur={(e) => e.target.value !== (row.note || '') && onChange({ note: e.target.value.trim() })}
-            className={INPUT}
-          />
-        </div>
-
-        <label
-          data-guide={guide ? 'needs-staff' : undefined}
-          className="flex items-center gap-2 self-center whitespace-nowrap rounded-full pb-0.5 text-[13px] font-medium text-ink-2 sm:pt-5"
-        >
-          <input
-            type="checkbox"
-            checked={row.needsStaff}
-            onChange={(e) => {
-              const needsStaff = e.target.checked
-              const start = parseClock(row.time)
-              onChange({ needsStaff, ...(needsStaff && !row.end && start != null ? { end: clockLabel(start + 60) } : {}) })
-            }}
-            className="h-4 w-4 accent-[var(--color-accent)]"
-          />
-          Needs staff
-        </label>
-
-        <button type="button" onClick={onAddBelow} className={ICON_BTN} title="Add a row below" aria-label="Add a row below">
-          <Icon name="plus" size={15} />
-        </button>
-
-        <div className="relative">
-          <button type="button" onClick={onAskDelete} className={ICON_BTN} title="Delete this row" aria-label={`Delete ${row.title || 'this row'}`}>
-            <Icon name="minus" size={15} />
-          </button>
-          {confirming && (
-            <ConfirmDelete
-              text={`Delete ${row.title ? `“${row.title}”` : 'this row'}?${row.needsStaff ? ' It also leaves the Staffing Planner.' : ''}`}
-              onCancel={onCancelDelete}
-              onConfirm={onConfirmDelete}
-            />
-          )}
-        </div>
-      </div>
-      {row.tone === 'urgent' && (
-        <div className="mt-2 pl-12">
-          <StatusBadge tone="urgent" size="sm">
-            Change requested
-          </StatusBadge>
-        </div>
-      )}
-    </li>
-  )
-}
-
-export default function TimelinePage({ params }) {
+export default function RunOfShowPage({ params }) {
   const { id } = use(params)
   const { version, rowsFor, setRows, resetEvent } = useTimelineEdits()
   const event = events.find((e) => e.id === id)
   const rows = rowsFor(id)
-  // The events guide points at the first row that is not staffed yet.
-  const guideRowId = (rows.find((r) => !r.needsStaff) || rows[0])?.id
 
-  const [selected, setSelected] = useState([])
-  const [confirmId, setConfirmId] = useState(null) // a row id, or 'bulk'
-  const [moving, setMoving] = useState(false)
-  const [shift, setShift] = useState({ minutes: 30, dir: 1 })
-  const [focusId, setFocusId] = useState(null)
-  const [dragId, setDragId] = useState(null)
-  const [over, setOver] = useState(null) // { id, after }
+  // The visible day: 6 AM to midnight, earlier if the data needs it.
+  const spans = rows.map(span)
+  const lo = Math.min(360, ...spans.map((x) => Math.floor(x.s / 60) * 60))
+  const hi = 1440
+  const height = ((hi - lo) / 60) * PX
+  const hours = Array.from({ length: (hi - lo) / 60 + 1 }, (_, i) => lo / 60 + i)
 
-  const update = (next) => setRows(id, next)
-  const change = (rowId, patch) => update(rows.map((r) => (r.id === rowId ? { ...r, ...patch } : r)))
+  const gridRef = useRef(null)
+  const dragRef = useRef(null)
+  const [preview, setPreview] = useState(null) // { id|'draft', s, e } while dragging
+  const [editor, setEditor] = useState(null) // { id|null, values }
+  const [undo, setUndo] = useState(null)
+  const undoTimer = useRef(null)
+  const rowsRef = useRef(rows)
+  rowsRef.current = rows
 
-  const newRow = (time) => ({ id: `${id}-r-${Date.now().toString(36)}`, time, end: null, title: '', note: '', needsStaff: false })
-
-  const addBelow = (rowId) => {
-    const at = rows.findIndex((r) => r.id === rowId)
-    const base = rows[at]
-    const row = newRow((base?.needsStaff && base.end) || base?.time || '12:00 PM')
-    setFocusId(row.id)
-    update([...rows.slice(0, at + 1), row, ...rows.slice(at + 1)])
-  }
-  const addFirst = () => {
-    const row = newRow('9:00 AM')
-    setFocusId(row.id)
-    update([...rows, row])
-  }
-
-  const remove = (ids) => {
-    update(rows.filter((r) => !ids.includes(r.id)))
-    setSelected((s) => s.filter((x) => !ids.includes(x)))
-    setConfirmId(null)
-  }
-
-  // Bulk move: shift the time (and end time) of every selected row.
-  const applyShift = () => {
-    const delta = shift.minutes * shift.dir
-    update(
-      rows.map((r) => {
-        if (!selected.includes(r.id)) return r
-        const t = parseClock(r.time)
-        const e = parseClock(r.end)
-        return { ...r, time: t == null ? r.time : clockLabel(t + delta), end: e == null ? r.end : clockLabel(e + delta) }
-      })
-    )
-    setMoving(false)
-  }
-
-  const toggle = (rowId) => setSelected((s) => (s.includes(rowId) ? s.filter((x) => x !== rowId) : [...s, rowId]))
-  const allOn = rows.length > 0 && selected.length === rows.length
-
-  // ---- drag to reorder: the row lands wherever the mouse lets go ----
-  const dragFor = (rowId) => ({
-    start: (e) => {
-      setDragId(rowId)
-      e.dataTransfer.effectAllowed = 'move'
-      e.dataTransfer.setData('text/plain', rowId)
-      const li = e.currentTarget.closest('li')
-      if (li) e.dataTransfer.setDragImage(li, 20, 20)
-    },
-    end: () => {
-      setDragId(null)
-      setOver(null)
-    },
-    over: (e) => {
-      if (!dragId) return
-      e.preventDefault()
-      const box = e.currentTarget.getBoundingClientRect()
-      const after = e.clientY > box.top + box.height / 2
-      setOver((o) => (o && o.id === rowId && o.after === after ? o : { id: rowId, after }))
-    },
-    drop: (e) => {
-      if (!dragId) return
-      e.preventDefault()
-      const target = over && over.id === rowId ? over : { id: rowId, after: false }
-      const moved = rows.find((r) => r.id === dragId)
-      if (moved && dragId !== rowId) {
-        const rest = rows.filter((r) => r.id !== dragId)
-        const at = rest.findIndex((r) => r.id === rowId)
-        rest.splice(target.after ? at + 1 : at, 0, moved)
-        update(rest)
+  const commit = useCallback(
+    (next, message) => {
+      const before = rowsRef.current
+      setRows(id, sortRows(next))
+      if (message) {
+        setUndo({ rows: before, message })
+        clearTimeout(undoTimer.current)
+        undoTimer.current = setTimeout(() => setUndo(null), 7000)
       }
-      setDragId(null)
-      setOver(null)
+    },
+    [id, setRows]
+  )
+  useEffect(() => () => clearTimeout(undoTimer.current), [])
+
+  const minuteAt = (clientY) => {
+    const box = gridRef.current.getBoundingClientRect()
+    return lo + ((clientY - box.top) / PX) * 60
+  }
+
+  const openNew = (s, e) => {
+    setEditor({ id: null, values: { id: `${id}-r-${Date.now().toString(36)}`, time: clockLabel(s), end: clockLabel(e), title: '', note: '', needsStaff: false } })
+  }
+
+  const saveEditor = (values) => {
+    const exists = rows.some((r) => r.id === values.id)
+    commit(exists ? rows.map((r) => (r.id === values.id ? { ...r, ...values } : r)) : [...rows, values])
+    setEditor(null)
+    setPreview(null)
+  }
+
+  const deleteRow = (rowId) => {
+    const row = rows.find((r) => r.id === rowId)
+    commit(
+      rows.filter((r) => r.id !== rowId),
+      `Deleted “${row?.title || 'block'}”`
+    )
+    setEditor(null)
+  }
+
+  // Delete key removes the open block, as in Google Calendar.
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== 'Delete' || !editor?.id) return
+      const tag = document.activeElement?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      deleteRow(editor.id)
     }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
   })
 
+  // ---- pointer: create, move, resize ----
+  const onPointerDown = (e) => {
+    if (e.button !== 0) return
+    const rowId = e.target.closest('[data-row]')?.getAttribute('data-row')
+    const edge = e.target.closest('[data-edge]')?.getAttribute('data-edge') || null
+    const row = rowId && rowId !== 'draft' ? rows.find((r) => r.id === rowId) : null
+    const startY = e.clientY
+    const m0 = minuteAt(startY)
+
+    if (row) {
+      const { s, e: end } = span(row)
+      dragRef.current = { kind: edge ? `resize-${edge}` : 'move', id: row.id, startY, m0, s0: s, e0: end, moved: false }
+    } else {
+      const anchor = clamp(Math.floor(m0 / SNAP) * SNAP, lo, hi - MIN_LEN)
+      dragRef.current = { kind: 'create', startY, anchor, moved: false }
+    }
+    setEditor(null)
+    setPreview(null)
+    e.preventDefault()
+
+    // Where the dragged block would land for a given pointer position.
+    const landing = (d, m) => {
+      if (d.kind === 'move') {
+        const dur = d.e0 - d.s0
+        const s = clamp(snap(d.s0 + (m - d.m0)), lo, hi - dur)
+        return { s, e: s + dur }
+      }
+      if (d.kind === 'resize-bottom') return { s: d.s0, e: clamp(snap(m), d.s0 + MIN_LEN, hi) }
+      if (d.kind === 'resize-top') return { s: clamp(snap(m), lo, d.e0 - MIN_LEN), e: d.e0 }
+      const cur = clamp(snap(m), lo, hi)
+      return { s: Math.min(d.anchor, cur), e: Math.min(Math.max(d.anchor + MIN_LEN, cur), hi) }
+    }
+
+    const onMove = (ev) => {
+      const d = dragRef.current
+      if (!d) return
+      if (Math.abs(ev.clientY - d.startY) > 4) d.moved = true
+      if (!d.moved) return
+      const { s, e: end } = landing(d, minuteAt(ev.clientY))
+      setPreview({ id: d.kind === 'create' ? 'draft' : d.id, s, e: end })
+    }
+
+    const onUp = (ev) => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      const d = dragRef.current
+      dragRef.current = null
+      if (!d) return
+
+      if (!d.moved) {
+        // A plain click.
+        if (d.kind === 'create') {
+          const s = clamp(Math.floor(d.anchor / 30) * 30, lo, hi - DEFAULT_LEN)
+          setPreview({ id: 'draft', s, e: s + DEFAULT_LEN })
+          openNew(s, s + DEFAULT_LEN)
+        } else {
+          const r = rowsRef.current.find((x) => x.id === d.id)
+          if (r) setEditor({ id: r.id, values: { ...r, end: r.end || clockLabel(span(r).e), note: r.note || '' } })
+        }
+        return
+      }
+
+      const { s, e: end } = landing(d, minuteAt(ev.clientY))
+      if (d.kind === 'create') {
+        setPreview({ id: 'draft', s, e: end })
+        openNew(s, end)
+      } else {
+        setPreview(null)
+        commit(
+          rowsRef.current.map((r) => (r.id === d.id ? { ...r, time: clockLabel(s), end: clockLabel(end) } : r)),
+          d.kind === 'move' ? 'Block moved' : 'Block resized'
+        )
+      }
+    }
+
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
+
+  const closeEditor = useCallback(() => {
+    setEditor(null)
+    setPreview((p) => (p && p.id === 'draft' ? null : p))
+  }, [])
+
   if (!event) return <EmptyState title="No such event" />
+
+  const shown = rows.map((r) => {
+    const base = span(r)
+    const p = preview && preview.id === r.id ? preview : null
+    return { row: r, s: p ? p.s : base.s, e: p ? p.e : base.e }
+  })
+  const draft = preview && preview.id === 'draft' ? preview : null
+  const positions = layout(shown.map((x) => ({ id: x.row.id, s: x.s, e: x.e })))
+  const staffed = rows.filter((r) => r.needsStaff).length
+
+  const renderBlock = ({ row, s, e }) => {
+    const pos = positions[row.id] || { lane: 0, lanes: 1 }
+    const top = ((s - lo) / 60) * PX
+    const h = Math.max(((e - s) / 60) * PX, 20)
+    const tone = row.tone === 'urgent' ? 'urgent' : row.needsStaff ? 'staff' : 'plain'
+    const active = editor?.id === row.id || preview?.id === row.id
+    return (
+      <div
+        key={row.id}
+        data-row={row.id}
+        title={`${row.title || '(No title)'}, ${range(s, e)}`}
+        className={[
+          'absolute cursor-grab select-none overflow-hidden rounded-xl border px-2 py-1 text-left text-[12px] leading-tight transition-shadow active:cursor-grabbing',
+          tone === 'urgent' ? 'border-urgent-line bg-urgent-soft text-urgent' : '',
+          tone === 'staff' ? 'border-accent bg-accent text-on-accent' : '',
+          tone === 'plain' ? 'border-line bg-wash-deep text-ink' : '',
+          active ? 'z-20 shadow-pop ring-2 ring-accent-line' : 'z-10 hover:shadow-card'
+        ].join(' ')}
+        style={{
+          top: top + 1,
+          height: h - 2,
+          left: `calc(${(pos.lane / pos.lanes) * 100}% + 2px)`,
+          width: `calc(${100 / pos.lanes}% - 5px)`
+        }}
+      >
+        <span data-edge="top" className="absolute inset-x-0 top-0 h-2 cursor-ns-resize" />
+        <span className="block truncate font-semibold">{row.title || '(No title)'}</span>
+        {h >= 38 && <span className="block truncate opacity-85">{range(s, e)}</span>}
+        {h >= 56 && row.needsStaff && (
+          <span className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold opacity-90">
+            <Icon name="users" size={11} /> Needs staff
+          </span>
+        )}
+        {h >= 74 && row.note && <span className="mt-0.5 block truncate text-[11px] opacity-80">{row.note}</span>}
+        <span data-edge="bottom" className="absolute inset-x-0 bottom-0 h-2 cursor-ns-resize" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-3" data-version={version}>
       <Card
         title="Run of show"
         icon="clock"
-        subtitle={`${rows.length} rows · ${rows.filter((r) => r.needsStaff).length} need staff and appear in the Staffing Planner`}
+        subtitle={`${rows.length} blocks · ${staffed} need staff and appear in the Staffing Planner. Click or drag on the grid to add one.`}
         action={
-          <Button size="sm" variant="ghost" onClick={() => resetEvent(id)}>
-            Reset to sample
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button size="sm" variant="ghost" onClick={() => resetEvent(id)}>
+              Reset to sample
+            </Button>
+            <Button
+              size="sm"
+              variant="primary"
+              data-guide="run-create"
+              onClick={() => {
+                const last = rows.reduce((m, r) => Math.max(m, span(r).e), lo + 8 * 60)
+                const s = clamp(Math.ceil(last / 30) * 30, lo, hi - DEFAULT_LEN)
+                setPreview({ id: 'draft', s, e: s + DEFAULT_LEN })
+                openNew(s, s + DEFAULT_LEN)
+              }}
+            >
+              <Icon name="plus" size={13} />
+              Create
+            </Button>
+          </div>
         }
         bodyClassName="px-0 py-0"
       >
-        <div className="flex flex-wrap items-center gap-3 border-b border-line-soft bg-wash/50 px-4 py-2.5">
-          <label className="flex items-center gap-2 text-[13px] font-medium text-ink-2">
-            <input
-              type="checkbox"
-              checked={allOn}
-              onChange={() => setSelected(allOn ? [] : rows.map((r) => r.id))}
-              className="h-4 w-4 accent-[var(--color-accent)]"
-              aria-label="Select all rows"
-            />
-            {selected.length ? `${selected.length} selected` : 'Select all'}
-          </label>
-          {selected.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative">
-                <Button size="sm" variant="secondary" onClick={() => setMoving((v) => !v)}>
-                  Move
-                </Button>
-                {moving && (
-                  <Popover onClose={() => setMoving(false)} align="left">
-                    <p className="text-[13px] font-semibold text-ink">Move {selected.length} selected by</p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <select
-                        value={shift.dir}
-                        onChange={(e) => setShift((s) => ({ ...s, dir: Number(e.target.value) }))}
-                        className={INPUT}
-                        aria-label="Earlier or later"
-                      >
-                        <option value={-1}>Earlier</option>
-                        <option value={1}>Later</option>
-                      </select>
-                      <input
-                        type="number"
-                        min={5}
-                        step={5}
-                        value={shift.minutes}
-                        onChange={(e) => setShift((s) => ({ ...s, minutes: Math.max(5, Number(e.target.value) || 5) }))}
-                        className={INPUT}
-                        aria-label="Minutes"
-                      />
-                      <span className="text-[13px] text-muted">min</span>
-                    </div>
-                    <div className="mt-2.5 flex justify-end gap-2">
-                      <Button size="sm" variant="secondary" onClick={() => setMoving(false)}>
-                        Cancel
-                      </Button>
-                      <Button size="sm" variant="primary" onClick={applyShift}>
-                        Move
-                      </Button>
-                    </div>
-                  </Popover>
-                )}
-              </div>
-              <div className="relative">
-                <Button size="sm" variant="secondary" onClick={() => setConfirmId('bulk')}>
-                  Delete
-                </Button>
-                {confirmId === 'bulk' && (
-                  <ConfirmDelete
-                    text={`Delete ${selected.length} selected row${selected.length === 1 ? '' : 's'}?`}
-                    align="left"
-                    onCancel={() => setConfirmId(null)}
-                    onConfirm={() => remove(selected)}
-                  />
-                )}
-              </div>
-              <Button size="sm" variant="ghost" onClick={() => setSelected([])}>
-                Clear
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {rows.length === 0 ? (
-          <div className="p-4">
-            <EmptyState
-              title="Nothing in the run of show yet"
-              body="Add the moments of the day. Tick Needs staff on the ones you will staff."
-              action={
-                <Button variant="primary" onClick={addFirst}>
-                  <Icon name="plus" size={14} />
-                  Add a row
-                </Button>
-              }
-            />
+        <div className="flex px-3 py-3 sm:px-4">
+          <div className="relative w-14 shrink-0" style={{ height }} aria-hidden="true">
+            {hours.map((h, i) =>
+              i === 0 || i === hours.length - 1 ? null : (
+                <span key={h} className="absolute right-2 -translate-y-1/2 whitespace-nowrap text-[10px] text-faint" style={{ top: ((h * 60 - lo) / 60) * PX }}>
+                  {clockLabel(h * 60)}
+                </span>
+              )
+            )}
           </div>
-        ) : (
-          <ol>
-            {rows.map((row) => (
-              <Row
-                key={row.id}
-                row={row}
-                guide={row.id === guideRowId}
-                selected={selected.includes(row.id)}
-                focus={focusId === row.id}
-                dropMark={over && over.id === row.id && dragId && dragId !== row.id ? (over.after ? 'after' : 'before') : null}
-                onSelect={() => toggle(row.id)}
-                onChange={(patch) => change(row.id, patch)}
-                onAddBelow={() => addBelow(row.id)}
-                onAskDelete={() => setConfirmId(row.id)}
-                confirming={confirmId === row.id}
-                onCancelDelete={() => setConfirmId(null)}
-                onConfirmDelete={() => remove([row.id])}
-                drag={dragFor(row.id)}
-              />
+
+          <div
+            ref={gridRef}
+            onPointerDown={onPointerDown}
+            className="relative flex-1 cursor-cell touch-none border-l border-line-soft"
+            style={{ height }}
+            role="application"
+            aria-label="Run of show day view. Click or drag to add a block."
+          >
+            {hours.map((h) => (
+              <div key={h} className="pointer-events-none absolute inset-x-0 border-t border-line-soft" style={{ top: ((h * 60 - lo) / 60) * PX }} />
             ))}
-          </ol>
-        )}
+            {hours.slice(0, -1).map((h) => (
+              <div key={`half-${h}`} className="pointer-events-none absolute inset-x-0 border-t border-dashed border-line-soft/60" style={{ top: ((h * 60 + 30 - lo) / 60) * PX }} />
+            ))}
+
+            {shown.map(renderBlock)}
+
+            {draft && (
+              <div
+                data-row="draft"
+                className="pointer-events-none absolute inset-x-1 z-20 overflow-hidden rounded-xl border-2 border-dashed border-accent bg-accent-soft px-2 py-1 text-[12px] font-semibold text-accent"
+                style={{ top: ((draft.s - lo) / 60) * PX + 1, height: Math.max(((draft.e - draft.s) / 60) * PX, 20) - 2 }}
+              >
+                {(editor?.values.title || '(No title)') + ' · ' + range(draft.s, draft.e)}
+              </div>
+            )}
+          </div>
+        </div>
       </Card>
+
+      {editor && (
+        <Editor
+          key={editor.values.id}
+          value={editor.values}
+          isNew={!editor.id}
+          anchorId={editor.id || 'draft'}
+          onSave={saveEditor}
+          onDelete={() => deleteRow(editor.id)}
+          onClose={closeEditor}
+        />
+      )}
+
+      {undo && (
+        <div role="status" className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full bg-ink px-5 py-2.5 text-[13px] font-medium text-surface shadow-pop">
+          <span>{undo.message}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setRows(id, undo.rows)
+              setUndo(null)
+            }}
+            className="rounded-full px-2 py-0.5 font-bold text-accent-line hover:bg-surface/10"
+          >
+            Undo
+          </button>
+        </div>
+      )}
     </div>
   )
 }
