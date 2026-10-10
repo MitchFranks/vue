@@ -51,6 +51,8 @@
   --status-clear: #2b5873;
   --status-clear-soft: #dfe9ef;
 
+  --header-height: 3.5rem;
+
   --shadow-raised-value: 0 1px 2px rgba(28, 27, 25, 0.05), 0 6px 20px rgba(28, 27, 25, 0.05);
   --shadow-overlay-value: 0 2px 4px rgba(28, 27, 25, 0.06), 0 16px 48px rgba(28, 27, 25, 0.12);
 }

@@ -102,7 +102,7 @@ export function GuideDialog({ step, onNext, onBack, onChoose, onSkip }) {
 
         {step === 'welcome' ? (
           <div className="px-6 pb-2 pt-4">
-            <h2 id={titleId} tabIndex={-1} data-autofocus className="display text-title text-ink outline-none">
+            <h2 id={titleId} tabIndex={-1} data-autofocus className="text-title font-light text-ink outline-none">
               Welcome to Vue
             </h2>
             <div id={bodyId} className="mt-3 space-y-3 text-body leading-relaxed text-ink">
@@ -168,7 +168,7 @@ function ChooseStep({ titleId, bodyId, onChoose }) {
   )
   return (
     <div className="px-6 pb-2 pt-4">
-      <h2 id={titleId} tabIndex={-1} data-autofocus className="display text-title text-ink outline-none">
+      <h2 id={titleId} tabIndex={-1} data-autofocus className="text-title font-light text-ink outline-none">
         What would you like to do first?
       </h2>
       <p id={bodyId} className="mt-3 text-body leading-relaxed text-ink">

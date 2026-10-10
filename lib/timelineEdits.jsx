@@ -124,7 +124,8 @@ function blockTimes(row) {
   const endMin = parseClock(row.end) ?? startMin + 60
   const start = startMin / 60
   let end = endMin / 60
-  if (end <= start) end += 24
+  if (end === start) end = start + 1 // no end set: default to an hour
+  else if (end < start) end += 24
   return { start, end }
 }
 
