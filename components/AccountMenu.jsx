@@ -78,7 +78,7 @@ export function AccountMenu() {
         onClick={() => setOpen((v) => !v)}
         className={cx(
           'grid h-9 w-9 place-items-center rounded-full bg-surface-sunken font-medium text-label text-ink transition-shadow',
-          'hover: focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-line-strong',
+          'hover:ring-2 hover:ring-line-strong focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-line-strong',
           open && 'ring-2 ring-accent'
         )}
       >

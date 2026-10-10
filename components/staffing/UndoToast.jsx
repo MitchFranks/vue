@@ -20,7 +20,7 @@ export function UndoToast() {
   if (!toast) return null
   return (
     <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex justify-center p-3">
-      <div className="pointer-events-auto flex w-full max-w-md items-start gap-2.5 rounded-md border border-status-clear-soft bg-status-clear-soft px-4 py-3 text-body text-status-clear shadow-[0_12px_35px_rgba(12,21,18,.18)]">
+      <div className="pointer-events-auto flex w-full max-w-md items-start gap-2.5 rounded-md border border-status-clear-soft bg-status-clear-soft px-4 py-3 text-body text-status-clear shadow-overlay">
         <Icon name="check" size={15} className="mt-0.5" />
         <div className="min-w-0 flex-1">
           <p>{toast.message}</p>
