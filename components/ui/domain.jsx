@@ -18,61 +18,53 @@ import { Avatar, Button, Card, Icon, ListRow, StatusBadge } from './primitives'
 /* ---------------------------------------------------------- UpNextItem --
  *
  * The single most important component in the product. It answers, in order:
- *   what happened  ->  which event  ->  why it matters  ->  what you can do.
+ *   how soon  ->  what happened  ->  which event  ->  why it matters  ->  what to do.
  *
- * GUIDE THE EYE: "do first" items get a thick accent rule and the
- * only filled button in the list. "Coming up" items are quieter. No red: priority
- * is shown by order and wording, so the list informs without alarming.
+ * Status before detail: the chip says whether it needs the user today
+ * (status-now) or this week (status-soon) in words, before the title. Only
+ * the first item in a list gets the filled ink button, so one action leads.
+ * Lists of these sit in a container with `divide-y divide-line`.
  */
 
 export function UpNextItem({ item, compact = false, first = false }) {
   const urgent = item.tone === 'urgent'
   return (
-    <article
-      className={cx(
-        'border-l-[3px] bg-surface transition-colors',
-        urgent ? 'border-l-accent' : item.tone === 'warn' ? 'border-l-warn' : 'border-l-line',
-        'border-y border-r border-line-soft hover:bg-wash/40',
-        first && 'ring-2 ring-inset ring-accent'
-      )}
-    >
-      <div className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-start sm:gap-4">
+    <article className="bg-surface px-4 py-4 transition-colors duration-150 hover:bg-surface-sunken/40 sm:px-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-6">
         <div className="min-w-0 flex-1">
-          <div className="mb-1.5 flex flex-wrap items-center gap-2">
-            <StatusBadge tone={urgent ? 'pending' : 'warn'} size="sm">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <StatusBadge tone={urgent ? 'urgent' : 'warn'} size="sm">
               {urgent ? 'Do first' : 'Coming up'}
             </StatusBadge>
             <Link
               href={`/events/${item.eventId}`}
-              className="border border-line bg-wash px-2 py-0.5 text-[10px] text-ink-2 transition-colors hover:border-accent hover:text-accent rounded-2xl"
+              className="rounded-sm px-1 text-small text-ink-muted transition-colors hover:text-accent"
             >
               {item.eventName}
             </Link>
-            <span className="text-[11px] text-faint">{item.meta}</span>
+            <span className="text-small text-ink-muted">· {item.meta}</span>
           </div>
 
-          <h3 className={cx('font-display text-[18px] font-bold leading-snug text-ink', urgent && 'sm:text-[20px]')}>
-            {item.title}
-          </h3>
+          <h3 className="text-heading font-medium text-ink">{item.title}</h3>
 
           {!compact && (
-            <dl className="mt-1.5 space-y-1">
-              <div className="flex gap-3 text-xs">
-                <dt className="eyebrow w-28 shrink-0 text-faint">What</dt>
-                <dd className="leading-relaxed text-muted">{item.what}</dd>
+            <dl className="mt-2 space-y-1 text-small">
+              <div className="flex gap-3">
+                <dt className="w-28 shrink-0 text-ink-muted">What</dt>
+                <dd className="text-ink">{item.what}</dd>
               </div>
-              <div className="flex gap-3 text-xs">
-                <dt className="eyebrow w-28 shrink-0 text-faint">Why it matters</dt>
-                <dd className="leading-relaxed text-muted">{item.why}</dd>
+              <div className="flex gap-3">
+                <dt className="w-28 shrink-0 text-ink-muted">Why it matters</dt>
+                <dd className="text-ink">{item.why}</dd>
               </div>
             </dl>
           )}
         </div>
 
         <div className="shrink-0">
-          <Button href={item.href} variant={urgent ? 'primary' : 'secondary'} size="sm">
+          <Button href={item.href} variant={first ? 'primary' : 'secondary'} size="sm">
             {item.actionLabel}
-            <Icon name="arrowRight" size={13} />
+            <Icon name="arrowRight" size={14} />
           </Button>
         </div>
       </div>
@@ -87,27 +79,25 @@ export function EventCard({ event, coverage, attentionCount = 0, guide = false }
     <Link
       href={`/events/${event.id}`}
       data-guide={guide ? 'events-first' : undefined}
-      className="surface-card block border border-transparent px-5 py-5 transition-all duration-200 hover:-translate-y-[2px] hover:border-accent-line"
+      className="block rounded-md border border-line bg-surface px-6 py-5 shadow-raised transition-colors duration-150 hover:border-line-strong"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-display text-[20px] font-bold text-ink">{event.name}</h3>
-            <span className="rounded-full bg-blush px-2.5 py-0.5 text-[11px] font-semibold text-ink-2">
-              {event.type}
-            </span>
+            <h3 className="text-heading font-medium text-ink">{event.name}</h3>
+            <span className="text-small text-ink-muted">{event.type}</span>
           </div>
-          <p className="mt-1 text-xs text-muted">
+          <p className="mt-1 text-small text-ink-muted">
             {event.dateShort} · {event.headline} · {event.guests} expected
           </p>
-          <p className="mt-0.5 text-[11px] text-faint">{event.spaces}</p>
+          <p className="text-small text-ink-muted">{event.spaces}</p>
         </div>
-        <Icon name="chevronRight" size={16} className="mt-1 text-faint" />
+        <Icon name="chevronRight" size={16} className="mt-1 text-ink-muted" />
       </div>
 
-      <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-line-soft pt-2.5">
+      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-4">
         {attentionCount > 0 ? (
-          <StatusBadge tone="pending" size="sm">
+          <StatusBadge tone="urgent" size="sm">
             {attentionCount} up next
           </StatusBadge>
         ) : (
@@ -125,7 +115,7 @@ export function EventCard({ event, coverage, attentionCount = 0, guide = false }
               Needs {coverage.short} more
             </StatusBadge>
           ))}
-        <span className="ml-auto text-[11px] text-faint">{event.bookingStatus} · {daysOutLabel(event)}</span>
+        <span className="ml-auto text-small text-ink-muted">{event.bookingStatus} · {daysOutLabel(event)}</span>
       </div>
     </Link>
   )
@@ -192,18 +182,18 @@ export function AssignmentCard({ assignment, event, block, onAccept, onDecline, 
           ? 'info'
           : 'pending'
   return (
-    <div className="border-b border-line-soft px-3 py-2.5 last:border-b-0">
+    <div className="border-b border-line px-4 py-3 last:border-b-0">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <Link href={`/staffing/${event.id}`} className="text-sm font-medium text-ink hover:text-accent">
+          <Link href={`/staffing/${event.id}`} className="font-medium text-ink transition-colors hover:text-accent">
             {event.name}
           </Link>
-          <p className="mt-0.5 text-xs text-muted">
+          <p className="text-small text-ink-muted">
             {block.name} · {event.dateShort} · {hourLabel(block.start)}–{hourLabel(block.end)}
           </p>
-          <p className="mt-0.5 text-[11px] text-faint">Role: {assignment.role}</p>
+          <p className="text-small text-ink-muted">Role: {assignment.role}</p>
           {assignment.status === 'declined' && assignment.declineReason && (
-            <p className="mt-1 text-[11px] text-urgent">Reason: {assignment.declineReason}</p>
+            <p className="mt-1 text-small text-status-now">Reason: {assignment.declineReason}</p>
           )}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
@@ -233,7 +223,7 @@ export function AssignmentCard({ assignment, event, block, onAccept, onDecline, 
       <div className="mt-2">
         <Link
           href={`/staffing/${event.id}?block=${block.id}&role=${encodeURIComponent(assignment.role)}`}
-          className="text-[11px] text-accent underline-offset-2 hover:underline"
+          className="text-small text-accent underline-offset-4 hover:underline"
         >
           Open on the board
         </Link>
@@ -252,7 +242,6 @@ export function EventBlock({ event, block, assignments, openPositions, children 
     <Card
       title={block.name}
       subtitle={`${hourLabel(block.start)} – ${hourLabel(block.end)}${block.kind === 'setup' ? ' · Load-in / setup (operations)' : block.kind === 'teardown' ? ' · Teardown (operations)' : ''}`}
-      tone={blockPositions.length ? 'urgent' : undefined}
       action={
         blockPositions.length ? (
           <StatusBadge tone="warn" size="sm">
@@ -266,11 +255,11 @@ export function EventBlock({ event, block, assignments, openPositions, children 
       }
       bodyClassName="px-0 py-0"
     >
-      <p className="border-b border-line-soft px-4 py-2.5 text-xs leading-relaxed text-muted">{block.note}</p>
+      <p className="border-b border-line px-4 py-3 text-small text-ink-muted sm:px-6">{block.note}</p>
 
-      <div className="border-b border-line-soft px-4 py-2">
-        <div className="eyebrow text-faint">Requires</div>
-        <div className="mt-1 flex flex-wrap gap-1.5">
+      <div className="border-b border-line px-4 py-3 sm:px-6">
+        <div className="text-small text-ink-muted">Requires</div>
+        <div className="mt-2 flex flex-wrap gap-2">
           {block.requirements.map((requirement) => {
             const filled = assignments.filter((a) => a.role === requirement.role && a.status === 'accepted').length
             const ok = filled >= requirement.count
@@ -278,11 +267,12 @@ export function EventBlock({ event, block, assignments, openPositions, children 
               <span
                 key={requirement.role}
                 className={cx(
-                  'border px-2 py-0.5 text-[11px] font-medium rounded-2xl',
-                  ok ? 'border-done-line bg-done-soft text-done' : 'border-urgent-line bg-urgent-soft text-urgent'
+                  'inline-flex h-6 items-center gap-1 rounded-full pl-2 pr-2.5 text-label font-medium',
+                  ok ? 'bg-status-clear-soft text-status-clear' : 'bg-status-now-soft text-status-now'
                 )}
               >
-                {requirement.role}: {filled}/{requirement.count}
+                <Icon name={ok ? 'check' : 'alert'} size={13} />
+                {requirement.role}: <span className="font-mono tabular-nums">{filled}/{requirement.count}</span>
               </span>
             )
           })}
@@ -308,15 +298,15 @@ export function AvailabilityGrid({ person, highlight }) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[520px] border-collapse text-[11px]">
+      <table className="w-full min-w-[520px] border-collapse font-mono text-label tabular-nums">
         <caption className="sr-only">{person.name} weekly availability</caption>
         <thead>
           <tr>
-            <th scope="col" className="w-10 border border-line bg-wash-deep p-1 text-left font-semibold text-muted rounded-2xl">
+            <th scope="col" className="w-10 border border-line bg-surface-sunken p-1 text-left font-sans font-medium text-ink-muted">
               Day
             </th>
             {hours.map((h) => (
-              <th key={h} scope="col" className="border border-line bg-wash-deep p-1 font-normal text-faint rounded-2xl">
+              <th key={h} scope="col" className="border border-line bg-surface-sunken p-1 font-normal text-ink-muted">
                 {h % 12 === 0 ? 12 : h % 12}
               </th>
             ))}
@@ -325,7 +315,7 @@ export function AvailabilityGrid({ person, highlight }) {
         <tbody>
           {days.map((day) => (
             <tr key={day}>
-              <th scope="row" className="border border-line bg-wash-deep p-1 text-left font-semibold text-ink-2 rounded-2xl">
+              <th scope="row" className="border border-line bg-surface-sunken p-1 text-left font-sans font-medium text-ink">
                 {day}
               </th>
               {hours.map((h) => {
@@ -336,8 +326,8 @@ export function AvailabilityGrid({ person, highlight }) {
                   <td
                     key={h}
                     className={cx(
-                      'border border-line p-0 rounded-2xl',
-                      free ? 'bg-done-soft' : 'bg-surface',
+                      'border border-line p-0',
+                      free ? 'bg-status-clear-soft' : 'bg-surface',
                       isHighlight && 'outline-2 outline-offset-[-2px] outline-accent'
                     )}
                   >
@@ -352,16 +342,16 @@ export function AvailabilityGrid({ person, highlight }) {
           ))}
         </tbody>
       </table>
-      <p className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-muted">
+      <p className="mt-3 flex flex-wrap items-center gap-4 text-small text-ink-muted">
         <span className="flex items-center gap-1">
-          <span className="inline-block h-3 w-3 border border-line bg-done-soft rounded-2xl" /> Available
+          <span className="inline-block h-3 w-3 border border-line bg-status-clear-soft" /> Available
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-3 w-3 border border-line bg-surface rounded-2xl" /> Not available
+          <span className="inline-block h-3 w-3 border border-line bg-surface" /> Not available
         </span>
         {highlight && (
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 border-2 border-accent rounded-2xl" /> Position being filled
+            <span className="inline-block h-3 w-3 border-2 border-accent" /> Position being filled
           </span>
         )}
       </p>
@@ -373,23 +363,23 @@ export function AvailabilityGrid({ person, highlight }) {
 
 export function TaskRow({ task, onToggle }) {
   return (
-    <div className="flex items-start gap-3 border-b border-line-soft px-3 py-2.5 last:border-b-0">
+    <div className="flex items-start gap-3 border-b border-line px-4 py-3 last:border-b-0 sm:px-6">
       <input
         type="checkbox"
         id={`task-${task.id}`}
         checked={task.done}
         onChange={onToggle}
-        className="mt-1 h-4 w-4 shrink-0 accent-[var(--color-accent)]"
+        className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--ink)]"
       />
       <div className="min-w-0 flex-1">
         <label
           htmlFor={`task-${task.id}`}
-          className={cx('block cursor-pointer text-[14px]', task.done ? 'text-faint line-through' : 'text-ink')}
+          className={cx('block cursor-pointer', task.done ? 'text-ink-muted' : 'text-ink')}
         >
           {task.title}
         </label>
-        <p className="mt-0.5 text-xs text-muted">{task.detail}</p>
-        <p className="mt-0.5 text-[11px] text-faint">Owner: {task.owner}</p>
+        <p className="text-small text-ink-muted">{task.detail}</p>
+        <p className="text-small text-ink-muted">Owner: {task.owner}</p>
       </div>
       <div className="shrink-0">
         {task.done ? (
@@ -427,7 +417,7 @@ export function Modal({ open, onClose, title, children, footer, labelledBy = 'mo
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-0 sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-4"
       onClick={onClose}
     >
       <div
@@ -436,24 +426,24 @@ export function Modal({ open, onClose, title, children, footer, labelledBy = 'mo
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto border border-line bg-surface shadow-[0_24px_60px_rgba(12,21,18,.22)] rounded-2xl"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-md border border-line bg-surface shadow-overlay sm:rounded-md motion-safe:animate-[vue-rise_.2s_ease-out]"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="flex items-start justify-between gap-3 border-b border-line px-4 py-3">
-          <h2 id={labelledBy} className="font-display text-[22px] font-bold text-ink">
+        <header className="flex items-start justify-between gap-3 border-b border-line px-6 py-4">
+          <h2 id={labelledBy} className="text-title font-light text-ink">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="border border-line px-2 py-1.5 text-muted transition-colors hover:border-ink hover:text-ink rounded-2xl"
+            className="grid h-8 w-8 place-items-center rounded-sm text-ink-muted transition-colors hover:bg-surface-sunken hover:text-ink"
           >
             <Icon name="x" size={14} />
             <span className="sr-only">Close</span>
           </button>
         </header>
-        <div className="px-4 py-3">{children}</div>
-        {footer && <footer className="flex flex-wrap justify-end gap-2 border-t border-line px-4 py-3">{footer}</footer>}
+        <div className="px-6 py-4">{children}</div>
+        {footer && <footer className="flex flex-wrap justify-end gap-2 border-t border-line px-6 py-4">{footer}</footer>}
       </div>
     </div>
   )
@@ -473,16 +463,15 @@ export function ToastHost({ toasts, onDismiss }) {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className={cx(
-            'pointer-events-auto flex w-full max-w-md items-start gap-2.5 border px-4 py-3 text-sm shadow-[0_12px_35px_rgba(12,21,18,.18)] rounded-2xl',
-            t.tone === 'urgent'
-              ? 'border-urgent-line bg-urgent-soft text-urgent'
-              : 'border-done-line bg-done-soft text-done'
-          )}
+          className="pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-md border border-line bg-surface px-4 py-3 text-ink shadow-overlay motion-safe:animate-[vue-rise_.2s_ease-out]"
         >
-          <Icon name={t.tone === 'urgent' ? 'alert' : 'check'} size={15} className="mt-0.5" />
+          <Icon
+            name={t.tone === 'urgent' ? 'alert' : 'check'}
+            size={16}
+            className={cx('mt-0.5', t.tone === 'urgent' ? 'text-status-now' : 'text-status-clear')}
+          />
           <span className="flex-1">{t.message}</span>
-          <button type="button" onClick={() => onDismiss(t.id)} className="text-current opacity-60 hover:opacity-100">
+          <button type="button" onClick={() => onDismiss(t.id)} className="rounded-sm text-ink-muted transition-colors hover:text-ink">
             <Icon name="x" size={13} />
             <span className="sr-only">Dismiss</span>
           </button>
@@ -521,7 +510,7 @@ export function useConfirm() {
         </>
       }
     >
-      <p className="text-sm text-ink-2">{pending?.body}</p>
+      <p className="text-ink">{pending?.body}</p>
     </Modal>
   )
   return { confirm, dialog }

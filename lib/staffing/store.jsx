@@ -12,7 +12,7 @@
 
 import { useTimelineVersion } from '@/lib/timelineEdits'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { WORLD, makeGuest, registerPerson, seedState } from './adapter'
+import { WORLD, makeGuest, registerPerson, seedState, syncPeople } from './adapter'
 import {
   activeRequest,
   blockById,
@@ -40,6 +40,13 @@ export const STORAGE_KEY = 'vue-lowfi-staffing2-v3'
 
 const nextId = (st, prefix) => `${prefix}${++st.counter}`
 
+/** Guests live in the shared world, which outlives a reset, so skip ids already taken. */
+function nextGuestId(st) {
+  let id = nextId(st, 'guest')
+  while (WORLD.staffMap[id]) id = nextId(st, 'guest')
+  return id
+}
+
 function log(st, eventId, text) {
   st.activity.unshift({ id: nextId(st, 'a'), at: simNowIso(st), eventId, text })
   if (st.activity.length > 200) st.activity.length = 200
@@ -59,12 +66,18 @@ export function applyAsk(st, spec) {
     const existing = activeRequest(staffId, spec.eventId, spec.role, st)
     const target = existing && existing.status !== 'backup' ? existing : null
     const blockIds = sortBlockIds(ev, [...(target?.blockIds || []), ...spec.blockIds])
-    const cand = { staffId, eventId: spec.eventId, role: spec.role, blockIds, callOffsetMin: spec.callOffsetMin, ignoreId: target?.id }
-    const hard = evaluate(cand, st).filter((i) => i.severity === 'hard')
+    // Same offset the Ask panel ranked with: the earlier of the two.
+    const callOffsetMin = target ? Math.min(target.callOffsetMin, spec.callOffsetMin) : spec.callOffsetMin
+    const cand = { staffId, eventId: spec.eventId, role: spec.role, blockIds, callOffsetMin, ignoreId: existing?.id }
+    const found = evaluate(cand, st)
+    if (found.some((i) => i.severity === 'block')) continue // already on this event: never double-book
+    const hard = found.filter((i) => i.severity === 'hard')
     const overrides = spec.reason ? hard.map((i) => ({ ruleId: i.ruleId, message: i.message, reason: spec.reason, at: now })) : []
+    // Asking a backup replaces the backup row, so there is only one live request.
+    if (existing && !target) delete st.requests[existing.id]
     if (target) {
       target.blockIds = blockIds
-      target.callOffsetMin = spec.callOffsetMin
+      target.callOffsetMin = callOffsetMin
       target.confirmedBlockIds = target.confirmedBlockIds.filter((b) => blockIds.includes(b))
       target.overrides = [...target.overrides, ...overrides]
       ids.push(target.id)
@@ -77,7 +90,7 @@ export function applyAsk(st, spec) {
         role: spec.role,
         blockIds,
         confirmedBlockIds: [],
-        callOffsetMin: spec.callOffsetMin,
+        callOffsetMin,
         status: 'draft',
         sentAt: null,
         sent: null,
@@ -115,7 +128,10 @@ export function applySend(st, ids, { urgentAll = false } = {}) {
       r.remindedAt = now
       log(st, ev.id, `Reminded ${name}`)
     } else {
-      r.sent = { blockIds: [...r.blockIds], callOffsetMin: r.callOffsetMin, prevOffset: r.sent?.callOffsetMin ?? r.callOffsetMin }
+      // A change still waiting for an answer keeps the offset the person last agreed to.
+      const awaitingChange = r.status === 'pending' && r.confirmedBlockIds.length > 0 && r.sent?.prevOffset != null
+      const prevOffset = awaitingChange ? r.sent.prevOffset : (r.sent?.callOffsetMin ?? r.callOffsetMin)
+      r.sent = { blockIds: [...r.blockIds], callOffsetMin: r.callOffsetMin, prevOffset }
       r.status = 'pending'
       r.sentAt = now
       r.replyBy = null
@@ -136,8 +152,14 @@ export function applyAnswer(st, id, yes, reason) {
   r.respondedAt = simNowIso(st)
   if (yes) {
     if (r.confirmedBlockIds.length) {
+      // Keep what they already had; confirm an added block only if it still has room.
+      const had = r.confirmedBlockIds
       r.status = 'accepted'
-      r.confirmedBlockIds = [...r.blockIds]
+      r.confirmedBlockIds = r.blockIds.filter((b) => {
+        if (had.includes(b)) return true
+        const c = coverage(ev.id, blockById(b), r.role, st, r.id)
+        return c.confirmed < c.need
+      })
       log(st, ev.id, `${name} said yes to the update (${blockNames(r)})`)
       return 'accepted'
     }
@@ -242,13 +264,14 @@ export function Staffing2Provider({ children }) {
 
   /**
    * Apply a mutation to a copy of the state. opts.undo keeps the previous
-   * state in the undo slot; opts.clearUndo empties it (sends, staff replies).
+   * state in the undo slot; opts.clearUndo empties it (sends, staff replies);
+   * opts.noTick leaves the sim clock alone (a staff member opening a text).
    */
   const commit = useCallback(
     (fn, opts = {}) => {
       const prev = stateRef.current
-      const draft = structuredClone(prev)
-      draft.tick = (draft.tick || 0) + 1
+      const draft = dropDeletedBlocks(structuredClone(prev))
+      if (!opts.noTick) draft.tick = (draft.tick || 0) + 1
       const result = fn(draft)
       if (result === false) return undefined
       stateRef.current = draft
@@ -270,7 +293,7 @@ export function Staffing2Provider({ children }) {
       /** Add someone who is not in the pool (the Ask panel's free-text field). Returns their id. */
       addPerson(name, role) {
         return commit((st) => {
-          const person = makeGuest(nextId(st, 'guest'), name.trim(), role)
+          const person = makeGuest(nextGuestId(st), name.trim(), role)
           st.people = [...(st.people || []), person]
           registerPerson(person)
           return person.id
@@ -305,6 +328,7 @@ export function Staffing2Provider({ children }) {
       },
       /** Manager records a reply that came in by phone. */
       recordReply(id, yes, reason) {
+        if (!req(id)) return undefined
         const name = firstName(req(id).staffId)
         return commit((st) => applyAnswer(st, id, yes, reason), {
           undo: true,
@@ -323,14 +347,16 @@ export function Staffing2Provider({ children }) {
         if (!r || r.seenAt || r.status !== 'pending') return
         commit((st) => {
           st.requests[id].seenAt = simNowIso(st)
-        })
+        }, { noTick: true })
       },
       dropOut(id, reason) {
         return commit(
           (st) => {
             const r = st.requests[id]
             if (!r || r.status !== 'accepted') return false
-            const hoursBefore = Math.max(0, Math.round((callAbsMin(r) - simNowMin(st)) / 60))
+            const call = callAbsMin(r)
+            if (call == null) return false
+            const hoursBefore = Math.max(0, Math.round((call - simNowMin(st)) / 60))
             r.shortNotice = isShortNotice(r, st)
             r.hoursBefore = hoursBefore
             r.status = 'declined'
@@ -345,32 +371,40 @@ export function Staffing2Provider({ children }) {
       },
       remove(id) {
         const r = req(id)
+        if (!r) return undefined
         const name = firstName(r.staffId)
         return commit(
           (st) => {
             const x = st.requests[id]
+            if (!x || x.status === 'cancelled') return false
+            // Nothing was promised to a draft.
             if (x.status === 'draft') {
               delete st.requests[id]
               return 'deleted'
             }
+            // Someone who said no, or is only a backup, was never counted on: nobody to tell.
+            const told = x.status === 'pending' || x.status === 'accepted'
+            if (x.status === 'declined') x.declinedBefore = true // keep "said no to this event" for later asks
             x.status = 'cancelled'
-            x.cancelNotice = 'queued'
+            if (told) x.cancelNotice = 'queued'
             log(st, x.eventId, `Removed ${name} (${x.role})`)
-            return 'queued'
+            return told ? 'queued' : 'quiet'
           },
           {
             undo: true,
             toast: (res) => ({
-              message: res === 'deleted' ? `Removed ${name}. Nothing had been sent.` : `Removed ${name}. Send the update to let ${name} know.`
+              message: res === 'deleted' ? `Removed ${name}. Nothing had been sent.` : res === 'quiet' ? `Removed ${name}.` : `Removed ${name}. Send the update to let ${name} know.`
             })
           }
         )
       },
       changeTimes(id, blockIds, callOffsetMin) {
+        if (!req(id)) return undefined
         const name = firstName(req(id).staffId)
         return commit(
           (st) => {
             const r = st.requests[id]
+            if (!r) return false
             const ev = WORLD.eventMap[r.eventId]
             r.blockIds = sortBlockIds(ev, blockIds)
             r.callOffsetMin = callOffsetMin
@@ -380,10 +414,12 @@ export function Staffing2Provider({ children }) {
         )
       },
       promote(id) {
+        if (!req(id)) return undefined
         const name = firstName(req(id).staffId)
         return commit(
           (st) => {
             const r = st.requests[id]
+            if (!r) return false
             r.status = 'accepted'
             r.confirmedBlockIds = [...r.blockIds]
             r.sent = { blockIds: [...r.blockIds], callOffsetMin: r.callOffsetMin }
@@ -394,10 +430,12 @@ export function Staffing2Provider({ children }) {
         )
       },
       markOk(id, reason) {
+        if (!req(id)) return undefined
         const name = firstName(req(id).staffId)
         return commit(
           (st) => {
             const r = st.requests[id]
+            if (!r) return false
             const issues = openIssues(r, st).filter((i) => i.severity !== 'info')
             r.overrides = [...r.overrides, ...issues.map((i) => ({ ruleId: i.ruleId, message: i.message, reason: reason || null, at: simNowIso(st) }))]
           },
@@ -459,6 +497,7 @@ export function Staffing2Provider({ children }) {
           /* ignore */
         }
         const next = freshState()
+        syncPeople(next.people)
         stateRef.current = next
         setState(next)
         setLoadError(false)
@@ -469,6 +508,7 @@ export function Staffing2Provider({ children }) {
         const slot = undoRef.current
         if (!slot) return
         setUndoSlot(null)
+        syncPeople(slot.state.people)
         stateRef.current = slot.state
         setState(slot.state)
         setToast({ id: `undone-${Date.now()}`, message: 'Undone.' })
