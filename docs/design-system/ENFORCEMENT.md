@@ -28,6 +28,7 @@ Scans `app/**/*.jsx`, `components/**/*.jsx` and `**/*.stories.jsx` for class tok
 | `no-uppercase` | `uppercase` | 1 | Sentence case only |
 | `no-responsive-type` | `(sm\|md\|lg\|xl\|2xl):text-<role>` | 2 | Roles are already fluid |
 | `no-legacy-class` | `eyebrow`, `display` (as class tokens) | 15 | `text-small text-ink-muted` / `text-title` |
+| `no-px-length` | Arbitrary px lengths: `*-[Npx]` (`min-w-[520px]`, `outline-offset-[-2px]`, …) | 27 | Use a spacing step or a rem value so layout follows the font setting |
 | `no-input-body` | `text-body` inside a `<input>` / `<select>` / `<textarea>` className | n/a | Use `text-control` |
 
 Colour utilities (`text-ink`, `text-status-now`, …) and alignment (`text-center`, `text-balance`)
@@ -46,9 +47,9 @@ The existing `STYLE-GUIDE.md` rules that also suit a string check (`dark:` varia
 
 | Path | Phase 1 | Phase 2 |
 |---|---|---|
-| `components/ui/**` and its stories | **error** (exit 1). 3 to fix in step 5 | error |
+| `components/ui/**` and its stories | **error** (exit 1). 3 type and 2 px-length fixes in step 6 | error |
 | `docs/design-system/**` (Foundations blocks) | **error** | error |
-| `app/**`, other `components/**` | **warning**: per-file counts, exit 0 (≈39 across 19 files) | **error** |
+| `app/**`, other `components/**` | **warning**: per-file counts, exit 0 (≈39 type warnings across 19 files, plus 25 px lengths) | **error** |
 
 The summary prints the warning total so progress through phase 2 is measurable.
 

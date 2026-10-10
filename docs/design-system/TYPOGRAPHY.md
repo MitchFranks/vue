@@ -17,8 +17,9 @@ a 360px phone to a 1512px laptop, and the rules for using them. Components ask f
    `heading`, `body`, `small` and `label` never change, because density and line length depend on them.
 3. **Responsiveness lives in the tokens.** A role may change with the viewport inside
    `globals.css`. Call sites never use `sm:text-…` / `md:text-…`.
-4. **rem, not px.** Same rendered sizes at the default root, but the user's browser font-size
-   setting is respected (WCAG 1.4.4).
+4. **rem, not px.** Type tokens and the spacing unit (`--spacing: 0.25rem`) are rem. They render
+   the same at the default root, but text *and* the space around it grow together when a user
+   raises their browser's default font size (WCAG 1.4.4). Radii and hairlines stay px.
 5. **12px floor.** `label` is the smallest size that exists.
 
 ---

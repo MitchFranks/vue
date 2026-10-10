@@ -58,15 +58,18 @@ The Geist system already fixed most of what the earlier prototypes got wrong. An
 | Visual language | The Geist system as defined in `STYLE-GUIDE.md`. This plan does not change colours, fonts or shape |
 | Responsive strategy | **Fluid** `display` and `title` with `clamp()`. Reading sizes (heading, body, small, label) stay fixed. Call sites never use breakpoint prefixes on type |
 | Target viewports | Mobile **360–430**, tablet **768–1024**, laptop **1280–1512**. Type stops growing at 1280 |
-| Units | Type tokens move from px to **rem**. At the default 16px root the rendered sizes are identical, and the user's browser font-size setting is respected |
-| Storybook phase 1 | **Foundations docs** + the **20 primitives**, with a light / dark / system toolbar |
-| Scope | **Tokens + primitives.** Pages and feature components are not edited; they get lint warnings |
+| Body size | **14px body**, as the Geist system specifies. Form fields are 16px on phones only (`control` role) so iOS doesn't zoom |
+| Units | Type tokens **and the spacing unit** move from px to **rem** (`--spacing: 0.25rem`). At the default 16px root everything renders identically, and type and layout both follow the user's browser font-size setting. Radii stay px |
+| Theme | **Light / Dark / System** setting in Settings, built on a `data-theme` attribute. System (follow the OS) stays the default |
+| Storybook phase 1 | **Foundations docs** + the **20 primitives**, with the same light / dark / system toolbar |
+| `/style-guide` route | **Retired.** Storybook replaces it; the route and its sidebar link are deleted when Storybook is published (phase 3) |
+| Scope | **Tokens + primitives**, plus the theme setting. Pages and feature components are not otherwise edited; they get lint warnings |
 | Enforcement | **Lint + docs.** Errors in `components/ui/` and stories, warnings everywhere else |
 
 ### Non-goals
 
-- Changing the palette, the font, the spacing scale or component visuals.
-- A user-facing theme switch in Settings. Phase 1 only adds the hook (`data-theme`) that makes one possible.
+- Changing the palette, the font, the radii or component visuals.
+- Converting the 27 arbitrary `[Npx]` lengths in classes (`min-w-[520px]`, `min-h-[…]`, …). They get a lint warning and move to rem or spacing steps in phase 2.
 - Domain components (`EventCard`, `AssignmentCard`, …) in Storybook. They need store decorators (phase 3).
 
 ---
@@ -80,6 +83,10 @@ The Geist system already fixed most of what the earlier prototypes got wrong. An
 4. **Inputs on phones** go from 14px to 16px text. From 768px up they stay 14px.
 5. **Long-form text** (messages, guide, settings) gets one consistent line height through a new
    `body-long` role instead of ad hoc `leading-relaxed`.
+6. **Settings gains an Appearance card** with Light / Dark / System. The choice is kept on the
+   device, like the guide settings, and applied before first paint so there's no flash.
+7. **Users who raise their browser's default font size** now get bigger type *and* proportionally
+   bigger spacing. At the default size nothing moves.
 
 ---
 
@@ -90,42 +97,46 @@ The Geist system already fixed most of what the earlier prototypes got wrong. An
 | # | Step | Output |
 |---|---|---|
 | 1 | Install Storybook 10 (`@storybook/nextjs-vite`), wire `globals.css`, Geist, the theme toolbar and viewport presets | `.storybook/`, `npm run storybook` ([STORYBOOK.md](STORYBOOK.md) §2) |
-| 2 | Add `data-theme` support to `globals.css`: dark tokens apply under `[data-theme="dark"]` *or* OS dark when no theme is forced | Storybook and a future setting can switch themes |
-| 3 | Type tokens: px → rem, fluid `display` / `title`, `--text-*--font-weight` on every role, new `body-long` and `control` roles | [TYPOGRAPHY.md](TYPOGRAPHY.md) §3–4 |
-| 4 | Split `primitives.jsx` (18 components) into one file per component; move generic `Modal` and `ToastHost` out of `domain.jsx`. Keep both files as barrels so no import changes | `components/ui/Button.jsx`, … (20 primitives) |
-| 5 | Update primitives to the new roles and drop redundant weight classes (mapping in [TYPOGRAPHY.md](TYPOGRAPHY.md) §6). Fixes the 3 violations in `components/ui/` | No overrides left in `components/ui/` |
-| 6 | Foundations MDX pages + one story file per primitive | [STORYBOOK.md](STORYBOOK.md) §3–4 |
-| 7 | Type lint script; replace the broken `lint` script; run lint and `build-storybook` in CI | [ENFORCEMENT.md](ENFORCEMENT.md) |
-| 8 | Check every route at 375 / 768 / 1280, light and dark | Notes in the PR |
-| 9 | Update `STYLE-GUIDE.md` §3 (type table and the fluid rule) and link it here | One source of truth |
+| 2 | Add `data-theme` support to `globals.css`: dark tokens apply under `[data-theme="dark"]` *or* OS dark when no theme is forced | Storybook and the setting can switch themes |
+| 3 | **Theme setting:** `lib/theme.js` (`THEME_KEY`, `getTheme`, `setTheme`, `applyTheme`, `THEME_BOOT_SCRIPT`). The boot script runs inline in `app/layout.jsx` `<head>` and sets `data-theme` from `localStorage` before paint, with `suppressHydrationWarning` on `<html>`. Settings gets an "Appearance" `Card` with a three-way Light / Dark / System control | Users can override the OS theme; no flash on load |
+| 4 | Units and type tokens: `--spacing: 4px` → `0.25rem`; type px → rem; fluid `display` / `title`; `--text-*--font-weight` on every role; new `body-long` and `control` roles | [TYPOGRAPHY.md](TYPOGRAPHY.md) §3–4 |
+| 5 | Split `primitives.jsx` (18 components) into one file per component; move generic `Modal` and `ToastHost` out of `domain.jsx`. Keep both files as barrels so no import changes | `components/ui/Button.jsx`, … (20 primitives) |
+| 6 | Update primitives to the new roles and drop redundant weight classes (mapping in [TYPOGRAPHY.md](TYPOGRAPHY.md) §6). Fixes the 3 type violations in `components/ui/`; the 2 px lengths in `domain.jsx` (`min-w-[520px]`, `outline-offset-[-2px]`) move to rem | No overrides left in `components/ui/` |
+| 7 | Foundations MDX pages + one story file per primitive | [STORYBOOK.md](STORYBOOK.md) §3–4 |
+| 8 | Type lint script; replace the broken `lint` script; run lint and `build-storybook` in CI | [ENFORCEMENT.md](ENFORCEMENT.md) |
+| 9 | Check every route at 375 / 768 / 1280, in light and dark, at the default font size and at 20px | Notes in the PR |
+| 10 | Update `STYLE-GUIDE.md`: §3 type table and the fluid rule, §2 the theme setting, §4 spacing in rem. Mark `/style-guide` as deprecated in favour of Storybook | One source of truth |
 
-**Done when:** Storybook shows Foundations + 20 primitives in both themes; `npm run lint`
-reports 0 errors; `npm run build` and `npm run build-storybook` pass; every route has been
-checked at the three widths.
+**Done when:** Storybook shows Foundations + 20 primitives in both themes; the Settings theme
+control works with no flash on reload; `npm run lint` reports 0 errors; `npm run build` and
+`npm run build-storybook` pass; every route has been checked at the three widths.
 
 ### Phase 2: page sweep (small)
 
 Clear the ~40 warnings in 20 files (`leading-relaxed` → `text-body-long`, drop `tracking-wide` /
 `uppercase`, `.eyebrow` → `text-small text-ink-muted`, `.display` → `text-title`). Delete the
 `.eyebrow` / `.display` classes, remove Tailwind's default size scale (`--text-*: initial`), and
-make every lint warning an error. Settle breakpoints on `md` / `lg` / `xl`.
+make every lint warning an error. Settle breakpoints on `md` / `lg` / `xl`. Convert the remaining
+25 arbitrary `[Npx]` lengths outside `components/ui/` to rem or spacing steps.
 
-### Phase 3: wider Storybook
+### Phase 3: wider Storybook, retire `/style-guide`
 
 Domain components with store/mock decorators, `@storybook/addon-a11y` (contrast checks in both
-themes), interaction tests via `@storybook/addon-vitest`, publishing Storybook alongside the
-GitHub Pages build.
+themes), interaction tests via `@storybook/addon-vitest`, and publishing Storybook alongside the
+GitHub Pages build. In the same change, delete `app/(app)/style-guide/` and point the sidebar link
+in `AppShell.jsx`, `STYLE-GUIDE.md`, the root `README.md` and the `globals.css` header at Storybook.
 
 ---
 
-## 5. Open questions
+## 5. Decisions log
 
-1. **Body size.** The Geist system uses a 14px body. Earlier planning asked for 16px. This plan
-   keeps 14px (it's what the design calls for and every screen is built on it) and handles the one
-   real mobile problem, input zoom, with the `control` role. Revisit after testing on a phone.
-2. **Spacing units.** `--spacing: 4px` is fixed px. Moving it to `0.25rem` changes nothing at the
-   default root but makes layout scale with the browser font setting too. Worth doing, but it
-   touches every layout, so it's left out of phase 1.
-3. **`/style-guide` route.** Keep it as a quick in-app reference, or replace it with a link to
-   Storybook once Storybook is published (phase 3)?
-4. **User theme setting.** Once `data-theme` exists, should Settings offer Light / Dark / System?
+| # | Question | Decision |
+|---|---|---|
+| 1 | Body size: 14px (Geist) or 16px? | **14px**, with 16px form fields on phones only |
+| 2 | Spacing units: px or rem? | **rem now**, in phase 1 (`--spacing: 0.25rem`) |
+| 3 | Keep `/style-guide` once Storybook exists? | **No.** Deleted when Storybook is published (phase 3) |
+| 4 | Light / Dark / System setting? | **Yes**, in phase 1, defaulting to System |
+
+## 6. Open questions
+
+None right now. New ones go here, then move to the decisions log once answered.

@@ -44,9 +44,10 @@ Tailwind v4 reaches Storybook through the existing `postcss.config.mjs`.
 2. **Real fonts on `<html>`.** `--font-sans` resolves `var(--font-geist-sans)` at `:root`, so
    `GeistSans.variable` and `GeistMono.variable` must be added to `document.documentElement`,
    not a wrapper div. A decorator does this once.
-3. **Theme toolbar:** a global `theme` with `light`, `dark` and `system`. The decorator sets
-   `document.documentElement.dataset.theme` (removing it for `system`). This depends on phase 1
-   step 2: the dark tokens must also apply under `[data-theme="dark"]`, not only inside
+3. **Theme toolbar:** a global `theme` with `light`, `dark` and `system`, the same three options
+   as the Settings control. The decorator calls `applyTheme()` from `lib/theme.js` (the function the
+   app's boot script and Settings use), so stories and the app can't switch themes differently.
+   This depends on phase 1 step 2: the dark tokens must also apply under `[data-theme="dark"]`, not only inside
    `@media (prefers-color-scheme: dark)`:
 
    ```css
@@ -90,7 +91,7 @@ These live in `docs/design-system/foundations/`, next to this plan.
 | `Introduction.mdx` | The five principles from `STYLE-GUIDE.md` §1, links to the style guide and TYPOGRAPHY.md |
 | `Typography.mdx` | Every role rendered live, with size, line height and weight **read from the DOM via `getComputedStyle`** so it can't drift; a fluid demo to resize; Sans vs Mono numbers; do / don't for the §7 rules |
 | `Colour.mdx` | Every token from `STYLE-GUIDE.md` §2 as swatches that switch with the theme toolbar, with live contrast ratios against `canvas` and `surface` |
-| `Space-shape-depth.mdx` | The 4px spacing steps (1, 2, 3, 4, 6, 8, 12), `radius-sm` / `md` / `pill` and what each means, `shadow-raised` vs `shadow-overlay`, `ease-calm` timings, the focus ring |
+| `Space-shape-depth.mdx` | The 0.25rem (4px) spacing steps (1, 2, 3, 4, 6, 8, 12), shown at the default and a 20px root, `radius-sm` / `md` / `pill` and what each means, `shadow-raised` vs `shadow-overlay`, `ease-calm` timings, the focus ring |
 | `Voice.mdx` | The voice rules and "Up Next" priority wording from `STYLE-GUIDE.md` §6–7 |
 
 Small helpers (`TypeSpecimen`, `Swatch`, `TokenTable`) live in `docs/design-system/foundations/blocks/`.
