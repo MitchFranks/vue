@@ -25,13 +25,13 @@ export function BlockToggles({ blocks, selected, onChange, gaps = {} }) {
             aria-pressed={on}
             onClick={() => toggle(b.id)}
             className={cx(
-              'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors',
-              on ? 'border-accent bg-accent-soft text-accent' : 'border-line bg-surface text-muted hover:border-accent-line'
+              'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-label font-medium transition-colors',
+              on ? 'border-accent bg-surface-sunken text-accent' : 'border-line bg-surface text-ink-muted hover:border-line-strong'
             )}
           >
             <Icon name={on ? 'check' : 'plus'} size={12} />
             {b.name} {rangeLabel(b.start, b.end)}
-            {gaps[b.id] ? <span className="font-normal text-muted">· {gaps[b.id]} open</span> : null}
+            {gaps[b.id] ? <span className="font-normal text-ink-muted">· {gaps[b.id]} open</span> : null}
           </button>
         )
       })}
@@ -52,14 +52,14 @@ export function CallTimeSelect({ id = 'call-time', startH, value, onChange }) {
   const opts = CALL_OFFSETS.includes(value) ? CALL_OFFSETS : [...CALL_OFFSETS, value].sort((a, b) => b - a)
   return (
     <div>
-      <label htmlFor={id} className="eyebrow block text-ink-2">
+      <label htmlFor={id} className="eyebrow block text-ink">
         Call time
       </label>
       <select
         id={id}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="mt-1.5 block w-full rounded-2xl border border-line bg-surface px-4 py-2.5 text-[15px] text-ink focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft"
+        className="mt-1.5 block w-full rounded-sm border border-line-strong bg-surface px-3 py-2 text-body text-ink focus:border-accent"
       >
         {opts.map((o) => (
           <option key={o} value={o}>
@@ -84,8 +84,8 @@ export function PickChips({ options, value, onChange, label }) {
             aria-pressed={on}
             onClick={() => onChange(on ? '' : o)}
             className={cx(
-              'rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors',
-              on ? 'border-accent bg-accent-soft text-accent' : 'border-line bg-surface text-ink-2 hover:border-accent-line'
+              'rounded-full border px-3 py-1.5 text-label font-medium transition-colors',
+              on ? 'border-accent bg-surface-sunken text-accent' : 'border-line bg-surface text-ink hover:border-line-strong'
             )}
           >
             {o}

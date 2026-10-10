@@ -11,7 +11,7 @@ import { useStaffing2 } from '@/lib/staffing/store'
 
 const HALF_HOURS = Array.from({ length: 49 }, (_, i) => i / 2)
 const selectCls =
-  'mt-1.5 block w-full rounded-2xl border border-line bg-surface px-3 py-2.5 text-[14px] text-ink focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft'
+  'mt-1.5 block w-full rounded-sm border border-line-strong bg-surface px-3 py-2 text-body text-ink focus:border-accent'
 
 export function AwayDateForm({ staffId, addedBy = 'manager', idPrefix = 'away' }) {
   const { addAway } = useStaffing2()
@@ -30,11 +30,11 @@ export function AwayDateForm({ staffId, addedBy = 'manager', idPrefix = 'away' }
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3 rounded-2xl border border-line-soft bg-wash/50 p-3">
+    <form onSubmit={submit} className="space-y-3 rounded-md border border-line bg-surface-sunken/50 p-3">
       <div className="grid gap-3 sm:grid-cols-2">
         <TextInput label="Date" id={`${idPrefix}-date`} type="date" value={dateKey} onChange={(e) => setDateKey(e.target.value)} />
         <div>
-          <span className="eyebrow block text-ink-2">Time</span>
+          <span className="eyebrow block text-ink">Time</span>
           <div className="mt-1.5 flex gap-2" role="group" aria-label="All day or part of the day">
             {[
               [true, 'All day'],
@@ -45,7 +45,7 @@ export function AwayDateForm({ staffId, addedBy = 'manager', idPrefix = 'away' }
                 type="button"
                 aria-pressed={allDay === v}
                 onClick={() => setAllDay(v)}
-                className={`rounded-full border px-3 py-2 text-[12px] font-semibold ${allDay === v ? 'border-accent bg-accent-soft text-accent' : 'border-line bg-surface text-ink-2'}`}
+                className={`rounded-full border px-3 py-2 text-label font-medium ${allDay === v ? 'border-accent bg-surface-sunken text-accent' : 'border-line bg-surface text-ink'}`}
               >
                 {label}
               </button>
@@ -56,7 +56,7 @@ export function AwayDateForm({ staffId, addedBy = 'manager', idPrefix = 'away' }
       {!allDay && (
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label htmlFor={`${idPrefix}-from`} className="eyebrow block text-ink-2">
+            <label htmlFor={`${idPrefix}-from`} className="eyebrow block text-ink">
               From
             </label>
             <select id={`${idPrefix}-from`} className={selectCls} value={start} onChange={(e) => setStart(Number(e.target.value))}>
@@ -68,7 +68,7 @@ export function AwayDateForm({ staffId, addedBy = 'manager', idPrefix = 'away' }
             </select>
           </div>
           <div>
-            <label htmlFor={`${idPrefix}-to`} className="eyebrow block text-ink-2">
+            <label htmlFor={`${idPrefix}-to`} className="eyebrow block text-ink">
               To
             </label>
             <select id={`${idPrefix}-to`} className={selectCls} value={end} onChange={(e) => setEnd(Number(e.target.value))}>
@@ -83,7 +83,7 @@ export function AwayDateForm({ staffId, addedBy = 'manager', idPrefix = 'away' }
       )}
       <TextInput label="Reason (optional)" id={`${idPrefix}-reason`} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Class, family, another job…" />
       <div className="flex items-center justify-between gap-2">
-        {!valid ? <p className="text-[11px] text-muted">&quot;To&quot; must be after &quot;From&quot;.</p> : <span />}
+        {!valid ? <p className="text-label text-ink-muted">&quot;To&quot; must be after &quot;From&quot;.</p> : <span />}
         <Button type="submit" size="sm" disabled={!valid}>
           Add away date
         </Button>

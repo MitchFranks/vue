@@ -17,7 +17,7 @@ import { usePathname } from 'next/navigation'
 import { cx } from '@/lib/cx'
 import { upNextLabel, useStore } from '@/lib/store'
 import { venue } from '@/lib/mock/events'
-import { Button, Icon } from './ui/primitives'
+import { Button, Count, Icon } from './ui/primitives'
 import { ToastHost } from './ui/domain'
 import { useOnboarding } from './onboarding/OnboardingProvider'
 import { AccountMenu } from './AccountMenu'
@@ -86,45 +86,45 @@ export function AppShell({ children }) {
   return (
     <div className="min-h-screen">
       {/* ---- Top bar ---- */}
-      <header className="sticky top-0 z-30 border-b border-line bg-surface/85 text-ink backdrop-blur">
-        <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
+      <header className="sticky top-0 z-30 border-b border-line bg-surface text-ink">
+        <div className="flex h-(--header-height) items-center gap-3 px-4 sm:px-6">
           <button
             type="button"
             onClick={() => setNavOpen((v) => !v)}
             aria-expanded={navOpen}
             aria-controls="main-nav"
-            className="rounded-full border border-line bg-surface px-2.5 py-2 text-ink transition-colors hover:bg-accent-soft lg:hidden"
+            className="grid h-9 w-9 place-items-center rounded-sm border border-line-strong bg-surface text-ink transition-colors hover:bg-surface-sunken lg:hidden"
           >
             <Icon name="list" size={16} />
             <span className="sr-only">Toggle navigation</span>
           </button>
 
-          <Link href="/" className="flex items-center gap-2.5" title="Back to the welcome screen">
-            <span className="grid h-10 w-10 place-items-center rounded-full bg-accent font-display text-[17px] font-extrabold text-on-accent shadow-pop">
-              v
-            </span>
-            <span className="leading-none">
-              <span className="block font-display text-[19px] font-extrabold tracking-tight text-ink">vue</span>
-              <span className="mt-0.5 hidden text-[11px] font-medium text-muted sm:block">wedding venue ops</span>
-            </span>
+          {/* No logo yet: the name is set in Geist Light wherever a mark would go. */}
+          <Link href="/" className="flex items-baseline gap-3 rounded-sm" title="Back to the welcome screen">
+            <span className="text-title font-light text-ink">Vue</span>
+            <span className="hidden text-small text-ink-muted sm:block">Wedding venue operations</span>
           </Link>
 
           {/* VISIBILITY OF SYSTEM STATUS: the prototype never pretends to be real. */}
-          <span className="ml-2 hidden rounded-full bg-blush px-3 py-1 text-[11px] font-bold text-ink-2 sm:inline">
+          <span className="ml-2 hidden h-6 items-center rounded-full bg-surface-sunken px-2.5 text-label font-medium text-ink-muted sm:inline-flex">
             Prototype
           </span>
 
           <div className="ml-auto flex items-center gap-2">
             <Link
               href="/up-next"
-              className="hidden items-center gap-2 rounded-full bg-accent-soft px-4 py-2 text-[12px] font-bold text-accent transition-colors hover:bg-accent hover:text-on-accent sm:inline-flex"
+              className="hidden h-9 items-center gap-2 rounded-sm px-3 text-small font-medium text-ink transition-colors hover:bg-surface-sunken sm:inline-flex"
             >
-              <Icon name="check" size={13} />
+              <Icon
+                name={counts.attention ? 'alert' : attention.length ? 'clock' : 'check'}
+                size={14}
+                className={counts.attention ? 'text-status-now' : attention.length ? 'text-status-soon' : 'text-status-clear'}
+              />
               {upNextLabel(attention)}
             </Link>
-            <div className="hidden text-right leading-tight sm:block">
-              <div className="text-xs font-semibold text-ink">{venue.manager}</div>
-              <div className="text-[11px] text-muted">{venue.managerRole}</div>
+            <div className="hidden text-right sm:block">
+              <div className="text-small font-medium text-ink">{venue.manager}</div>
+              <div className="text-label text-ink-muted">{venue.managerRole}</div>
             </div>
             <AccountMenu />
           </div>
@@ -136,15 +136,15 @@ export function AppShell({ children }) {
         <aside
           id="main-nav"
           className={cx(
-            'fixed inset-y-0 left-0 z-40 w-64 shrink-0 overflow-y-auto border-r border-line bg-surface/90 pt-16 backdrop-blur transition-transform lg:sticky lg:top-16 lg:z-0 lg:h-[calc(100vh-4rem)] lg:translate-x-0 lg:pt-0',
+            'fixed inset-y-0 left-0 z-40 w-64 shrink-0 overflow-y-auto border-r border-line bg-surface pt-(--header-height) transition-transform duration-200 ease-calm lg:sticky lg:top-(--header-height) lg:z-0 lg:h-[calc(100vh-var(--header-height))] lg:translate-x-0 lg:pt-0',
             navOpen ? 'translate-x-0' : '-translate-x-full'
           )}
         >
           <nav className="p-3" aria-label="Main">
             {NAV.map((group) => (
-              <div key={group.heading} className="mb-4">
-                <div className="eyebrow mb-2 px-3 text-faint">{group.heading}</div>
-                <ul className="space-y-0.5">
+              <div key={group.heading} className="mb-6">
+                <div className="mb-1 px-3 text-label text-ink-muted">{group.heading}</div>
+                <ul className="space-y-px">
                   {group.items.map((item) => {
                     const active = item.href === activeHref
                     // While the first-run guide points at a sidebar item, that item is marked.
@@ -157,26 +157,17 @@ export function AppShell({ children }) {
                           aria-current={active ? 'page' : undefined}
                           data-onboarding={item.onboarding}
                           className={cx(
-                            'flex items-center gap-2.5 rounded-full py-2.5 pl-3.5 pr-3 text-[13px] transition-colors',
+                            'flex h-9 items-center gap-3 rounded-sm px-3 text-small font-medium transition-colors duration-150',
                             active
-                              ? 'bg-accent font-semibold text-on-accent shadow-pop'
+                              ? 'bg-surface-sunken text-ink font-semibold shadow-[inset_2px_0_0_var(--accent)]'
                               : guided
-                                ? 'bg-accent-soft font-semibold text-accent'
-                                : 'text-muted hover:bg-accent-soft hover:text-accent'
+                                ? 'bg-surface-sunken text-accent ring-1 ring-inset ring-accent'
+                                : 'text-ink-muted hover:bg-surface-sunken hover:text-ink'
                           )}
                         >
-                          <Icon name={item.icon} size={15} className={active ? 'text-on-accent' : guided ? 'text-accent' : 'text-faint'} />
+                          <Icon name={item.icon} size={16} className={active || guided ? 'text-accent' : 'text-ink-muted'} />
                           <span className="flex-1 truncate">{item.label}</span>
-                          {count > 0 && (
-                            <span
-                              className={cx(
-                                'rounded-full px-2 text-[11px] font-bold',
-                                active ? 'bg-on-accent/20 text-on-accent' : 'bg-accent-soft text-accent'
-                              )}
-                            >
-                              {count}
-                            </span>
-                          )}
+                          {count > 0 && <Count tone={item.badge === 'attention' || item.badge === 'messages' ? 'urgent' : undefined}>{count}</Count>}
                         </Link>
                       </li>
                     )
@@ -185,9 +176,9 @@ export function AppShell({ children }) {
               </div>
             ))}
 
-            <div className="mt-6 border-t border-line-soft pt-3">
+            <div className="mt-6 border-t border-line pt-4">
               <Button href="/events/new" variant="primary" size="md" className="w-full" data-onboarding="new-event">
-                <Icon name="plus" size={13} />
+                <Icon name="plus" size={14} />
                 New event
               </Button>
               <button
@@ -198,14 +189,14 @@ export function AppShell({ children }) {
                   clearPlannerGuide()
                   clearEventsGuide()
                 }}
-                className="mt-2 w-full rounded-full border border-line px-3 py-2 text-[12px] font-medium text-muted transition-colors hover:border-accent-line hover:bg-accent-soft hover:text-accent"
+                className="mt-2 h-9 w-full rounded-sm px-3 text-small font-medium text-ink-muted transition-colors hover:bg-surface-sunken hover:text-ink"
               >
                 Reset prototype data
               </button>
-              <Link href="/style-guide" className="mt-2 block rounded-full px-3 py-2 text-center text-[12px] font-medium text-faint transition-colors hover:bg-accent-soft hover:text-accent">
+              <Link href="/style-guide" className="mt-1 flex h-9 items-center justify-center rounded-sm px-3 text-small font-medium text-ink-muted transition-colors hover:bg-surface-sunken hover:text-ink">
                 Style guide
               </Link>
-              <p className="mt-3 px-1 text-[11px] leading-relaxed text-faint">
+              <p className="mt-3 px-3 text-label text-ink-muted">
                 Simulated data. Nothing here is saved to a real system.
               </p>
             </div>
@@ -214,14 +205,14 @@ export function AppShell({ children }) {
 
         {navOpen && (
           <div
-            className="fixed inset-0 z-30 bg-ink/30 lg:hidden"
+            className="fixed inset-0 z-30 bg-black/40 lg:hidden"
             onClick={() => setNavOpen(false)}
             aria-hidden="true"
           />
         )}
 
         {/* ---- Page ---- */}
-        <main className="min-w-0 flex-1 px-4 py-7 sm:px-8 sm:py-10">
+        <main className="min-w-0 flex-1 px-4 pt-8 pb-12 sm:px-8 sm:pt-12">
           <div className="mx-auto w-full max-w-[1120px]">{children}</div>
         </main>
       </div>

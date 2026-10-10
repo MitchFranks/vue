@@ -82,20 +82,20 @@ export function SendReview({ prepared, onClose, onDone, onChangeTimes }) {
         </>
       }
     >
-      <p className="mb-3 text-[13px] text-muted">Each person gets one message for their whole day.</p>
+      <p className="mb-3 text-small text-ink-muted">Each person gets one message for their whole day.</p>
 
       {(model.warnings.length > 0 || model.gaps.length > 0) && (
-        <section className="mb-4 rounded-2xl border border-warn-line bg-warn-soft/60 px-3 py-3">
-          <h3 className="flex items-center gap-1.5 text-[13px] font-bold text-warn">
+        <section className="mb-4 rounded-md border border-status-soon-soft bg-status-soon-soft/60 px-3 py-3">
+          <h3 className="flex items-center gap-1.5 text-small font-medium text-status-soon">
             <Icon name="alert" size={13} />
             Check before sending ({model.warnings.length + model.gaps.length})
           </h3>
-          <ul className="mt-1.5 space-y-1.5 text-[12px] text-ink-2">
+          <ul className="mt-1.5 space-y-1.5 text-label text-ink">
             {model.warnings.map((w, i) => (
               <li key={`w${i}`} className="flex flex-wrap items-baseline justify-between gap-x-2">
                 <span>{w.text}</span>
                 {!prepared.askSpec && state.requests[w.r.id] && (
-                  <button type="button" className="font-semibold text-accent hover:underline" onClick={() => onChangeTimes(w.r.id)}>
+                  <button type="button" className="font-medium text-accent hover:underline" onClick={() => onChangeTimes(w.r.id)}>
                     Change
                   </button>
                 )}
@@ -112,12 +112,12 @@ export function SendReview({ prepared, onClose, onDone, onChangeTimes }) {
         {model.items.map(({ r, kind, urgent, text }) => (
           <li key={r.id}>
             <div className="mb-1 flex flex-wrap items-center gap-2">
-              <span className="text-[13px] font-semibold text-ink">{staffById(r.staffId).name}</span>
+              <span className="text-small font-medium text-ink">{staffById(r.staffId).name}</span>
               <StatusBadge tone={kind === 'cancel' ? 'empty' : urgent && (kind === 'ask' || kind === 'change') ? 'warn' : 'info'} size="sm">
                 {urgent && kind === 'ask' ? 'Short notice' : KIND_LABEL[kind]}
               </StatusBadge>
             </div>
-            <blockquote className="rounded-2xl border-l-4 border-accent-line bg-wash px-3 py-2 text-[13px] leading-relaxed text-ink-2">
+            <blockquote className="rounded-md border-l-4 border-line-strong bg-surface-sunken px-3 py-2 text-small leading-relaxed text-ink">
               {text}
             </blockquote>
           </li>
