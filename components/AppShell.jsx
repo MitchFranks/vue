@@ -1,127 +1,234 @@
 'use client'
 
 // ---------------------------------------------------------------------------
-// The frame that wraps every product screen: top bar + breadcrumb trail.
+// The frame around every screen.
 //
-// Keeping one shell around all the screens is what makes them read as the
-// same product, and the breadcrumb is a persistent SIGNIFIER for "you are here
-// / here is the way back". Both are derived from the URL, so they can never
-// disagree with the page that is showing.
+// NON-LINEAR NAVIGATION: a persistent sidebar is always on screen (a slide-over
+// on mobile), grouped into the four product areas. Every area is reachable from
+// everywhere — there is no wizard, no forced order, and no dead ends.
+//
+// CONVENTIONS: left sidebar + top bar + breadcrumbs is the layout people
+// already know from every admin tool they have used.
 // ---------------------------------------------------------------------------
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Icon } from './ui'
 import { cx } from '@/lib/cx'
-import { johnson, venue } from '@/lib/data'
+import { upNextLabel, useStore } from '@/lib/store'
+import { venue } from '@/lib/mock/events'
+import { Button, Icon } from './ui/primitives'
+import { ToastHost } from './ui/domain'
+import { useOnboarding } from './onboarding/OnboardingProvider'
+import { AccountMenu } from './AccountMenu'
+import { PlannerGuide, clearPlannerGuide } from './onboarding/PlannerGuide'
+import { EventsGuide, clearEventsGuide } from './onboarding/EventsGuide'
 
-function crumbsFor(pathname) {
-  if (pathname.startsWith('/events/johnson/messages/')) {
-    return [
-      { label: johnson.name, href: '/events/johnson' },
-      { label: 'Decorating time request' }
+const NAV = [
+  {
+    heading: 'Overview',
+    items: [
+      { href: '/dashboard', label: 'Dashboard', icon: 'home', exact: true },
+      { href: '/up-next', label: 'Up Next', icon: 'check', badge: 'attention', onboarding: 'up-next' },
+      { href: '/calendar', label: 'Calendar', icon: 'calendar', onboarding: 'calendar' },
+      { href: '/events', label: 'Events', icon: 'list' }
+    ]
+  },
+  {
+    heading: 'Staffing',
+    items: [
+      // One workflow, one menu item. The tab bar inside it links its screens.
+      {
+        href: '/staffing',
+        match: '/staffing',
+        label: 'Staffing Planner',
+        icon: 'users',
+        badge: 'openPositions',
+        onboarding: 'staffing'
+      }
+    ]
+  },
+  {
+    heading: 'People & Comms',
+    items: [
+      { href: '/staff', label: 'Staff Directory', icon: 'user', onboarding: 'staff' },
+      { href: '/messages', label: 'Messages', icon: 'mail', badge: 'messages', onboarding: 'messages' },
+      { href: '/couples', label: 'Couples', icon: 'users' },
+      { href: '/vendors', label: 'Vendors', icon: 'truck', onboarding: 'vendors' }
     ]
   }
-  if (pathname.startsWith('/events/')) {
-    return [{ label: johnson.name }]
-  }
-  return []
-}
+]
 
 export function AppShell({ children }) {
   const pathname = usePathname()
-  const crumbs = crumbsFor(pathname)
-  const onDashboard = crumbs.length === 0
+  const [navOpen, setNavOpen] = useState(false)
+  const { attention, openPositions, messageList, toasts, dismissToast, reset } = useStore()
+  const { reset: resetGuide, guideTarget } = useOnboarding()
+
+  const unreplied = messageList.filter((m) => m.needsReply && !m.replied).length
+  const counts = { attention: attention.filter((a) => a.tone === 'urgent').length, openPositions: openPositions.length, messages: unreplied }
+
+  // Highlight only the most specific nav item for the current route, so a
+  // parent is not also lit up on a child route. `match` lets one item own a
+  // whole section (the staffing workflow owns every /staffing/* page).
+  const activeHref = NAV.flatMap((g) => g.items)
+    .filter((item) => {
+      const base = item.match ?? item.href
+      return pathname === base || (!item.exact && pathname.startsWith(`${base}/`))
+    })
+    .sort((a, b) => (b.match ?? b.href).length - (a.match ?? a.href).length)[0]?.href
+
+  // Close the mobile nav whenever the route changes.
+  useEffect(() => {
+    setNavOpen(false)
+  }, [pathname])
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-20 border-b border-line bg-cream">
-        <div className="mx-auto flex h-16 max-w-[1320px] items-center gap-3.5 px-4 md:gap-7 md:px-6">
-          {/* Wordmark goes home to the landing screen; "Dashboard" in the nav
-              is the way back to the work. */}
-          <Link
-            href="/"
-            className="flex flex-col items-start rounded-lg py-1.5 pr-2 text-left leading-none"
-            title="Back to the welcome screen"
+    <div className="min-h-screen">
+      {/* ---- Top bar ---- */}
+      <header className="sticky top-0 z-30 border-b border-line bg-surface/85 text-ink backdrop-blur">
+        <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
+          <button
+            type="button"
+            onClick={() => setNavOpen((v) => !v)}
+            aria-expanded={navOpen}
+            aria-controls="main-nav"
+            className="rounded-full border border-line bg-surface px-2.5 py-2 text-ink transition-colors hover:bg-accent-soft lg:hidden"
           >
-            <span className="font-display text-[21px] font-semibold tracking-[0.02em]">{venue.name}</span>
-            <span className="mt-[3px] text-[10px] uppercase tracking-[0.16em] text-faint">Venue Operations</span>
+            <Icon name="list" size={16} />
+            <span className="sr-only">Toggle navigation</span>
+          </button>
+
+          <Link href="/" className="flex items-center gap-2.5" title="Back to the welcome screen">
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-accent font-display text-[17px] font-extrabold text-on-accent shadow-pop">
+              v
+            </span>
+            <span className="leading-none">
+              <span className="block font-display text-[19px] font-extrabold tracking-tight text-ink">vue</span>
+              <span className="mt-0.5 hidden text-[11px] font-medium text-muted sm:block">wedding venue ops</span>
+            </span>
           </Link>
 
-          {/* SIGNIFIER / NO FALSE AFFORDANCE: only sections that exist are
-              listed. Nav items that look like navigation but aren't cost the
-              user time. */}
-          <nav className="mr-auto hidden items-center gap-0.5 md:flex" aria-label="Primary">
-            <NavItem href="/dashboard" active={onDashboard}>
-              Dashboard
-            </NavItem>
-            <NavItem href="/events/johnson" active={!onDashboard}>
-              Events
-            </NavItem>
-          </nav>
+          {/* VISIBILITY OF SYSTEM STATUS: the prototype never pretends to be real. */}
+          <span className="ml-2 hidden rounded-full bg-blush px-3 py-1 text-[11px] font-bold text-ink-2 sm:inline">
+            Prototype
+          </span>
 
-          <div className="ml-auto flex items-center gap-2.5 md:ml-0">
-            <span className="hidden flex-col items-end leading-tight md:flex">
-              <span className="text-[13px] font-medium">{venue.manager}</span>
-              <span className="text-[11px] text-faint">{venue.managerRole}</span>
-            </span>
-            <span className="inline-grid h-8 w-8 place-items-center rounded-full border border-parchment-line bg-parchment text-[11.5px] font-semibold text-night">
-              {venue.managerInitials}
-            </span>
+          <div className="ml-auto flex items-center gap-2">
+            <Link
+              href="/up-next"
+              className="hidden items-center gap-2 rounded-full bg-accent-soft px-4 py-2 text-[12px] font-bold text-accent transition-colors hover:bg-accent hover:text-on-accent sm:inline-flex"
+            >
+              <Icon name="check" size={13} />
+              {upNextLabel(attention)}
+            </Link>
+            <div className="hidden text-right leading-tight sm:block">
+              <div className="text-xs font-semibold text-ink">{venue.manager}</div>
+              <div className="text-[11px] text-muted">{venue.managerRole}</div>
+            </div>
+            <AccountMenu />
           </div>
         </div>
       </header>
 
-      {crumbs.length > 0 && (
-        <div className="border-b border-line bg-cream">
-          <nav className="mx-auto flex max-w-[1320px] items-center gap-1 px-4 py-2.5 text-[12.5px] md:px-6" aria-label="Breadcrumb">
-            <Crumb href="/dashboard">
-              <Icon name="arrowLeft" size={14} />
-              Dashboard
-            </Crumb>
-            {crumbs.map((crumb, i) => (
-              <span className="flex items-center gap-1" key={crumb.label}>
-                <Icon name="chevronRight" size={13} className="text-line" />
-                {crumb.href && i < crumbs.length - 1 ? (
-                  <Crumb href={crumb.href}>{crumb.label}</Crumb>
-                ) : (
-                  <span className="px-1.5 py-[3px] text-muted" aria-current="page">
-                    {crumb.label}
-                  </span>
-                )}
-              </span>
+      <div className="flex">
+        {/* ---- Sidebar ---- */}
+        <aside
+          id="main-nav"
+          className={cx(
+            'fixed inset-y-0 left-0 z-40 w-64 shrink-0 overflow-y-auto border-r border-line bg-surface/90 pt-16 backdrop-blur transition-transform lg:sticky lg:top-16 lg:z-0 lg:h-[calc(100vh-4rem)] lg:translate-x-0 lg:pt-0',
+            navOpen ? 'translate-x-0' : '-translate-x-full'
+          )}
+        >
+          <nav className="p-3" aria-label="Main">
+            {NAV.map((group) => (
+              <div key={group.heading} className="mb-4">
+                <div className="eyebrow mb-2 px-3 text-faint">{group.heading}</div>
+                <ul className="space-y-0.5">
+                  {group.items.map((item) => {
+                    const active = item.href === activeHref
+                    // While the first-run guide points at a sidebar item, that item is marked.
+                    const guided = guideTarget && item.onboarding === guideTarget && !active
+                    const count = item.badge ? counts[item.badge] : 0
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          aria-current={active ? 'page' : undefined}
+                          data-onboarding={item.onboarding}
+                          className={cx(
+                            'flex items-center gap-2.5 rounded-full py-2.5 pl-3.5 pr-3 text-[13px] transition-colors',
+                            active
+                              ? 'bg-accent font-semibold text-on-accent shadow-pop'
+                              : guided
+                                ? 'bg-accent-soft font-semibold text-accent'
+                                : 'text-muted hover:bg-accent-soft hover:text-accent'
+                          )}
+                        >
+                          <Icon name={item.icon} size={15} className={active ? 'text-on-accent' : guided ? 'text-accent' : 'text-faint'} />
+                          <span className="flex-1 truncate">{item.label}</span>
+                          {count > 0 && (
+                            <span
+                              className={cx(
+                                'rounded-full px-2 text-[11px] font-bold',
+                                active ? 'bg-on-accent/20 text-on-accent' : 'bg-accent-soft text-accent'
+                              )}
+                            >
+                              {count}
+                            </span>
+                          )}
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
             ))}
+
+            <div className="mt-6 border-t border-line-soft pt-3">
+              <Button href="/events/new" variant="primary" size="md" className="w-full" data-onboarding="new-event">
+                <Icon name="plus" size={13} />
+                New event
+              </Button>
+              <button
+                type="button"
+                onClick={() => {
+                  reset()
+                  resetGuide()
+                  clearPlannerGuide()
+                  clearEventsGuide()
+                }}
+                className="mt-2 w-full rounded-full border border-line px-3 py-2 text-[12px] font-medium text-muted transition-colors hover:border-accent-line hover:bg-accent-soft hover:text-accent"
+              >
+                Reset prototype data
+              </button>
+              <Link href="/style-guide" className="mt-2 block rounded-full px-3 py-2 text-center text-[12px] font-medium text-faint transition-colors hover:bg-accent-soft hover:text-accent">
+                Style guide
+              </Link>
+              <p className="mt-3 px-1 text-[11px] leading-relaxed text-faint">
+                Simulated data. Nothing here is saved to a real system.
+              </p>
+            </div>
           </nav>
-        </div>
-      )}
+        </aside>
 
-      <main className="mx-auto w-full max-w-[1320px] flex-1 px-4 pt-5 pb-10 md:px-6 md:pt-[26px] md:pb-14">{children}</main>
+        {navOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-ink/30 lg:hidden"
+            onClick={() => setNavOpen(false)}
+            aria-hidden="true"
+          />
+        )}
 
-      <footer className="border-t border-line bg-cream px-6 py-4 text-center text-xs text-faint">
-        Prototype · {venue.name} · IS 551. Mock data only — no live email, payments or integrations.
-      </footer>
+        {/* ---- Page ---- */}
+        <main className="min-w-0 flex-1 px-4 py-7 sm:px-8 sm:py-10">
+          <div className="mx-auto w-full max-w-[1120px]">{children}</div>
+        </main>
+      </div>
+
+      <ToastHost toasts={toasts} onDismiss={dismissToast} />
+      <PlannerGuide />
+      <EventsGuide />
     </div>
-  )
-}
-
-function NavItem({ href, active, children }) {
-  return (
-    <Link
-      href={href}
-      className={cx(
-        'rounded-full px-3 py-[7px] text-[13px] font-medium transition-colors',
-        active ? 'bg-parchment text-bark' : 'text-muted hover:bg-surface-2 hover:text-ink'
-      )}
-    >
-      {children}
-    </Link>
-  )
-}
-
-function Crumb({ href, children }) {
-  return (
-    <Link href={href} className="inline-flex items-center gap-1.5 rounded-full px-1.5 py-[3px] font-medium text-bark hover:bg-parchment">
-      {children}
-    </Link>
   )
 }

@@ -1,77 +1,151 @@
+'use client'
+
 // ---------------------------------------------------------------------------
-// SCREEN 0 — Landing.
-// Job: say what the product is in one breath, then get out of the way.
+// SCREEN 0 — Welcome.
 //
-// This is the only full-viewport screen in the prototype and the only one that
-// does not sit inside the product shell — it carries its own nav so the picture
-// can run edge to edge. The layout follows the Figma "hero design variation":
-// full-bleed photograph, a flat dusk overlay, a transparent nav across the top,
-// centred light-serif headline, and a hairline footer strip.
+// The one screen that is not the product. Its job is to say what Vue is in a
+// single breath and then get out of the way.
 //
-// The copy is the product's, not the mock-up's. Every nav item and button here
-// goes somewhere real — the design's "Spaces / Philosophy / Curation" labels
-// would have been navigation that navigates nowhere (NO FALSE AFFORDANCE).
+// Light, soft and a little playful: a blush-to-lilac wash, big rounded type,
+// pill buttons, and three floating stat bubbles. The figures are read from the
+// live store rather than hard-coded, so this screen can never quote a number
+// the dashboard disagrees with. See docs/STYLE-GUIDE.md.
 // ---------------------------------------------------------------------------
 
 import Link from 'next/link'
-import { Button, Icon } from './ui'
-import { venue } from '@/lib/data'
-import { asset } from '@/lib/asset'
+import { upNextLabel, useStore } from '@/lib/store'
+import { events, venue } from '@/lib/mock/events'
+import { staff } from '@/lib/mock/staff'
+import { Icon } from './ui/primitives'
 
 const NAV = [
   { label: 'Dashboard', href: '/dashboard' },
-  { label: 'Events', href: '/events/johnson' },
-  { label: 'Messages', href: '/events/johnson/messages/decor-time' }
+  { label: 'Weddings', href: '/events' },
+  { label: 'Staffing', href: '/staffing' },
+  { label: 'Messages', href: '/messages' }
 ]
 
 export function Landing() {
+  const { attention, openPositions } = useStore()
+
+  const bubbles = [
+    { value: events.length, label: 'Weddings & events', tone: 'bg-accent-soft text-accent' },
+    { value: staff.length, label: 'On the team', tone: 'bg-done-soft text-done' },
+    { value: openPositions.length, label: 'Open positions', tone: 'bg-warn-soft text-warn' }
+  ]
+
   return (
-    <div className="on-photo relative flex min-h-screen min-h-dvh flex-col bg-night text-cream">
-      <img className="absolute inset-0 h-full w-full object-cover" src={asset('/images/villa-hero.jpg')} alt="" />
-      <div className="absolute inset-0 bg-night/48" aria-hidden="true" />
+    <div className="relative flex min-h-screen min-h-dvh flex-col overflow-hidden bg-canvas text-ink">
+      {/* Soft colour washes — decoration only. */}
+      <div className="pointer-events-none absolute -left-24 -top-24 h-[28rem] w-[28rem] rounded-full bg-blush/70 blur-3xl" />
+      <div className="pointer-events-none absolute -right-20 top-1/4 h-[30rem] w-[30rem] rounded-full bg-accent-soft blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 left-1/3 h-[24rem] w-[24rem] rounded-full bg-done-soft/80 blur-3xl" />
 
-      <header className="relative z-10 flex items-center justify-between gap-6 px-6 pt-7 md:px-16 md:pt-10">
-        <span className="font-display text-[19px] font-semibold tracking-[0.02em] text-cream md:text-2xl">{venue.name}</span>
+      {/* ------------------------------ header ------------------------------ */}
+      <header className="relative z-10">
+        <div className="mx-auto flex h-20 w-[min(100%-2rem,1200px)] items-center justify-between gap-6 md:h-24">
+          <span className="flex items-center gap-3">
+            <span className="grid h-11 w-11 place-items-center rounded-full bg-accent font-display text-[20px] font-extrabold text-on-accent shadow-pop">
+              v
+            </span>
+            <span className="leading-none">
+              <strong className="block font-display text-[22px] font-extrabold tracking-tight">vue</strong>
+              <small className="mt-0.5 block text-[12px] font-medium text-muted">wedding venue ops</small>
+            </span>
+          </span>
 
-        <nav className="hidden items-center gap-10 md:flex" aria-label="Primary">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="px-0.5 py-1 text-sm font-medium text-parchment transition-colors hover:text-cream"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+          <nav className="hidden items-center gap-1 rounded-full bg-surface/80 p-1.5 shadow-card backdrop-blur lg:flex" aria-label="Welcome">
+            {NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-full px-5 py-2 text-sm font-semibold text-ink-2 transition-colors hover:bg-accent-soft hover:text-accent"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
 
-        <Button variant="parchment" href="/dashboard">
-          Open dashboard
-        </Button>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2.5 rounded-full bg-ink px-6 py-3 text-[13px] font-bold text-white transition-all duration-200 hover:-translate-y-[2px] hover:bg-accent hover:text-on-accent"
+          >
+            Open dashboard
+            <Icon name="arrowRight" size={15} />
+          </Link>
+        </div>
       </header>
 
-      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 py-12 text-center md:px-8">
-        <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-parchment">
-          Venue operations for {venue.name}
-        </p>
-        <h1 className="mb-6 max-w-[760px] font-display text-5xl font-light leading-[1.08] text-cream md:text-7xl">
-          Every event, every loose end, in one quiet place.
-        </h1>
-        <p className="mb-10 max-w-[560px] text-base leading-relaxed text-cream/80">
-          Timeline, vendors, staff, payments, contracts and client email for every wedding you host — together on
-          one screen, instead of scattered across five systems.
-        </p>
-        <Button variant="cream" size="lg" href="/dashboard">
-          See what needs attention
-          <Icon name="arrowRight" size={15} />
-        </Button>
+      {/* ------------------------------- hero -------------------------------- */}
+      <div className="relative z-10 flex flex-1 items-center">
+        <div className="mx-auto w-[min(100%-2rem,1200px)] py-14 md:py-20">
+          <p className="inline-flex items-center gap-2 rounded-full bg-surface px-4 py-2 text-[13px] font-semibold text-accent shadow-card">
+            <span className="h-2 w-2 rounded-full bg-blush-deep" />
+            Wedding operations for {venue.name}
+          </p>
+
+          <h1 className="display mt-7 max-w-4xl text-[clamp(2.8rem,6.4vw,5.4rem)] leading-[1.02]">
+            Every wedding, every loose end,
+            <br />
+            <span className="rounded-[2rem] bg-accent px-4 text-on-accent">in one happy place.</span>
+          </h1>
+
+          <p className="mt-8 max-w-xl text-base leading-7 text-ink-2 md:text-lg">
+            Timeline, vendors, staff, payments, contracts and couple email for every wedding you host — together on
+            one screen, instead of scattered across five systems.
+          </p>
+
+          <div className="mt-10 flex flex-wrap gap-4">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-3 rounded-full bg-accent px-8 py-4 text-[14px] font-bold text-on-accent shadow-pop transition-all duration-200 hover:-translate-y-[2px] hover:bg-accent-dark"
+            >
+              See what's up next
+              <Icon name="arrowRight" size={16} />
+            </Link>
+            <Link
+              href="/staffing"
+              className="inline-flex items-center gap-3 rounded-full bg-surface px-8 py-4 text-[14px] font-bold text-ink shadow-card transition-all duration-200 hover:-translate-y-[2px] hover:text-accent"
+            >
+              Review staffing
+              <Icon name="arrowRight" size={16} />
+            </Link>
+          </div>
+
+          <p className="mt-6 flex items-center gap-2.5 text-sm font-medium text-ink-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-accent" />
+            Up next: {upNextLabel(attention)}
+          </p>
+
+          {/* Live stat bubbles. */}
+          <div className="mt-14 grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-3">
+            {bubbles.map((b) => (
+              <div key={b.label} className="surface-card px-6 py-5">
+                <strong className={`inline-block rounded-full px-4 py-1 font-display text-[clamp(1.6rem,3.6vw,2.2rem)] font-extrabold ${b.tone}`}>
+                  {b.value}
+                </strong>
+                <span className="mt-2 block text-[13px] font-semibold text-muted">{b.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <footer className="relative z-10 flex items-center justify-between gap-4 border-t border-parchment/20 px-6 pt-5 pb-7 md:px-16 md:pt-6 md:pb-10">
-        <span className="font-display text-[17px] italic text-parchment">Historic spaces, calmly run.</span>
-        <span className="hidden text-[11px] uppercase tracking-[0.12em] text-parchment sm:block">
-          Signed in as {venue.manager} · {venue.today}
-        </span>
+      {/* ------------------------------ footer ------------------------------- */}
+      <footer className="relative z-10">
+        <div className="mx-auto flex w-[min(100%-2rem,1200px)] flex-col gap-3 py-6 sm:flex-row sm:items-center sm:justify-between">
+          <p className="flex items-start gap-3 text-[13px] leading-relaxed text-muted">
+            <span className="mt-px shrink-0 rounded-full bg-blush px-3 py-0.5 text-[11px] font-bold text-ink-2">
+              Prototype
+            </span>
+            <span className="max-w-[58ch]">
+              Everything past this screen is simulated and is being tested for usability.
+            </span>
+          </p>
+          <span className="hidden shrink-0 text-[12px] font-medium text-muted sm:block">
+            {venue.manager} · {venue.today}
+          </span>
+        </div>
       </footer>
     </div>
   )
