@@ -20,6 +20,7 @@ import { ChangeTimes, MarkOkDialog } from '@/components/staffing/ChangeTimes'
 import { EditNeeds } from '@/components/staffing/EditNeeds'
 import { WORLD } from '@/lib/staffing/adapter'
 import {
+  blockById,
   coverage,
   daysOutText,
   eventOf,
@@ -108,11 +109,12 @@ function Crew({ eventId }) {
   const notices = []
   const dropped = rs
     .filter((r) => r.droppedOut)
-    .filter((r) => r.blockIds.some((b) => coverage(eventId, WORLD.blockMap[b].block, r.role, state).toFind > 0))
+    .filter((r) => r.blockIds.some((b) => blockById(b) && coverage(eventId, blockById(b), r.role, state).toFind > 0))
     .sort((a, b) => (a.respondedAt < b.respondedAt ? 1 : -1))[0]
   if (dropped) {
     const gaps = dropped.blockIds
-      .map((b) => ({ b: WORLD.blockMap[b].block, n: coverage(eventId, WORLD.blockMap[b].block, dropped.role, state).toFind }))
+      .filter((b) => blockById(b))
+      .map((b) => ({ b: blockById(b), n: coverage(eventId, blockById(b), dropped.role, state).toFind }))
       .filter((x) => x.n > 0)
     const same = gaps.every((g) => g.n === gaps[0].n)
     const names = gaps.map((g) => g.b.name).join(' and ')
@@ -152,7 +154,7 @@ function Crew({ eventId }) {
             setTimeout(() => setHighlight(summary.toCheck[0].id), 0)
           }}
         >
-          Show {n === 1 ? 'them' : 'them'}
+          Show them
         </Button>
       )
     })
@@ -264,8 +266,6 @@ function Crew({ eventId }) {
           ))}
         </div>
       )}
-
-      
 
       {!roles.length ? (
         <EmptyState

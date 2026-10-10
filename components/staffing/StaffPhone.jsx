@@ -134,7 +134,7 @@ function ReplyPage({ requestId, onDone }) {
         </div>
       </dl>
       <p className="text-label text-ink-muted">
-        Questions? {MANAGER.first} · {MANAGER.phone}
+        Questions? {MANAGER.first}{MANAGER.phone ? ` · ${MANAGER.phone}` : ''}
       </p>
 
       {!pending ? (

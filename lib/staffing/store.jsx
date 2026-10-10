@@ -12,7 +12,7 @@
 
 import { useTimelineVersion } from '@/lib/timelineEdits'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { WORLD, makeGuest, registerPerson, seedState } from './adapter'
+import { WORLD, makeGuest, registerPerson, seedState, syncPeople } from './adapter'
 import {
   activeRequest,
   blockById,
@@ -59,12 +59,14 @@ export function applyAsk(st, spec) {
     const existing = activeRequest(staffId, spec.eventId, spec.role, st)
     const target = existing && existing.status !== 'backup' ? existing : null
     const blockIds = sortBlockIds(ev, [...(target?.blockIds || []), ...spec.blockIds])
-    const cand = { staffId, eventId: spec.eventId, role: spec.role, blockIds, callOffsetMin: spec.callOffsetMin, ignoreId: target?.id }
+    // Same offset the Ask panel ranked with: the earlier of the two.
+    const callOffsetMin = target ? Math.min(target.callOffsetMin, spec.callOffsetMin) : spec.callOffsetMin
+    const cand = { staffId, eventId: spec.eventId, role: spec.role, blockIds, callOffsetMin, ignoreId: target?.id }
     const hard = evaluate(cand, st).filter((i) => i.severity === 'hard')
     const overrides = spec.reason ? hard.map((i) => ({ ruleId: i.ruleId, message: i.message, reason: spec.reason, at: now })) : []
     if (target) {
       target.blockIds = blockIds
-      target.callOffsetMin = spec.callOffsetMin
+      target.callOffsetMin = callOffsetMin
       target.confirmedBlockIds = target.confirmedBlockIds.filter((b) => blockIds.includes(b))
       target.overrides = [...target.overrides, ...overrides]
       ids.push(target.id)
@@ -77,7 +79,7 @@ export function applyAsk(st, spec) {
         role: spec.role,
         blockIds,
         confirmedBlockIds: [],
-        callOffsetMin: spec.callOffsetMin,
+        callOffsetMin,
         status: 'draft',
         sentAt: null,
         sent: null,
@@ -242,13 +244,14 @@ export function Staffing2Provider({ children }) {
 
   /**
    * Apply a mutation to a copy of the state. opts.undo keeps the previous
-   * state in the undo slot; opts.clearUndo empties it (sends, staff replies).
+   * state in the undo slot; opts.clearUndo empties it (sends, staff replies);
+   * opts.noTick leaves the sim clock alone (a staff member opening a text).
    */
   const commit = useCallback(
     (fn, opts = {}) => {
       const prev = stateRef.current
       const draft = structuredClone(prev)
-      draft.tick = (draft.tick || 0) + 1
+      if (!opts.noTick) draft.tick = (draft.tick || 0) + 1
       const result = fn(draft)
       if (result === false) return undefined
       stateRef.current = draft
@@ -323,7 +326,7 @@ export function Staffing2Provider({ children }) {
         if (!r || r.seenAt || r.status !== 'pending') return
         commit((st) => {
           st.requests[id].seenAt = simNowIso(st)
-        })
+        }, { noTick: true })
       },
       dropOut(id, reason) {
         return commit(
@@ -353,15 +356,18 @@ export function Staffing2Provider({ children }) {
               delete st.requests[id]
               return 'deleted'
             }
+            // Someone who said no, or is only a backup, was never counted on: nobody to tell.
+            const told = x.status === 'pending' || x.status === 'accepted'
+            if (x.status === 'declined') x.declinedBefore = true // keep "said no to this event" for later asks
             x.status = 'cancelled'
-            x.cancelNotice = 'queued'
+            if (told) x.cancelNotice = 'queued'
             log(st, x.eventId, `Removed ${name} (${x.role})`)
-            return 'queued'
+            return told ? 'queued' : 'quiet'
           },
           {
             undo: true,
             toast: (res) => ({
-              message: res === 'deleted' ? `Removed ${name}. Nothing had been sent.` : `Removed ${name}. Send the update to let ${name} know.`
+              message: res === 'deleted' ? `Removed ${name}. Nothing had been sent.` : res === 'quiet' ? `Removed ${name}.` : `Removed ${name}. Send the update to let ${name} know.`
             })
           }
         )
@@ -459,6 +465,7 @@ export function Staffing2Provider({ children }) {
           /* ignore */
         }
         const next = freshState()
+        syncPeople(next.people)
         stateRef.current = next
         setState(next)
         setLoadError(false)
@@ -469,6 +476,7 @@ export function Staffing2Provider({ children }) {
         const slot = undoRef.current
         if (!slot) return
         setUndoSlot(null)
+        syncPeople(slot.state.people)
         stateRef.current = slot.state
         setState(slot.state)
         setToast({ id: `undone-${Date.now()}`, message: 'Undone.' })
