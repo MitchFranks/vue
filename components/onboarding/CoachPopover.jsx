@@ -197,7 +197,7 @@ export function CoachPopover({ target, n, total, title, body, onBack, onSkip, on
             width: rect.width + 10,
             height: rect.height + 10,
             borderRadius: rect.radius + 5,
-            boxShadow: '0 0 0 4px var(--color-accent-line), 0 0 0 200vmax rgb(42 33 69 / 0.32)'
+            boxShadow: '0 0 0 4px var(--accent), 0 0 0 200vmax rgb(0 0 0 / 0.4)'
           }}
         />
       )}

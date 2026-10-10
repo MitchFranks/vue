@@ -167,7 +167,7 @@ export function AppShell({ children }) {
                         >
                           <Icon name={item.icon} size={16} className={active || guided ? 'text-accent' : 'text-ink-muted'} />
                           <span className="flex-1 truncate">{item.label}</span>
-                          {count > 0 && <Count>{count}</Count>}
+                          {count > 0 && <Count tone={item.badge === 'attention' || item.badge === 'messages' ? 'urgent' : undefined}>{count}</Count>}
                         </Link>
                       </li>
                     )

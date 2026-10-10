@@ -23,7 +23,7 @@ const DEFAULT_LEN = 60
 const MIN_LEN = 15
 
 const INPUT =
-  'w-full rounded-sm border border-line-strong bg-surface px-3 py-2 text-body text-ink placeholder:text-ink-muted focus:border-accent'
+  'w-full rounded-sm border border-line-strong bg-surface px-3 py-2 text-body text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent'
 
 const snap = (m) => Math.round(m / SNAP) * SNAP
 const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi)
@@ -128,7 +128,7 @@ function Editor({ value, isNew, anchorId, onSave, onDelete, onClose }) {
       role="dialog"
       aria-label={isNew ? 'New block' : 'Edit block'}
       style={pos ? { left: pos.left, top: pos.top, width: 340 } : { visibility: 'hidden' }}
-      className="fixed z-40 rounded-md border border-line bg-surface p-4"
+      className="fixed z-40 rounded-md border border-line bg-surface p-4 shadow-overlay"
     >
       <div className="mb-3 flex items-center justify-between">
         <span className="text-label font-medium uppercase tracking-wide text-ink-muted">{isNew ? 'New block' : 'Edit block'}</span>
@@ -147,7 +147,7 @@ function Editor({ value, isNew, anchorId, onSave, onDelete, onClose }) {
         onChange={(e) => set({ title: e.target.value })}
         onKeyDown={(e) => e.key === 'Enter' && save()}
         placeholder="Add title"
-        className="w-full border-0 border-b-2 border-line bg-transparent px-0 pb-1.5 text-title font-light text-ink placeholder:text-ink-muted focus:border-accent"
+        className="w-full border-0 border-b-2 border-line bg-transparent px-0 pb-1.5 text-title font-light text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none"
       />
 
       <div className="mt-4 grid grid-cols-2 gap-2">
@@ -182,7 +182,7 @@ function Editor({ value, isNew, anchorId, onSave, onDelete, onClose }) {
           type="checkbox"
           checked={form.needsStaff}
           onChange={(e) => set({ needsStaff: e.target.checked })}
-          className="mt-0.5 h-4 w-4 accent-[var(--color-accent)]"
+          className="mt-0.5 h-4 w-4 accent-accent"
         />
         <span>
           <span className="block text-small font-medium text-ink">Needs staff</span>
@@ -402,7 +402,7 @@ export default function RunOfShowPage({ params }) {
         className={[
           'absolute cursor-grab select-none overflow-hidden rounded-md border px-2 py-1 text-left text-label leading-tight transition-shadow active:cursor-grabbing',
           tone === 'urgent' ? 'border-status-now-soft bg-status-now-soft text-status-now' : '',
-          tone === 'staff' ? 'border-line-strong bg-surface text-ink' : '',
+          tone === 'staff' ? 'border-accent bg-surface text-accent' : '',
           tone === 'plain' ? 'border-line bg-surface-sunken text-ink' : '',
           active ? 'z-20 ring-2 ring-accent' : 'z-10 hover:shadow-raised'
         ].join(' ')}

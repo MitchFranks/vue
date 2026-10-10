@@ -215,7 +215,7 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
             </select>
           </div>
           <label className="flex items-center gap-2 pb-2.5 text-small text-ink">
-            <input type="checkbox" checked={allRoles} onChange={(e) => setAllRoles(e.target.checked)} className="h-4 w-4 accent-[var(--color-accent)]" />
+            <input type="checkbox" checked={allRoles} onChange={(e) => setAllRoles(e.target.checked)} className="h-4 w-4 accent-accent" />
             Show other roles
           </label>
         </div>
@@ -321,7 +321,7 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
                         type="checkbox"
                         checked={on}
                         onChange={() => toggle(id)}
-                        className="mt-2 h-4 w-4 shrink-0 accent-[var(--color-accent)]"
+                        className="mt-2 h-4 w-4 shrink-0 accent-accent"
                         aria-label={`Ask ${x.person.name}`}
                       />
                       {inner}
