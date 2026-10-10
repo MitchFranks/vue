@@ -46,7 +46,7 @@ export function FirstCoupleItem() {
       >
         {/* Decoration only: a few soft dots that drift up once. */}
         <span aria-hidden="true" className="pointer-events-none absolute inset-0">
-          {['left-[12%] bg-line-strong', 'left-[30%] bg-ink', 'left-[55%] bg-status-soon-soft', 'left-[78%] bg-line-strong', 'left-[90%] bg-line-strong'].map(
+          {['left-[12%] bg-status-clear', 'left-[30%] bg-accent', 'left-[55%] bg-status-soon', 'left-[78%] bg-status-now', 'left-[90%] bg-status-clear'].map(
             (cls, i) => (
               <span
                 key={cls}

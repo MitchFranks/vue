@@ -93,7 +93,7 @@ export function TimeChart({ eventId, blocks, roles, st }) {
               type="button"
               onClick={() => jump(block.id)}
               title={`${block.name} ${rangeLabel(block.start, block.end)}`}
-              className="absolute flex flex-col overflow-hidden rounded-md border border-line bg-surface-sunken px-2 py-1 text-left text-label leading-tight text-ink transition-colors hover:bg-surface-sunken"
+              className="absolute flex flex-col overflow-hidden rounded-md border border-line bg-surface-sunken px-2 py-1 text-left text-label leading-tight text-ink transition-colors hover:border-line-strong"
               style={{
                 top: (block.start - first) * PX_PER_HOUR + 2,
                 height: (block.end - block.start) * PX_PER_HOUR - 4,

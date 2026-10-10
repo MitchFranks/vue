@@ -87,7 +87,7 @@ export function AppShell({ children }) {
     <div className="min-h-screen">
       {/* ---- Top bar ---- */}
       <header className="sticky top-0 z-30 border-b border-line bg-surface text-ink">
-        <div className="flex h-14 items-center gap-3 px-4 sm:px-6">
+        <div className="flex h-(--header-height) items-center gap-3 px-4 sm:px-6">
           <button
             type="button"
             onClick={() => setNavOpen((v) => !v)}
@@ -136,7 +136,7 @@ export function AppShell({ children }) {
         <aside
           id="main-nav"
           className={cx(
-            'fixed inset-y-0 left-0 z-40 w-64 shrink-0 overflow-y-auto border-r border-line bg-surface pt-14 transition-transform duration-200 ease-calm lg:sticky lg:top-14 lg:z-0 lg:h-[calc(100vh-3.5rem)] lg:translate-x-0 lg:pt-0',
+            'fixed inset-y-0 left-0 z-40 w-64 shrink-0 overflow-y-auto border-r border-line bg-surface pt-(--header-height) transition-transform duration-200 ease-calm lg:sticky lg:top-(--header-height) lg:z-0 lg:h-[calc(100vh-var(--header-height))] lg:translate-x-0 lg:pt-0',
             navOpen ? 'translate-x-0' : '-translate-x-full'
           )}
         >
@@ -159,15 +159,15 @@ export function AppShell({ children }) {
                           className={cx(
                             'flex h-9 items-center gap-3 rounded-sm px-3 text-small font-medium transition-colors duration-150',
                             active
-                              ? 'bg-surface-sunken text-ink shadow-[inset_2px_0_0_var(--accent)]'
+                              ? 'bg-surface-sunken text-ink font-semibold shadow-[inset_2px_0_0_var(--accent)]'
                               : guided
-                                ? 'bg-surface-sunken text-accent'
+                                ? 'bg-surface-sunken text-accent ring-1 ring-inset ring-accent'
                                 : 'text-ink-muted hover:bg-surface-sunken hover:text-ink'
                           )}
                         >
                           <Icon name={item.icon} size={16} className={active || guided ? 'text-accent' : 'text-ink-muted'} />
                           <span className="flex-1 truncate">{item.label}</span>
-                          {count > 0 && <Count>{count}</Count>}
+                          {count > 0 && <Count tone={item.badge === 'attention' || item.badge === 'messages' ? 'urgent' : undefined}>{count}</Count>}
                         </Link>
                       </li>
                     )
