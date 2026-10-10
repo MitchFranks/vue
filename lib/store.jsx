@@ -614,8 +614,9 @@ export function useStore() {
 }
 
 export function hourLabel(h) {
-  const hour24 = Math.floor(h)
-  const mins = Math.round((h - hour24) * 60)
+  const wrapped = ((h % 24) + 24) % 24 // blocks that cross midnight run past 24
+  const hour24 = Math.floor(wrapped)
+  const mins = Math.round((wrapped - hour24) * 60)
   const suffix = hour24 >= 12 ? 'PM' : 'AM'
   const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12
   return mins ? `${hour12}:${String(mins).padStart(2, '0')} ${suffix}` : `${hour12}:00 ${suffix}`
