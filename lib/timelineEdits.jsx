@@ -45,7 +45,9 @@ function write(key, value) {
 export function parseClock(text) {
   const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(String(text || '').trim())
   if (!m) return null
-  let h = Number(m[1]) % 12
+  const hour = Number(m[1])
+  if (hour < 1 || hour > 12 || Number(m[2]) > 59) return null
+  let h = hour % 12
   if (m[3].toUpperCase() === 'PM') h += 12
   return h * 60 + Number(m[2])
 }
@@ -122,7 +124,8 @@ function blockTimes(row) {
   const endMin = parseClock(row.end) ?? startMin + 60
   const start = startMin / 60
   let end = endMin / 60
-  if (end <= start) end += 24
+  if (end === start) end = start + 1 // no end set: default to an hour
+  else if (end < start) end += 24
   return { start, end }
 }
 
@@ -146,17 +149,23 @@ function syncBlocks(eventId, rows) {
   for (const row of wanted) {
     const { start, end } = blockTimes(row)
     const patch = { name: row.title || 'Untitled', start, end }
+    // A block that comes back (undo, or ticking "Needs staff" again) gets its
+    // sample details back; a brand-new row starts from the defaults.
+    const fresh = (copy) =>
+      copy
+        ? cloneBlock(copy)
+        : { id: row.id, kind: 'guest-facing', requirements: [{ role: 'Event Staff', count: 1 }], note: row.note || '' }
     const main = ev.blocks.find((b) => b.id === row.id)
     if (main) {
       Object.assign(main, patch, { note: row.note || main.note || '' })
     } else {
-      ev.blocks.push({ id: row.id, kind: 'guest-facing', requirements: [{ role: 'Event Staff', count: 1 }], note: row.note || '', ...patch })
+      ev.blocks.push({ ...fresh(originalLists[eventId]?.main.find((b) => b.id === row.id)), ...patch, note: row.note || '' })
     }
     let planner = world.blocks.find((b) => b.id === row.id)
     if (planner) {
       Object.assign(planner, patch)
     } else {
-      planner = { id: row.id, kind: 'guest-facing', requirements: [{ role: 'Event Staff', count: 1 }], note: row.note || '', ...patch }
+      planner = { ...fresh(originalLists[eventId]?.planner.find((b) => b.id === row.id)), ...patch, note: row.note || '' }
       world.blocks.push(planner)
     }
     WORLD.blockMap[row.id] = { block: planner, event: world }
@@ -168,7 +177,8 @@ function syncBlocks(eventId, rows) {
 
 function putRows(eventId, rows) {
   cache[eventId] = rows
-  timelines[eventId] = rows // the event overview reads the run of show from here
+  // The event overview reads plain run-of-show lines from here; staffing blocks live in the planner.
+  timelines[eventId] = rows.filter((r) => !r.needsStaff).map(({ id, time, title, note, tone }) => ({ id, time, title, note, ...(tone ? { tone } : {}) }))
   syncBlocks(eventId, rows)
 }
 
