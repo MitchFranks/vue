@@ -44,60 +44,60 @@ export default function Staffing2TeamPage() {
               const nextAway = away.find((a) => (a.endDateKey || a.dateKey) >= TODAY_KEY)
               const isOpen = open === p.id
               return (
-                <li key={p.id} className="border-b border-line-soft last:border-b-0">
+                <li key={p.id} className="border-b border-line last:border-b-0">
                   <button
                     type="button"
                     aria-expanded={isOpen}
                     onClick={() => setOpen(isOpen ? null : p.id)}
-                    className="flex w-full items-start gap-3 px-5 py-3 text-left transition-colors hover:bg-accent-soft/50"
+                    className="flex w-full items-start gap-3 px-5 py-3 text-left transition-colors hover:bg-surface-sunken/50"
                   >
                     <Avatar initials={p.initials} />
                     <span className="min-w-0 flex-1">
-                      <span className="flex flex-wrap items-center gap-2 text-[14px] font-medium text-ink">
+                      <span className="flex flex-wrap items-center gap-2 text-body font-medium text-ink">
                         {p.name}
-                        <span className="text-[12px] font-normal text-muted">{p.roles.join(' · ')}</span>
-                        {p.pool && <span className="rounded-full bg-blush px-2 py-0.5 text-[11px] font-semibold text-ink-2">On call</span>}
+                        <span className="text-label font-normal text-ink-muted">{p.roles.join(' · ')}</span>
+                        {p.pool && <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-label font-medium text-ink">On call</span>}
                       </span>
-                      <span className="mt-0.5 block text-xs text-muted">Usually free: {usuallyFree(p)}</span>
-                      <span className="mt-0.5 block text-xs text-ink-2">
+                      <span className="mt-0.5 block text-label text-ink-muted">Usually free: {usuallyFree(p)}</span>
+                      <span className="mt-0.5 block text-label text-ink">
                         Next 30 days: {load.events} event{load.events === 1 ? '' : 's'} · {load.hours} h
-                        {nextAway && <span className="text-muted"> · Away {awayDateText(nextAway)}</span>}
+                        {nextAway && <span className="text-ink-muted"> · Away {awayDateText(nextAway)}</span>}
                       </span>
                     </span>
-                    <Icon name="chevronDown" size={15} className={cx('mt-1 shrink-0 text-faint transition-transform', isOpen && 'rotate-180')} />
+                    <Icon name="chevronDown" size={15} className={cx('mt-1 shrink-0 text-ink-muted transition-transform', isOpen && 'rotate-180')} />
                   </button>
                   {isOpen && (
-                    <div className="space-y-3 border-t border-line-soft bg-wash/40 px-5 py-4">
+                    <div className="space-y-3 border-t border-line bg-surface-sunken/40 px-5 py-4">
                       <div>
-                        <h3 className="text-[13px] font-bold text-ink">Away dates</h3>
+                        <h3 className="text-small font-medium text-ink">Away dates</h3>
                         {away.length ? (
                           <ul className="mt-1.5 space-y-1.5">
                             {away.map((a) => (
-                              <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 text-[13px] text-ink-2">
+                              <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 text-small text-ink">
                                 <span>
                                   {awayDateText(a)}
-                                  <span className="ml-1.5 text-[11px] text-faint">added by {a.addedBy === 'staff' ? p.name.split(' ')[0] : 'you'}</span>
+                                  <span className="ml-1.5 text-label text-ink-muted">added by {a.addedBy === 'staff' ? p.name.split(' ')[0] : 'you'}</span>
                                 </span>
-                                <button type="button" onClick={() => removeAway(a.id)} className="text-[12px] font-semibold text-accent hover:underline">
+                                <button type="button" onClick={() => removeAway(a.id)} className="text-label font-medium text-accent hover:underline">
                                   Remove
                                 </button>
                               </li>
                             ))}
                           </ul>
                         ) : (
-                          <p className="mt-1 text-[12px] text-muted">None.</p>
+                          <p className="mt-1 text-label text-ink-muted">None.</p>
                         )}
                       </div>
                       <div>
-                        <h3 className="mb-1.5 text-[13px] font-bold text-ink">Add away date</h3>
+                        <h3 className="mb-1.5 text-small font-medium text-ink">Add away date</h3>
                         <AwayDateForm staffId={p.id} addedBy="manager" idPrefix={`team-away-${p.id}`} />
                       </div>
                       {p.credentials?.length > 0 && (
                         <div>
-                          <h3 className="text-[13px] font-bold text-ink">Certificates</h3>
+                          <h3 className="text-small font-medium text-ink">Certificates</h3>
                           <ul className="mt-1 space-y-1">
                             {p.credentials.map((c) => (
-                              <li key={c.type} className="flex flex-wrap items-center gap-2 text-[13px] text-ink-2">
+                              <li key={c.type} className="flex flex-wrap items-center gap-2 text-small text-ink">
                                 Alcohol service: expires {monthDay(c.expiresOn)}, {c.expiresOn.slice(0, 4)}
                                 {dayStartMin(c.expiresOn) - dayStartMin(TODAY_KEY) < 45 * 1440 && (
                                   <StatusBadge tone="warn" size="sm">
@@ -109,7 +109,7 @@ export default function Staffing2TeamPage() {
                           </ul>
                         </div>
                       )}
-                      <p className="text-[12px] text-muted">
+                      <p className="text-label text-ink-muted">
                         {p.phone} · {p.preferredHours}
                       </p>
                     </div>
@@ -122,7 +122,7 @@ export default function Staffing2TeamPage() {
       )}
 
       <p className="mt-6 text-center">
-        <button type="button" onClick={reset} className="text-[12px] font-medium text-muted underline-offset-2 hover:text-accent hover:underline">
+        <button type="button" onClick={reset} className="text-label font-medium text-ink-muted underline-offset-2 hover:text-accent hover:underline">
           Reset sample data
         </button>
       </p>

@@ -35,14 +35,14 @@ function PhoneScreen() {
       ) : (
         <div className="space-y-4">
           <div className="mx-auto max-w-[360px]">
-            <label htmlFor="viewing-as" className="eyebrow block text-ink-2">
+            <label htmlFor="viewing-as" className="eyebrow block text-ink">
               Viewing as
             </label>
             <select
               id="viewing-as"
               value={who}
               onChange={(e) => setWho(e.target.value)}
-              className="mt-1.5 block w-full rounded-2xl border border-line bg-surface px-4 py-2.5 text-[15px] text-ink focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft"
+              className="mt-1.5 block w-full rounded-sm border border-line-strong bg-surface px-3 py-2 text-body text-ink focus:border-accent"
             >
               {WORLD.staff.map((p) => (
                 <option key={p.id} value={p.id}>

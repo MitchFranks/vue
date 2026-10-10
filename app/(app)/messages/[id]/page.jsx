@@ -91,15 +91,15 @@ export default function MessageDetailPage({ params }) {
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         <div className="space-y-4">
           <Card title="Message" icon="mail">
-            <div className="mb-3 flex items-center gap-3 border-b border-line-soft pb-3">
+            <div className="mb-3 flex items-center gap-3 border-b border-line pb-3">
               <Avatar initials={base.initials} />
               <div>
-                <div className="text-sm font-medium text-ink">{base.from}</div>
-                <div className="text-xs text-muted">{base.fromRole}</div>
+                <div className="text-body font-medium text-ink">{base.from}</div>
+                <div className="text-label text-ink-muted">{base.fromRole}</div>
               </div>
-              <span className="ml-auto text-xs text-faint">{base.received}</span>
+              <span className="ml-auto text-label text-ink-muted">{base.received}</span>
             </div>
-            <div className="space-y-2 text-sm leading-relaxed text-ink-2">
+            <div className="space-y-2 text-body leading-relaxed text-ink">
               {base.body.map((p, i) => (
                 <p key={i}>{p}</p>
               ))}
@@ -108,8 +108,8 @@ export default function MessageDetailPage({ params }) {
 
           {replied ? (
             <Card title="Your reply" icon="send">
-              <div className="whitespace-pre-wrap text-sm leading-relaxed text-muted">{draft}</div>
-              <p className="mt-3 border-t border-line-soft pt-2 text-xs text-faint">
+              <div className="whitespace-pre-wrap text-body leading-relaxed text-ink-muted">{draft}</div>
+              <p className="mt-3 border-t border-line pt-2 text-label text-ink-muted">
                 Sent just now. Nothing actually left the browser — this is a prototype.
               </p>
             </Card>
@@ -149,7 +149,7 @@ export default function MessageDetailPage({ params }) {
 
           {event && (
             <Card title="Related event" icon="calendar">
-              <Link href={`/events/${event.id}`} className="text-sm font-medium text-accent hover:underline">
+              <Link href={`/events/${event.id}`} className="text-body font-medium text-accent hover:underline">
                 {event.name}
               </Link>
               <dl className="mt-2 space-y-2">

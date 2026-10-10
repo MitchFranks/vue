@@ -43,8 +43,8 @@ export default function EventUpNextPage({ params }) {
                 aria-pressed={kind === k.id}
                 className={
                   kind === k.id
-                    ? 'rounded-box border border-accent bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent'
-                    : 'rounded-box border border-line bg-surface px-2.5 py-1 text-xs text-ink-2 hover:bg-wash-deep'
+                    ? 'rounded-md border border-accent bg-surface-sunken px-2.5 py-1 text-label font-medium text-accent'
+                    : 'rounded-md border border-line bg-surface px-2.5 py-1 text-label text-ink hover:bg-surface-sunken'
                 }
               >
                 {k.label} ({n})
@@ -74,7 +74,7 @@ export default function EventUpNextPage({ params }) {
         <>
           {urgent.length > 0 && (
             <section className="mb-5">
-              <h2 className="mb-2 flex items-center gap-2 text-sm font-bold text-accent">
+              <h2 className="mb-2 flex items-center gap-2 text-body font-medium text-accent">
                 <Icon name="check" size={15} />
                 Do first ({urgent.length})
               </h2>
@@ -88,7 +88,7 @@ export default function EventUpNextPage({ params }) {
                         dismissAttention(item.id)
                         toast('Moved out of Up Next.')
                       }}
-                      className="absolute bottom-2 right-3 rounded-full border border-line bg-surface px-2.5 py-0.5 text-[11px] font-medium text-muted hover:bg-accent-soft hover:text-accent"
+                      className="absolute bottom-2 right-3 rounded-full border border-line bg-surface px-2.5 py-0.5 text-label font-medium text-ink-muted hover:bg-surface-sunken hover:text-accent"
                     >
                       Dismiss
                     </button>
@@ -100,7 +100,7 @@ export default function EventUpNextPage({ params }) {
 
           {rest.length > 0 && (
             <section>
-              <h2 className="mb-2 flex items-center gap-2 text-sm font-bold text-muted">
+              <h2 className="mb-2 flex items-center gap-2 text-body font-medium text-ink-muted">
                 <Icon name="clock" size={15} />
                 Coming up ({rest.length})
               </h2>
@@ -115,7 +115,7 @@ export default function EventUpNextPage({ params }) {
       )}
 
       <Card className="mt-5" title="About this list" icon="info">
-        <p className="text-xs text-muted">
+        <p className="text-label text-ink-muted">
           These are the items from your Up Next page that belong to this event. Dismissing one here moves it out of Up Next everywhere.
         </p>
       </Card>

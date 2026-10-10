@@ -10,9 +10,9 @@
 import { useMemo, useState } from 'react'
 import { cx } from '@/lib/cx'
 import { Avatar, Button, Icon } from '@/components/ui/primitives'
-import { WORLD } from '@/lib/staffing/adapter'
 import { SETTINGS } from '@/lib/staffing/rules'
 import {
+  blockById,
   blocksOfRequest,
   callTimeH,
   coverage,
@@ -46,11 +46,13 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
   const blocks = roleBlocks(eventId, role, state)
   const backupsMode = mode === 'backups'
 
-  const [selBlocks, setSelBlocks] = useState(() => {
+  const [pickedBlocks, setSelBlocks] = useState(() => {
     if (config.blockIds?.length) return config.blockIds
     const gaps = blocks.filter((b) => coverage(eventId, b, role, state).toFind > 0).map((b) => b.id)
     return gaps.length ? gaps : blocks.slice(0, 1).map((b) => b.id)
   })
+  // Blocks deleted from the run of show while this panel is open drop out.
+  const selBlocks = useMemo(() => pickedBlocks.filter((id) => blockById(id)), [pickedBlocks, state])
   const [offset, setOffset] = useState(SETTINGS.callOffsetByRole[role] ?? 0)
   const [allRoles, setAllRoles] = useState(false)
   const [reason, setReason] = useState('')
@@ -82,7 +84,7 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
   const tickedRows = ranked.filter((x) => ticked.includes(x.person.id) && x.group !== 'cant' && x.group !== 'backup')
   const needReason = tickedRows.filter((x) => x.group === 'reason')
   // Spots still open (need minus confirmed), and how many are already being asked for them.
-  const selCovs = selBlocks.map((id) => coverage(eventId, WORLD.blockMap[id].block, role, state))
+  const selCovs = selBlocks.map((id) => coverage(eventId, blockById(id), role, state))
   const openSpots = Math.max(0, ...selCovs.map((c) => c.gap))
   const alreadyAsked = Math.max(0, ...selCovs.map((c) => c.waiting + c.notSent))
   const canAsk = tickedRows.length > 0 && (!needReason.length || reason.trim())
@@ -112,7 +114,7 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
 
   const describe = (x) => {
     if (x.existing && x.existing.status !== 'backup' && x.group !== 'cant') {
-      const newNames = selBlocks.filter((b) => !x.existing.blockIds.includes(b)).map((b) => WORLD.blockMap[b].block.name).join(' + ')
+      const newNames = selBlocks.filter((b) => !x.existing.blockIds.includes(b)).map((b) => blockById(b).name).join(' + ')
       return `Add ${newNames} to ${firstName(x.person.id)}'s day (on ${blocksOfRequest(x.existing).map((b) => b.name).join(' + ')} from ${fmtH(callTimeH(x.existing))})`
     }
     const real = x.issues.filter((i) => i.severity !== 'info')
@@ -213,7 +215,7 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
             </select>
           </div>
           <label className="flex items-center gap-2 pb-2.5 text-small text-ink">
-            <input type="checkbox" checked={allRoles} onChange={(e) => setAllRoles(e.target.checked)} className="h-4 w-4 accent-[var(--color-accent)]" />
+            <input type="checkbox" checked={allRoles} onChange={(e) => setAllRoles(e.target.checked)} className="h-4 w-4 accent-accent" />
             Show other roles
           </label>
         </div>
@@ -319,7 +321,7 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
                         type="checkbox"
                         checked={on}
                         onChange={() => toggle(id)}
-                        className="mt-2 h-4 w-4 shrink-0 accent-[var(--color-accent)]"
+                        className="mt-2 h-4 w-4 shrink-0 accent-accent"
                         aria-label={`Ask ${x.person.name}`}
                       />
                       {inner}

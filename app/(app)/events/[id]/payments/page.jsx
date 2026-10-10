@@ -23,39 +23,39 @@ export default function PaymentsPage({ params }) {
           <Field label="Contract total" value={money(pay.total)} />
           <Field label="Paid to date" value={money(pay.paid)} />
           <Field label="Outstanding">
-            <span className={outstanding > 0 ? 'font-semibold text-warn' : 'text-done'}>{money(outstanding)}</span>
+            <span className={outstanding > 0 ? 'font-medium text-status-soon' : 'text-status-clear'}>{money(outstanding)}</span>
           </Field>
         </dl>
-        <div className="mt-3 h-2 w-full overflow-hidden rounded-pill border border-line bg-wash-deep">
-          <div className="h-full bg-done" style={{ width: `${(pay.paid / pay.total) * 100}%` }} />
+        <div className="mt-3 h-2 w-full overflow-hidden rounded-pill border border-line bg-surface-sunken">
+          <div className="h-full bg-status-clear" style={{ width: `${(pay.paid / pay.total) * 100}%` }} />
         </div>
       </Card>
 
       <Card title="Payment schedule" icon="list" bodyClassName="px-0 py-0">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[480px] text-sm">
+          <table className="w-full min-w-[480px] text-body">
             <caption className="sr-only">Payment schedule</caption>
             <thead>
-              <tr className="border-b border-line bg-wash-deep text-left text-xs tracking-wide text-faint">
-                <th scope="col" className="px-4 py-2 font-semibold">
+              <tr className="border-b border-line bg-surface-sunken text-left text-label tracking-wide text-ink-muted">
+                <th scope="col" className="px-4 py-2 font-medium">
                   Instalment
                 </th>
-                <th scope="col" className="px-4 py-2 font-semibold">
+                <th scope="col" className="px-4 py-2 font-medium">
                   When
                 </th>
-                <th scope="col" className="px-4 py-2 text-right font-semibold">
+                <th scope="col" className="px-4 py-2 text-right font-medium">
                   Amount
                 </th>
-                <th scope="col" className="px-4 py-2 text-right font-semibold">
+                <th scope="col" className="px-4 py-2 text-right font-medium">
                   Status
                 </th>
               </tr>
             </thead>
             <tbody>
               {pay.schedule.map((row) => (
-                <tr key={row.id} className="border-b border-line-soft last:border-b-0">
+                <tr key={row.id} className="border-b border-line last:border-b-0">
                   <td className="px-4 py-2.5 text-ink">{row.label}</td>
-                  <td className="px-4 py-2.5 text-xs text-muted">{row.when}</td>
+                  <td className="px-4 py-2.5 text-label text-ink-muted">{row.when}</td>
                   <td className="px-4 py-2.5 text-right tabular-nums text-ink">{money(row.amount)}</td>
                   <td className="px-4 py-2.5 text-right">
                     <StatusBadge

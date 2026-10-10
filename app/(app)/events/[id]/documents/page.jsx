@@ -23,7 +23,7 @@ export default function DocumentsPage({ params }) {
           <ListRow
             key={d.id}
             leading={
-              <span className="rounded-xl border border-line bg-wash-deep px-1.5 py-0.5 text-[10px] font-semibold text-muted">
+              <span className="rounded-md border border-line bg-surface-sunken px-1.5 py-0.5 text-label font-medium text-ink-muted">
                 {d.kind}
               </span>
             }

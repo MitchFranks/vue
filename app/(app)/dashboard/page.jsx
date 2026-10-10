@@ -67,22 +67,22 @@ export default function DashboardPage() {
       <section className="mb-6">
         <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
           <div>
-            <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
+            <h2 className="flex items-center gap-2 text-heading font-medium text-ink">
               <Icon name="list" size={17} className="text-accent" />
               Up next
             </h2>
-            <p className="mt-0.5 text-xs text-muted">
+            <p className="mt-0.5 text-label text-ink-muted">
               Picked for you automatically. Each item says what happened, why it matters and what to do.
             </p>
           </div>
-          <Link href="/up-next" className="text-xs text-accent underline-offset-2 hover:underline">
+          <Link href="/up-next" className="text-label text-accent underline-offset-2 hover:underline">
             See everything ({attention.length})
           </Link>
         </div>
 
         {attention.length === 0 ? (
           <Card>
-            <p className="py-4 text-center text-sm text-muted">
+            <p className="py-4 text-center text-body text-ink-muted">
               You&apos;re all caught up. Every event is fully staffed.
             </p>
           </Card>
@@ -102,8 +102,8 @@ export default function DashboardPage() {
         {/* ---- Upcoming events ---- */}
         <section>
           <div className="mb-2 flex items-end justify-between gap-2">
-            <h2 className="text-base font-semibold text-ink">Upcoming events</h2>
-            <Link href="/events" className="text-xs text-accent underline-offset-2 hover:underline">
+            <h2 className="text-heading font-medium text-ink">Upcoming events</h2>
+            <Link href="/events" className="text-label text-accent underline-offset-2 hover:underline">
               All events
             </Link>
           </div>
@@ -122,8 +122,8 @@ export default function DashboardPage() {
         {/* ---- Staffing coverage at a glance ---- */}
         <section>
           <div className="mb-2 flex items-end justify-between gap-2">
-            <h2 className="text-base font-semibold text-ink">Staffing status</h2>
-            <Link href="/staffing" className="text-xs text-accent underline-offset-2 hover:underline">
+            <h2 className="text-heading font-medium text-ink">Staffing status</h2>
+            <Link href="/staffing" className="text-label text-accent underline-offset-2 hover:underline">
               Weekly schedule
             </Link>
           </div>
@@ -134,18 +134,18 @@ export default function DashboardPage() {
                 <Link
                   key={event.id}
                   href={`/staffing/${event.id}`}
-                  className="flex items-center gap-3 border-b border-line-soft px-3 py-2.5 last:border-b-0 hover:bg-wash-deep"
+                  className="flex items-center gap-3 border-b border-line px-3 py-2.5 last:border-b-0 hover:bg-surface-sunken"
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-ink">{event.name}</div>
-                    <div className="mt-0.5 text-xs text-muted">
+                    <div className="truncate text-body font-medium text-ink">{event.name}</div>
+                    <div className="mt-0.5 text-label text-ink-muted">
                       {cov.filled} of {cov.required} roles confirmed
                       {cov.pending > 0 && ` · ${cov.pending} pending`}
                     </div>
                     {/* Placeholder-style coverage bar — wireframe, not a chart. */}
-                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-pill border border-line bg-wash-deep">
+                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-pill border border-line bg-surface-sunken">
                       <div
-                        className={cx2(cov.complete ? 'bg-done' : 'bg-urgent', 'h-full')}
+                        className={cx2(cov.complete ? 'bg-status-clear' : 'bg-status-now', 'h-full')}
                         style={{ width: `${cov.required ? (cov.filled / cov.required) * 100 : 0}%` }}
                       />
                     </div>
@@ -166,18 +166,18 @@ export default function DashboardPage() {
 
           <div className="mt-3">
             <Card title="Today" subtitle={venue.today} icon="calendar">
-              <ul className="space-y-2 text-xs">
+              <ul className="space-y-2 text-label">
                 <li className="flex gap-2">
-                  <span className="w-16 shrink-0 font-medium text-ink-2">8:42 AM</span>
-                  <span className="text-muted">Emily Johnson asked to move decorating to 9:00 AM</span>
+                  <span className="w-16 shrink-0 font-medium text-ink">8:42 AM</span>
+                  <span className="text-ink-muted">Emily Johnson asked to move decorating to 9:00 AM</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="w-16 shrink-0 font-medium text-ink-2">7:15 AM</span>
-                  <span className="text-muted">Harvest Table asked for the guarantee</span>
+                  <span className="w-16 shrink-0 font-medium text-ink">7:15 AM</span>
+                  <span className="text-ink-muted">Harvest Table asked for the guarantee</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="w-16 shrink-0 font-medium text-ink-2">Yesterday</span>
-                  <span className="text-muted">Jake Pearson declined the Johnson ceremony assignment</span>
+                  <span className="w-16 shrink-0 font-medium text-ink">Yesterday</span>
+                  <span className="text-ink-muted">Jake Pearson declined the Johnson ceremony assignment</span>
                 </li>
               </ul>
             </Card>

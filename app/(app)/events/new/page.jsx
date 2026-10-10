@@ -139,7 +139,7 @@ export default function NewEventPage() {
 
           <div className="space-y-4">
             <Card title="What happens next" icon="info">
-              <ol className="list-decimal space-y-1.5 pl-4 text-xs text-muted">
+              <ol className="list-decimal space-y-1.5 pl-4 text-label text-ink-muted">
                 <li>The event appears in Events and on the calendar.</li>
                 <li>You add staffable blocks (setup, ceremony, cocktail hour, reception, teardown) and the staffing requirement for each.</li>
                 <li>The planner suggests staff from their stated availability.</li>

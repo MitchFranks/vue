@@ -45,8 +45,8 @@ export default function InboxPage() {
             aria-pressed={filter === f.id}
             className={
               filter === f.id
-                ? 'rounded-box border border-accent bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent'
-                : 'rounded-box border border-line bg-surface px-2.5 py-1 text-xs text-ink-2 hover:bg-wash-deep'
+                ? 'rounded-md border border-accent bg-surface-sunken px-2.5 py-1 text-label font-medium text-accent'
+                : 'rounded-md border border-line bg-surface px-2.5 py-1 text-label text-ink hover:bg-surface-sunken'
             }
           >
             {f.label} ({counts[f.id]})

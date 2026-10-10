@@ -53,7 +53,7 @@ export default function Staffing2EventsPage() {
                 <article
                   key={ev.id}
                   onClick={() => router.push(`/staffing/${ev.id}`)}
-                  className={`${primary ? 'ring-2 ring-accent ' : ''}surface-card flex cursor-pointer flex-col gap-3 border border-transparent px-5 py-4 transition-all duration-200 hover:-translate-y-[2px] hover:border-accent-line sm:flex-row sm:items-center`}
+                  className={`${primary ? 'ring-2 ring-accent ' : ''}surface-card flex cursor-pointer flex-col gap-3 px-6 py-4 transition-colors duration-150 hover:border-line-strong sm:flex-row sm:items-center`}
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -61,7 +61,7 @@ export default function Staffing2EventsPage() {
                         href={`/staffing/${ev.id}`}
                         data-guide={primary ? 'planner-event' : undefined}
                         onClick={(e) => e.stopPropagation()}
-                        className="font-display text-[18px] font-bold text-ink hover:text-accent"
+                        className="text-heading font-medium text-ink hover:text-accent"
                       >
                         {ev.name}
                       </Link>
@@ -71,10 +71,10 @@ export default function Staffing2EventsPage() {
                         </StatusBadge>
                       )}
                     </div>
-                    <p className="mt-0.5 text-xs text-muted">
+                    <p className="mt-0.5 text-label text-ink-muted">
                       {ev.couple} · {ev.dateShort} · {daysOutText(ev)} · {guestsText(ev)}
                     </p>
-                    <p className="mt-1 text-[13px] text-ink-2">{summaryLine(m.summary)}</p>
+                    <p className="mt-1 text-small text-ink">{summaryLine(m.summary)}</p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {m.chips.map((c) =>
                         c.icon ? (

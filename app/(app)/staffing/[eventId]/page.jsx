@@ -20,6 +20,7 @@ import { ChangeTimes, MarkOkDialog } from '@/components/staffing/ChangeTimes'
 import { EditNeeds } from '@/components/staffing/EditNeeds'
 import { WORLD } from '@/lib/staffing/adapter'
 import {
+  blockById,
   coverage,
   daysOutText,
   eventOf,
@@ -108,11 +109,12 @@ function Crew({ eventId }) {
   const notices = []
   const dropped = rs
     .filter((r) => r.droppedOut)
-    .filter((r) => r.blockIds.some((b) => coverage(eventId, WORLD.blockMap[b].block, r.role, state).toFind > 0))
+    .filter((r) => r.blockIds.some((b) => blockById(b) && coverage(eventId, blockById(b), r.role, state).toFind > 0))
     .sort((a, b) => (a.respondedAt < b.respondedAt ? 1 : -1))[0]
   if (dropped) {
     const gaps = dropped.blockIds
-      .map((b) => ({ b: WORLD.blockMap[b].block, n: coverage(eventId, WORLD.blockMap[b].block, dropped.role, state).toFind }))
+      .filter((b) => blockById(b))
+      .map((b) => ({ b: blockById(b), n: coverage(eventId, blockById(b), dropped.role, state).toFind }))
       .filter((x) => x.n > 0)
     const same = gaps.every((g) => g.n === gaps[0].n)
     const names = gaps.map((g) => g.b.name).join(' and ')
@@ -152,7 +154,7 @@ function Crew({ eventId }) {
             setTimeout(() => setHighlight(summary.toCheck[0].id), 0)
           }}
         >
-          Show {n === 1 ? 'them' : 'them'}
+          Show them
         </Button>
       )
     })
@@ -259,13 +261,11 @@ function Crew({ eventId }) {
         <div className="mb-5 space-y-2">
           {notices.slice(0, 3).map((n) => (
             <Alert key={n.key} tone={n.tone} action={n.action}>
-              <span className="text-[13px]">{n.text}</span>
+              <span className="text-small">{n.text}</span>
             </Alert>
           ))}
         </div>
       )}
-
-      
 
       {!roles.length ? (
         <EmptyState
@@ -299,17 +299,17 @@ function Crew({ eventId }) {
       )}
 
       <details className="surface-card mt-5 px-5 py-3.5">
-        <summary className="cursor-pointer text-[14px] font-bold text-ink">Replies and changes ({activity.length})</summary>
+        <summary className="cursor-pointer text-body font-medium text-ink">Replies and changes ({activity.length})</summary>
         {activity.length ? (
-          <ul className="mt-2 space-y-1.5 text-[13px] text-ink-2">
+          <ul className="mt-2 space-y-1.5 text-small text-ink">
             {activity.map((a) => (
               <li key={a.id}>
-                <span className="text-muted">{stampLabel(a.at)} ·</span> {a.text}
+                <span className="text-ink-muted">{stampLabel(a.at)} ·</span> {a.text}
               </li>
             ))}
           </ul>
         ) : (
-          <p className="mt-2 text-[13px] text-muted">Nothing yet. Asks, replies and changes show up here.</p>
+          <p className="mt-2 text-small text-ink-muted">Nothing yet. Asks, replies and changes show up here.</p>
         )}
       </details>
 
