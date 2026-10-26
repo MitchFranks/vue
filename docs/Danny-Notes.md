@@ -4,6 +4,9 @@
 
 - [ ] ****
 
+- [x] **Up Next Tasks view with sorts and filters.**
+  Task card data: Task Name, Due Date (required); Description, Due Time, Couple, Vendor Tags (optional). Contacts are stored per person and the couple name is calculated from them in alphabetical order (Ava & Zack). A task tags either the whole couple or one partner. Sorts: Due Date (all-day before timed), Contact, Couple, Vendor, Task Name. Filters: Due on, Due this week, Contact, Couple, Vendor, Task Name, Task Type.
+
 - [ ] **The Couples page needs a button to add a new couple**
 
 - [ ] **Events** 

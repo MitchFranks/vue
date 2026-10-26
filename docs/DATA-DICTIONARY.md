@@ -100,14 +100,27 @@ about the **timeline** or **run of show**; the blocks are the staffed parts of i
 Availability is **weekly and recurring only** — there are no date-specific exceptions or time off.
 A person is "available" for a block only if one window **fully covers** it (`isAvailable`).
 
+### Contact &nbsp; `lib/mock/records.js` · screens: Up Next task filters and task editor
+
+One person. Each partner in a couple is a contact.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `id` | string | `con-emily-johnson` |
+| `firstName`, `lastName` | string | "Emily" / "Johnson" |
+| `coupleId` | string → Couple | The couple this person belongs to |
+| `email`, `phone` | string | Contact |
+
 ### Couple &nbsp; `lib/mock/records.js` · screens: *Couples*, couple profile
 
 | Field | Type | Meaning |
 |---|---|---|
-| `id` | string | `johnson-emily` (primary contact, not the couple) |
-| `name` | string | "Emily & Marcus Johnson" — the billing party |
-| `primaryContact` | string | The person you actually write to: "Emily Johnson" |
-| `email`, `phone`, `initials` | string | Contact |
+| `id` | string | `cpl-2001` |
+| `contactIds` | string[] → Contact | The two partners |
+| `primaryContactId` | string → Contact | The person you actually write to |
+| `name` | string, **calculated** | `coupleName()`: partners in alphabetical order by first name. "Emily & Marcus Johnson" when they share a last name, else "Dev Patel & Priya Shah". Sorting by couple name therefore sorts by the alphabetically-first partner |
+| `firstNames` | string, **calculated** | "Emily & Marcus" |
+| `primaryContact`, `email`, `phone`, `initials` | string, **calculated** | From the primary contact |
 | `eventIds` | string[] | Events booked (all currently length 1) |
 | `since` | string | "Booked February 2026". Display text |
 | `note` | string | Free text |
@@ -124,17 +137,31 @@ A person is "available" for a block only if one window **fully covers** it (`isA
 | `statusTone` | tone | Colour of the status pill ⚠️ |
 | `note` | string | Free text |
 
-### Task &nbsp; · screens: event *Tasks* tab
+### Task &nbsp; `lib/mock/records.js`, logic in `lib/tasks.js` · screens: Up Next *Tasks* view, event *Tasks* tab
 
 | Field | Type | Meaning |
 |---|---|---|
 | `id` | string | `t-guest-count` |
 | `eventId` | string → Event | |
-| `title`, `detail` | string | "Submit the guarantee to Harvest Table Catering" |
-| `due` | string | Display text: "Due today", "Due Sun, Oct 11", "Completed Sep 12" ⚠️ |
-| `dueTone` | tone | `urgent`, `warn`, `info`, `done`. **Also decides whether the task appears in Up Next** ⚠️ |
+| `title` | string, **required** | Task Name: "Submit the guarantee to Harvest Table Catering" |
+| `dueDate` | `YYYY-MM-DD`, **required** | Due Date |
+| `dueTime` | `HH:MM` \| null | Due Time. Null means any time that day |
+| `type` | string | Task Type, one of `TASK_TYPES` in `lib/tasks.js` |
+| `detail` | string | Description |
+| `coupleIds` | string[] → Couple | Couples tagged as a whole |
+| `contactIds` | string[] → Contact | Single partners tagged on their own. Per couple, a task tags the couple **or** one partner, never both |
+| `vendorIds` | string[] → Vendor | Vendor tags |
+| `due` | string, **calculated** | `dueInfo()`: "Due today · 5:00 PM", "Due tomorrow", "Due Wed, Oct 14", "Overdue · was due …", "Completed Sep 12" |
+| `dueTone` | tone, **calculated** | Overdue or today → `urgent`; within 7 days → `warn`; later → `info`; done → `done`. **Still decides whether the task appears in Up Next** |
+| `completedOn` | string | Display text for seed tasks that start done |
 | `owner` | string | Person's name as text (not an id) |
 | `done` | boolean | Seed value only. Live value = `doneTaskIds` in state |
+
+Edits made in Up Next are kept in `taskEdits` in state and laid over the seed record.
+
+**Up Next task sorts** (`sortTasks`): Due date (by date; on the same day, tasks with no time first, then by time) · Contact name · Couple name · Vendor name · Task name. Tasks with nothing to sort on go last.
+
+**Up Next task filters** (`filterTasks`): Due on (exact date) · Due this week (today through six days out) · Contact · Couple · Vendor · Task name (text search) · Task type · Show completed. A contact filter also matches tasks tagged on that contact's couple, and a couple filter also matches tasks tagged on one of its partners.
 
 ### Message &nbsp; · screens: *Messages*, message detail, event *Messages* tab
 
@@ -202,6 +229,7 @@ The one thing the user can change. Lives in `StoreProvider`; seeded from the fil
 |---|---|---|
 | `assignments` | `{ [assignmentId]: Assignment }` | Who is on which timeline block, and whether they said yes. See below |
 | `doneTaskIds` | string[] | Tasks ticked off. Starts with every task whose seed `done` is true |
+| `taskEdits` | object | `taskId → { title, dueDate, dueTime, type, detail, coupleIds, contactIds, vendorIds }` changed in the Up Next task editor |
 | `repliedMessageIds` | string[] | Messages the manager has answered |
 | `readMessageIds` | string[] | Messages opened (replying also marks read) |
 | `signedDocumentIds` | string[] | Documents the manager has signed — flips status to "Signed" |

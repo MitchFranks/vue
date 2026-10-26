@@ -26,16 +26,19 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { events, eventById, daysOutLabel } from './mock/events.js'
 import { documents, messages, money, payments, tasks } from './mock/records.js'
 import { pluralRole } from './mock/staff.js'
+import { dueInfo } from './tasks.js'
 import { useStaffing2 } from './staffing/store'
 import { changed, coverage, requestList, rolesOf, staffById as plannerStaffById } from './staffing/derive'
 
 const StoreContext = createContext(null)
 
-const STORAGE_KEY = 'vue-lowfi-prototype-v6'
+const STORAGE_KEY = 'vue-lowfi-prototype-v7'
 
 function initialState() {
   return {
     doneTaskIds: tasks.filter((t) => t.done).map((t) => t.id),
+    // taskId -> fields changed from Up Next (name, due date/time, type, description, tags)
+    taskEdits: {},
     repliedMessageIds: [],
     readMessageIds: [],
     signedDocumentIds: [],
@@ -101,6 +104,11 @@ export function StoreProvider({ children }) {
         ? s.doneTaskIds.filter((t) => t !== taskId)
         : [...s.doneTaskIds, taskId]
     }))
+  }, [])
+
+  /** Change a task's fields. `patch` holds only the fields that changed. */
+  const updateTask = useCallback((taskId, patch) => {
+    setState((s) => ({ ...s, taskEdits: { ...s.taskEdits, [taskId]: { ...s.taskEdits?.[taskId], ...patch } } }))
   }, [])
 
   /** Submit the guaranteed guest count: sets it on the event and completes the task. */
@@ -237,9 +245,15 @@ export function StoreProvider({ children }) {
 
   // ---- derived: tasks / messages / documents ------------------------------
 
+  // `due` and `dueTone` are worked out from the due date (lib/tasks.js), so an
+  // edited date moves the task in and out of Up Next.
   const taskList = useMemo(
-    () => tasks.map((t) => ({ ...t, done: state.doneTaskIds.includes(t.id) })),
-    [state.doneTaskIds]
+    () =>
+      tasks.map((t) => {
+        const task = { ...t, ...state.taskEdits?.[t.id], done: state.doneTaskIds.includes(t.id) }
+        return { ...task, ...dueInfo(task) }
+      }),
+    [state.doneTaskIds, state.taskEdits]
   )
 
   const messageList = useMemo(
@@ -385,7 +399,7 @@ export function StoreProvider({ children }) {
         why: `${t.due} · owned by ${t.owner}.`,
         eventId: t.eventId,
         eventName: event ? event.name : 'No event',
-        meta: t.due,
+        meta: `${t.type} · ${t.due}`,
         dismissible: true,
         actionLabel: 'Open event tasks',
         href: `/events/${t.eventId}/tasks`
@@ -469,6 +483,7 @@ export function StoreProvider({ children }) {
     dismissedCount,
     // actions
     toggleTask,
+    updateTask,
     submitGuestCount,
     markReplied,
     markRead,

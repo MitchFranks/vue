@@ -9,6 +9,10 @@
 //
 // The kind filter lives in the URL (/up-next?kind=task) so other screens can
 // deep-link straight to one slice of the queue.
+//
+// Tasks is its own view (components/tasks/TaskBoard.jsx): every task, not
+// only the ones due, with sorts and filters by due date, contact, couple,
+// vendor, name and type.
 // ---------------------------------------------------------------------------
 
 import { Suspense, useState } from 'react'
@@ -17,6 +21,7 @@ import { useStore } from '@/lib/store'
 import { events } from '@/lib/mock/events'
 import { Breadcrumbs, Button, Card, EmptyState, FilterChip, FilterGroup, PageHeader } from '@/components/ui/primitives'
 import { UpNextItem, useHideWithUndo } from '@/components/ui/domain'
+import { TaskBoard } from '@/components/tasks/TaskBoard'
 
 const KINDS = [
   { id: 'all', label: 'Everything' },
@@ -38,7 +43,7 @@ export default function UpNextPage() {
 
 function UpNextView() {
   const store = useStore()
-  const { attention, dismissedCount, restoreAllAttention, toast } = store
+  const { attention, dismissedCount, restoreAllAttention, taskList, toast } = store
   const hide = useHideWithUndo(store)
 
   const router = useRouter()
@@ -74,7 +79,13 @@ function UpNextView() {
               key={k.id}
               pressed={kind === k.id}
               onClick={() => setKind(k.id)}
-              count={k.id === 'all' ? attention.length : attention.filter((a) => a.kind === k.id).length}
+              count={
+                k.id === 'all'
+                  ? attention.length
+                  : k.id === 'task'
+                    ? taskList.filter((t) => !t.done).length
+                    : attention.filter((a) => a.kind === k.id).length
+              }
             >
               {k.label}
             </FilterChip>
@@ -96,7 +107,7 @@ function UpNextView() {
           })}
         </FilterGroup>
 
-        {dismissedCount > 0 && (
+        {dismissedCount > 0 && kind !== 'task' && (
           <p className="flex flex-wrap items-center gap-2 text-small text-ink-muted">
             {dismissedCount} hidden ·
             <Button variant="ghost" size="sm" onClick={showHidden}>
@@ -106,7 +117,9 @@ function UpNextView() {
         )}
       </div>
 
-      {filtered.length === 0 ? (
+      {kind === 'task' ? (
+        <TaskBoard eventFilter={eventFilter} onClearEvent={() => setEventFilter('all')} />
+      ) : filtered.length === 0 ? (
         <EmptyState
           title="Nothing in this view"
           body="Either everything here is handled, or the filters above are hiding it. Try switching back to Everything."
