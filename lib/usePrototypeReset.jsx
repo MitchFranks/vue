@@ -17,7 +17,7 @@ export function usePrototypeReset() {
   const resetPrototype = () =>
     confirm({
       title: 'Reset everything?',
-      body: 'Replies, tasks, messages, staffing changes, timeline edits, hidden items, and display preferences will return to the sample state. This cannot be undone.',
+      body: 'Replies, tasks, messages, staffing changes, timeline edits, and display preferences will return to the sample state. This cannot be undone.',
       confirmLabel: 'Reset everything',
       danger: true,
       onConfirm: () => {

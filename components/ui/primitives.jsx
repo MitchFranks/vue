@@ -515,7 +515,8 @@ export function Avatar({ initials, size = 'md' }) {
 const LABEL = 'mb-1.5 block text-small text-ink-muted'
 const CONTROL =
   'block w-full rounded-sm border border-line-strong bg-surface px-3 text-body text-ink placeholder:text-ink-muted/70 transition-colors focus:border-accent focus-visible:outline-offset-0'
-const CONTROL_ERROR = 'border-status-now focus:border-status-now'
+// A missing or invalid field also gets the light red wash, not just a red edge.
+const CONTROL_ERROR = 'border-status-now bg-status-now-soft! focus:border-status-now'
 const HINT = 'mt-1.5 text-small text-ink-muted'
 const ERROR = 'mt-1.5 flex items-center gap-1 text-small text-status-now'
 

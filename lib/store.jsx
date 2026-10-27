@@ -32,22 +32,22 @@ import { changed, coverage, requestList, rolesOf, staffById as plannerStaffById 
 
 const StoreContext = createContext(null)
 
-const STORAGE_KEY = 'vue-lowfi-prototype-v8'
+const STORAGE_KEY = 'vue-lowfi-prototype-v9'
 
 function initialState() {
   return {
     doneManualTaskIds: manualTasks.filter((t) => t.done).map((t) => t.id),
     // recordId -> fields changed from Tasks (name, due date/time, type, description, tags)
     manualTaskEdits: {},
+    // tasks added from the Tasks page ("New"), in the same shape as lib/mock/records.js manualTasks
+    createdTasks: [],
     // The venue's own task types (the system ones are fixed, see lib/tasks.js)
     taskTypes: DEFAULT_TASK_TYPES,
     repliedMessageIds: [],
     readMessageIds: [],
     signedDocumentIds: [],
     // `${eventId}:${paymentId}` recorded as paid in the prototype
-    paidPaymentIds: [],
-    // task ids the manager chose to hide. Staffing items can't be hidden.
-    hiddenTaskIds: []
+    paidPaymentIds: []
   }
 }
 
@@ -108,6 +108,20 @@ export function StoreProvider({ children }) {
     }))
   }, [])
 
+  /** Add a task from the Tasks page. `fields` is what TaskEditor collects. Returns the new record's id. */
+  const addManualTask = useCallback((fields) => {
+    const id = `t-new-${Date.now()}`
+    setState((s) => ({
+      ...s,
+      createdTasks: [
+        ...(s.createdTasks || []),
+        // Owned by the signed-in venue manager, as the sidebar shows.
+        { owner: 'Dana Whitcomb', done: false, ...fields, id }
+      ]
+    }))
+    return id
+  }, [])
+
   /** Change a task's fields. `patch` holds only the fields that changed. */
   const updateManualTask = useCallback((recordId, patch) => {
     setState((s) => ({ ...s, manualTaskEdits: { ...s.manualTaskEdits, [recordId]: { ...s.manualTaskEdits?.[recordId], ...patch } } }))
@@ -134,7 +148,7 @@ export function StoreProvider({ children }) {
       const next = to.trim()
       setState((s) => {
         const edits = { ...s.manualTaskEdits }
-        for (const t of manualTasks) {
+        for (const t of [...manualTasks, ...(s.createdTasks || [])]) {
           if ((edits[t.id]?.type ?? t.type) === from) edits[t.id] = { ...edits[t.id], type: next }
         }
         return { ...s, manualTaskEdits: edits, taskTypes: s.taskTypes.map((t) => (t === from ? next : t)) }
@@ -148,7 +162,7 @@ export function StoreProvider({ children }) {
   const deleteTaskType = useCallback((name, moveTo) => {
     setState((s) => {
       const edits = { ...s.manualTaskEdits }
-      for (const t of manualTasks) {
+      for (const t of [...manualTasks, ...(s.createdTasks || [])]) {
         if ((edits[t.id]?.type ?? t.type) === name && moveTo) edits[t.id] = { ...edits[t.id], type: moveTo }
       }
       return { ...s, manualTaskEdits: edits, taskTypes: s.taskTypes.filter((t) => t !== name) }
@@ -202,18 +216,6 @@ export function StoreProvider({ children }) {
     const key = `${eventId}:${paymentId}`
     setState((s) => ({ ...s, paidPaymentIds: s.paidPaymentIds.filter((k) => k !== key) }))
   }, [])
-
-  const hideTask = useCallback((id) => {
-    setState((s) =>
-      s.hiddenTaskIds.includes(id) ? s : { ...s, hiddenTaskIds: [...s.hiddenTaskIds, id] }
-    )
-  }, [])
-
-  const unhideTask = useCallback((id) => {
-    setState((s) => ({ ...s, hiddenTaskIds: s.hiddenTaskIds.filter((x) => x !== id) }))
-  }, [])
-
-  const unhideAllTasks = useCallback(() => setState((s) => ({ ...s, hiddenTaskIds: [] })), [])
 
   const reset = useCallback(() => {
     setState(initialState())
@@ -293,11 +295,11 @@ export function StoreProvider({ children }) {
   // edited date moves the task in and out of Tasks.
   const manualTaskList = useMemo(
     () =>
-      manualTasks.map((t) => {
+      [...manualTasks, ...(state.createdTasks || [])].map((t) => {
         const task = { ...t, ...state.manualTaskEdits?.[t.id], done: state.doneManualTaskIds.includes(t.id) }
         return { ...task, ...dueInfo(task) }
       }),
-    [state.doneManualTaskIds, state.manualTaskEdits]
+    [state.doneManualTaskIds, state.manualTaskEdits, state.createdTasks]
   )
 
   const messageList = useMemo(
@@ -358,7 +360,6 @@ export function StoreProvider({ children }) {
         eventId: spot.event.id,
         eventName: spot.event.name,
         meta: `${spot.block.name} · ${hourLabel(spot.block.start)}–${hourLabel(spot.block.end)}`,
-        hideable: false
       }
       if (spot.toFind > 0) {
         items.push({
@@ -372,7 +373,6 @@ export function StoreProvider({ children }) {
           why: spot.event.primary
             ? `${daysOutLabel(spot.event)}. Until it is filled, this block runs short-staffed.`
             : `${daysOutLabel(spot.event)}.`,
-          actionLabel: spot.toFind === 1 ? 'Fill spot' : 'Fill spots',
           href: `${spotLink}&ask=1`
         })
       } else if (spot.pending > 0) {
@@ -383,7 +383,6 @@ export function StoreProvider({ children }) {
           title: `${spot.block.name}: waiting on ${spot.pending} ${spot.pending === 1 ? 'reply' : 'replies'} for ${pluralRole(spot.role, spot.short)}`,
           what: `You asked ${spot.pending} ${spot.pending === 1 ? 'person' : 'people'}. The spot stays open until someone says yes.`,
           why: `${daysOutLabel(spot.event)}. If nobody says yes, ask someone else.`,
-          actionLabel: 'Check replies',
           href: spotLink
         })
       }
@@ -408,8 +407,6 @@ export function StoreProvider({ children }) {
         eventId: event.id,
         eventName: event.name,
         meta: `${drafts} not sent`,
-        hideable: false,
-        actionLabel: 'Review and send',
         href: `/staffing/${event.id}?send=1`
       })
     }
@@ -437,8 +434,6 @@ export function StoreProvider({ children }) {
         eventId: m.eventId,
         eventName: event ? event.name : 'No event',
         meta: m.fromRole.split(' · ')[0],
-        hideable: true,
-        actionLabel: 'Open and reply',
         href: `/messages/${m.id}`
       })
     }
@@ -467,8 +462,6 @@ export function StoreProvider({ children }) {
         eventId: d.eventId,
         eventName: event ? event.name : 'No event',
         meta: 'Awaiting signature',
-        hideable: true,
-        actionLabel: 'Open documents',
         href: `/events/${d.eventId}/documents`
       })
     }
@@ -492,8 +485,6 @@ export function StoreProvider({ children }) {
           eventId: event.id,
           eventName: event.name,
           meta: p.when,
-          hideable: true,
-          actionLabel: 'Open payments',
           href: `/events/${event.id}/payments`
         })
       }
@@ -505,16 +496,7 @@ export function StoreProvider({ children }) {
     return dated.sort((a, b) => (order[a.tone] ?? 9) - (order[b.tone] ?? 9))
   }, [openPositions, planner, messageList, manualTaskList, documentList, paymentsForEvent])
 
-  // Hidden items are still open; they are only kept out of the list.
-  const openTasks = useMemo(
-    () => allOpenTasks.filter((i) => !state.hiddenTaskIds.includes(i.id)),
-    [allOpenTasks, state.hiddenTaskIds]
-  )
-  const hiddenTasks = useMemo(
-    () => allOpenTasks.filter((i) => state.hiddenTaskIds.includes(i.id)),
-    [allOpenTasks, state.hiddenTaskIds]
-  )
-  const hiddenCount = hiddenTasks.length
+  const openTasks = allOpenTasks
 
   // ---- derived: COMPLETED tasks -------------------------------------------
   //
@@ -527,7 +509,7 @@ export function StoreProvider({ children }) {
     const done = []
 
     for (const t of manualTaskList) {
-      if (t.done) done.push(taskFromRecord(t, { done: true, hideable: false, actionLabel: 'Open event tasks' }))
+      if (t.done) done.push(taskFromRecord(t, { done: true }))
     }
 
     for (const m of messageList) {
@@ -547,7 +529,6 @@ export function StoreProvider({ children }) {
           contactIds: contacts.filter((c) => contactName(c) === m.from).map((c) => c.id)
         }),
         due: 'Replied',
-        actionLabel: 'View thread',
         href: `/messages/${m.id}`
       })
     }
@@ -565,7 +546,6 @@ export function StoreProvider({ children }) {
         dueDate: event ? event.dateKey : TODAY_KEY,
         ...eventTags(event),
         due: 'Signed',
-        actionLabel: 'Open documents',
         href: `/events/${d.eventId}/documents`
       })
     }
@@ -584,7 +564,6 @@ export function StoreProvider({ children }) {
           dueDate: p.dueDate || event.dateKey,
           ...eventTags(event),
           due: 'Paid',
-          actionLabel: 'Open payments',
           href: `/events/${event.id}/payments`
         })
       }
@@ -608,13 +587,12 @@ export function StoreProvider({ children }) {
     // Tasks
     openTasks,
     tasksForEvent,
-    hiddenTasks,
-    hiddenCount,
     completedTasks,
     taskTypes: allTaskTypes(state.taskTypes),
     editableTaskTypes: state.taskTypes,
     // actions
     toggleManualTask,
+    addManualTask,
     updateManualTask,
     addTaskType,
     renameTaskType,
@@ -626,9 +604,6 @@ export function StoreProvider({ children }) {
     unsignDocument,
     recordPayment,
     undoPayment,
-    hideTask,
-    unhideTask,
-    unhideAllTasks,
     reset,
     // feedback
     toasts,

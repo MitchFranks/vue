@@ -31,7 +31,6 @@ import {
   whoOptions
 } from '@/lib/tasks'
 import { Button, Card, EmptyState } from '@/components/ui/primitives'
-import { useHideWithUndo } from '@/components/ui/domain'
 import { TaskCard } from './TaskCard'
 import { TaskEditor } from './TaskEditor'
 import { TaskToolbar } from './TaskToolbar'
@@ -39,9 +38,8 @@ import { TaskToolbar } from './TaskToolbar'
 
 export function TaskBoard() {
   const store = useStore()
-  const { openTasks, completedTasks, manualTaskList, taskTypes, hiddenCount, unhideAllTasks, toggleManualTask, updateManualTask, toast } =
+  const { openTasks, completedTasks, manualTaskList, taskTypes, toggleManualTask, addManualTask, updateManualTask, toast } =
     store
-  const hide = useHideWithUndo(store)
 
   const [sort, setSort] = useState('due')
   const [direction, setDirection] = useState('asc')
@@ -51,11 +49,11 @@ export function TaskBoard() {
 
   const set = (field, value) => setFilters((f) => ({ ...f, [field]: value }))
 
-  // What needs the manager now, plus tasks that are not due yet (nothing to hide there).
+  // What needs the manager now, plus tasks that are not due yet.
   const items = useMemo(() => {
     const upcoming = manualTaskList
       .filter((t) => !t.done && t.dueTone === 'info')
-      .map((t) => taskFromRecord(t, { hideable: false }))
+      .map((t) => taskFromRecord(t))
     return [...openTasks, ...upcoming]
   }, [openTasks, manualTaskList])
 
@@ -103,15 +101,16 @@ export function TaskBoard() {
     })
   }
 
+  // `editing` is a task record being edited, or 'new' while adding one.
   function handleSave(patch) {
-    updateManualTask(editing.id, patch)
+    if (editing === 'new') {
+      addManualTask(patch)
+      toast(`Added "${patch.title}".`)
+    } else {
+      updateManualTask(editing.id, patch)
+      toast(`Saved "${patch.title}".`)
+    }
     setEditing(null)
-    toast(`Saved "${patch.title}".`)
-  }
-
-  function showHidden() {
-    unhideAllTasks()
-    toast(`${hiddenCount} hidden ${hiddenCount === 1 ? 'task is' : 'tasks are'} back in Tasks.`)
   }
 
   const clearAll = () => {
@@ -130,6 +129,7 @@ export function TaskBoard() {
         facets={facets}
         sort={sort}
         direction={direction}
+        onNew={() => setEditing('new')}
         onSort={(s, d) => {
           setSort(s)
           setDirection(d)
@@ -141,15 +141,6 @@ export function TaskBoard() {
             </span>
             {narrowing > 0 && filters.status === 'open' && ` of ${pool.filter((t) => !t.done).length}`}
             {filters.status !== 'open' && ` · ${shownDone.length} completed`}
-            {hiddenCount > 0 && (
-              <>
-                {' '}
-                · {hiddenCount} hidden ·{' '}
-                <button type="button" onClick={showHidden} className="underline underline-offset-2 hover:text-ink">
-                  Show them
-                </button>
-              </>
-            )}
           </>
         }
       />
@@ -180,7 +171,6 @@ export function TaskBoard() {
                 first={i === 0}
                 onToggle={handleToggle}
                 onEdit={(t) => setEditing(manualTaskList.find((r) => r.id === t.recordId))}
-                onHide={hide}
               />
             ))}
           </div>
@@ -197,7 +187,14 @@ export function TaskBoard() {
         </Card>
       )}
 
-      {editing && <TaskEditor key={editing.id} task={editing} onClose={() => setEditing(null)} onSave={handleSave} />}
+      {editing && (
+        <TaskEditor
+          key={editing === 'new' ? 'new' : editing.id}
+          task={editing === 'new' ? null : editing}
+          onClose={() => setEditing(null)}
+          onSave={handleSave}
+        />
+      )}
     </div>
   )
 }

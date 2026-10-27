@@ -3,13 +3,12 @@
 // SCREEN 5 — Event Overview.
 //
 // The same queue as the Tasks page, scoped to this one event: what to do
-// first, and what is coming up, for this wedding only. "Hide" works the same
-// in both groups and can be undone; staffing items can't be hidden.
+// first, and what is coming up, for this wedding only.
 
 import { use, useState } from 'react'
 import { useStore } from '@/lib/store'
 import { Button, EmptyState, FilterChip, FilterGroup, Icon } from '@/components/ui/primitives'
-import { TaskRow, openSpots, useHideWithUndo } from '@/components/ui/domain'
+import { TaskRow, openSpots } from '@/components/ui/domain'
 
 const SOURCES = [
   { id: 'all', label: 'Everything' },
@@ -22,50 +21,22 @@ const SOURCES = [
 
 export default function EventOverviewPage({ params }) {
   const { id } = use(params)
-  const store = useStore()
-  const { tasksForEvent, hiddenTasks, coverageForEvent, unhideTask, toast } = store
-  const hide = useHideWithUndo(store)
+  const { tasksForEvent, coverageForEvent } = useStore()
   const [source, setSource] = useState('all')
 
   const all = tasksForEvent(id)
   const coverage = coverageForEvent(id)
-  const hidden = hiddenTasks.filter((a) => a.eventId === id).map((a) => a.id)
   const filtered = all.filter((a) => source === 'all' || a.source === source)
   const urgent = filtered.filter((a) => a.tone === 'urgent')
   const rest = filtered.filter((a) => a.tone !== 'urgent')
-
-  const showHidden = () => {
-    hidden.forEach(unhideTask)
-    toast(`Showing ${hidden.length} hidden ${hidden.length === 1 ? 'item' : 'items'} again.`)
-  }
-
-  const hiddenNote = hidden.length > 0 && (
-    <p className="mt-4 flex flex-wrap items-center gap-2 text-small text-ink-muted">
-      {hidden.length} hidden
-      <Button variant="ghost" size="sm" onClick={showHidden}>
-        Show hidden
-      </Button>
-    </p>
-  )
 
   if (all.length === 0) {
     return (
       <div>
         {coverage.complete ? (
           <EmptyState
-            title={hidden.length ? 'Nothing else needs you' : 'All caught up'}
-            body={
-              hidden.length
-                ? `${hidden.length} hidden ${hidden.length === 1 ? 'item is' : 'items are'} still open.`
-                : 'Nothing needs you on this event right now. New items appear here as soon as something changes.'
-            }
-            action={
-              hidden.length > 0 && (
-                <Button variant="secondary" size="sm" onClick={showHidden}>
-                  Show hidden
-                </Button>
-              )
-            }
+            title="All caught up"
+            body="Nothing needs you on this event right now. New items appear here as soon as something changes."
           />
         ) : (
           // Never "caught up" while the header still shows open spots.
@@ -121,7 +92,7 @@ export default function EventOverviewPage({ params }) {
               </h2>
               <div className="divide-y divide-line overflow-hidden rounded-md border border-line bg-surface">
                 {urgent.map((item, i) => (
-                  <TaskRow key={item.id} task={item} first={i === 0} onHide={hide} />
+                  <TaskRow key={item.id} task={item} first={i === 0} />
                 ))}
               </div>
             </section>
@@ -135,7 +106,7 @@ export default function EventOverviewPage({ params }) {
               </h2>
               <div className="divide-y divide-line overflow-hidden rounded-md border border-line bg-surface">
                 {rest.map((item, i) => (
-                  <TaskRow key={item.id} task={item} first={urgent.length === 0 && i === 0} onHide={hide} />
+                  <TaskRow key={item.id} task={item} first={urgent.length === 0 && i === 0} />
                 ))}
               </div>
             </section>
@@ -143,7 +114,6 @@ export default function EventOverviewPage({ params }) {
         </>
       )}
 
-      {hiddenNote}
     </div>
   )
 }

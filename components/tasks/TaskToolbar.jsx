@@ -16,6 +16,7 @@
 //           sort" brings it back). Like Filter, the button reads "1 sort" and is
 //           highlighted while a sort is set, and is just the icon when not.
 //   Search  opens an inline box for task names; stays open while it has text.
+//   New     (the filled button, last) adds a task, as in Notion.
 //
 // One panel is open at a time. Escape or a click elsewhere closes it, and
 // focus returns to its button. Filters follow the rules in lib/tasks.js:
@@ -123,6 +124,7 @@ export function TaskToolbar({
   sort,
   direction,
   onSort,
+  onNew,
   summary
 }) {
   const [openPanel, setOpenPanel] = useState(null)
@@ -398,6 +400,11 @@ export function TaskToolbar({
           open={searchOpen}
           onClick={() => setSearching(!(searchOpen && !filters.query))}
         />
+
+        <Button variant="primary" size="sm" className="ml-1" onClick={onNew}>
+          <Icon name="plus" size={14} />
+          New
+        </Button>
 
         {openPanel === 'filter' && (
           <Panel id="task-filter-panel" label="Filter tasks">

@@ -83,10 +83,8 @@ const SAMPLE_ITEM = {
   tone: 'urgent',
   title: 'Reception: 2 open spots for servers',
   what: '1 of 3 servers confirmed.',
-  why: 'Saturday. Until it is filled, this block runs short-staffed.',
   eventName: 'Johnson Wedding',
   meta: 'Reception · 5:00 PM–11:00 PM',
-  actionLabel: 'Fill spots',
   href: '/tasks'
 }
 
@@ -177,7 +175,7 @@ export default function StyleGuidePage() {
               New event
             </Button>
             <Button variant="secondary">Cancel</Button>
-            <Button variant="ghost">Hide</Button>
+            <Button variant="ghost">Skip</Button>
             <Button variant="danger">Reset everything</Button>
             <Button variant="secondary" disabled>
               Disabled
@@ -216,7 +214,7 @@ export default function StyleGuidePage() {
           </div>
         </Card>
 
-        <Card title="task" subtitle="Status, what, which event, why, then one action." icon="inbox" bodyClassName="px-0 py-0">
+        <Card title="task" subtitle="Status, what, which event, then one action." icon="inbox" bodyClassName="px-0 py-0">
           <TaskRow task={SAMPLE_ITEM} first badge />
         </Card>
 

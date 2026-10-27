@@ -6,16 +6,18 @@
 // someone wrote, so they all share this card.
 //
 // Reads in the same order everywhere: how soon -> what kind of task, which
-// event and its date -> the name -> What / Why -> who it is for -> what to do. Couples,
+// event and its date -> the name -> description -> who it is for -> what to do. Couples,
 // single contacts and vendors show as tags so a sort by any of them is easy to
 // follow down the list.
 //
-// Only a manual task (one the venue wrote) can be ticked off, reopened or
-// edited here. The others are finished where they live (reply, fill the spot,
-// sign, record the payment), which the main button opens. Completed tasks of
+// Only a manual task (one the venue wrote) can be marked done, reopened or
+// edited here, with the Mark Done button under Action (no checkbox). The others are finished where they live (reply, fill the spot,
+// sign, record the payment). The main button says "Action" for every task,
+// since what the action is has not been decided. Completed tasks of
 // every source show here too, under "Show completed".
 // ---------------------------------------------------------------------------
 
+import { ClampedText } from '@/components/ui/ClampedText'
 import { cx } from '@/lib/cx'
 import { eventById } from '@/lib/mock/events'
 import { contactName, contactById, coupleById, vendorById } from '@/lib/mock/records'
@@ -30,7 +32,7 @@ function Tag({ icon, children }) {
   )
 }
 
-export function TaskCard({ task, first = false, onToggle, onEdit, onHide }) {
+export function TaskCard({ task, first = false, onToggle, onEdit }) {
   const couples = (task.coupleIds || []).map(coupleById).filter(Boolean)
   const contacts = (task.contactIds || []).map(contactById).filter(Boolean)
   const vendors = (task.vendorIds || []).map(vendorById).filter(Boolean)
@@ -45,19 +47,6 @@ export function TaskCard({ task, first = false, onToggle, onEdit, onHide }) {
   return (
     <article className="bg-surface px-4 py-4 transition-colors duration-150 hover:bg-surface-sunken/40 sm:px-6">
       <div className="flex gap-3">
-        {canTick ? (
-          <input
-            type="checkbox"
-            id={`task-${task.recordId}`}
-            checked={!!task.done}
-            onChange={() => onToggle(task)}
-            aria-label={task.done ? `Reopen "${task.title}"` : `Complete "${task.title}"`}
-            className="mt-1 h-4 w-4 shrink-0 accent-[var(--ink)]"
-          />
-        ) : (
-          <span className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-        )}
-
         <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-start sm:gap-6">
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -75,22 +64,8 @@ export function TaskCard({ task, first = false, onToggle, onEdit, onHide }) {
               {task.title}
             </h3>
 
-            {(task.what || task.why) && (
-              <dl className="mt-2 space-y-1 text-small">
-                {task.what && (
-                  <div className="flex gap-3">
-                    <dt className="w-16 shrink-0 text-ink-muted">What</dt>
-                    <dd className="text-ink">{task.what}</dd>
-                  </div>
-                )}
-                {task.why && (
-                  <div className="flex gap-3">
-                    <dt className="w-16 shrink-0 text-ink-muted">Why</dt>
-                    <dd className="text-ink">{task.why}</dd>
-                  </div>
-                )}
-              </dl>
-            )}
+            {/* The description: a written task's own text, or what the system noticed. */}
+            {task.what && <ClampedText className="mt-2">{task.what}</ClampedText>}
 
             {tagged && (
               <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Tagged">
@@ -113,21 +88,27 @@ export function TaskCard({ task, first = false, onToggle, onEdit, onHide }) {
             )}
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-start gap-2">
             {isTask && !task.done && (
               <Button variant="ghost" size="sm" onClick={() => onEdit(task)}>
                 Edit
               </Button>
             )}
-            {task.hideable && onHide && (
-              <Button variant="ghost" size="sm" onClick={() => onHide(task)}>
-                Hide
+            {/* The two buttons are one width, Action above Mark Done. */}
+            <div className="flex flex-col gap-2">
+              <Button href={task.href} variant={first ? 'primary' : 'secondary'} size="sm">
+                Action
+                <span className="sr-only"> for {task.title}</span>
+                <Icon name="arrowRight" size={14} />
               </Button>
-            )}
-            <Button href={task.href} variant={first ? 'primary' : 'secondary'} size="sm">
-              {task.actionLabel}
-              <Icon name="arrowRight" size={14} />
-            </Button>
+              {canTick && (
+                <Button variant="secondary" size="sm" onClick={() => onToggle(task)}>
+                  {task.done ? 'Reopen' : 'Mark Done'}
+                  <span className="sr-only"> {task.title}</span>
+                  <Icon name={task.done ? 'refresh' : 'check'} size={14} />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>

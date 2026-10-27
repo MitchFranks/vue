@@ -1,10 +1,11 @@
 'use client'
 
 // ---------------------------------------------------------------------------
-// TaskEditor — edit a task's card data in a side sheet.
+// TaskEditor — add a task, or edit one, in a side sheet. Pass `task={null}`
+// to add.
 //
-// Required: Task name, Due date. Optional: Due time, Type, Description, who
-// it is for, Vendor tags.
+// Required: Task name, Due date, Event. Optional: Due time, Type,
+// Description, who it is for, Vendor tags.
 //
 // COUPLE and VENDORS are searchable pickers (components/ui/SearchPicker.jsx),
 // so they work the same with 2 couples or 200 vendors. The couple picker
@@ -17,14 +18,19 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useStore } from '@/lib/store'
+import { events } from '@/lib/mock/events'
 import { splitWho, vendorOptions, whoKey, whoOptions } from '@/lib/tasks'
 import { Modal } from '@/components/ui/domain'
 import { SearchPicker } from '@/components/ui/SearchPicker'
 import { WhoPicker } from './WhoPicker'
 import { Button, Select, TextInput, Textarea } from '@/components/ui/primitives'
 
+// A new task starts empty, so the required fields are the user's to fill.
+const BLANK = { title: '', dueDate: '', type: 'Other' }
+
 function draftFrom(task) {
   return {
+    eventId: task.eventId || '',
     title: task.title,
     dueDate: task.dueDate,
     dueTime: task.dueTime || '',
@@ -38,10 +44,11 @@ function draftFrom(task) {
   }
 }
 
-/** Render with `key={task.id}` so a new task starts a fresh draft. */
+/** Render with `key={task.id}` (or a fixed key when adding) so each task starts a fresh draft. */
 export function TaskEditor({ task, onClose, onSave }) {
+  const adding = !task
   const { taskTypes } = useStore()
-  const [draft, setDraft] = useState(() => draftFrom(task))
+  const [draft, setDraft] = useState(() => draftFrom(task || BLANK))
   const [errors, setErrors] = useState({})
 
   const set = (field) => (e) => setDraft((d) => ({ ...d, [field]: e.target.value }))
@@ -51,10 +58,12 @@ export function TaskEditor({ task, onClose, onSave }) {
     const next = {}
     if (!draft.title.trim()) next.title = 'Give the task a name.'
     if (!draft.dueDate) next.dueDate = 'Choose the date it is due.'
+    if (!draft.eventId) next.eventId = 'Choose the event this task is for.'
     setErrors(next)
     if (Object.keys(next).length) return
 
     onSave({
+      eventId: draft.eventId,
       title: draft.title.trim(),
       dueDate: draft.dueDate,
       dueTime: draft.dueTime || null,
@@ -72,8 +81,8 @@ export function TaskEditor({ task, onClose, onSave }) {
       open
       onClose={onClose}
       variant="sheet"
-      title="Edit task"
-      subtitle={task.title}
+      title={adding ? 'New task' : 'Edit task'}
+      subtitle={adding ? undefined : task.title}
       labelledBy="task-editor-title"
       footer={
         <>
@@ -81,7 +90,7 @@ export function TaskEditor({ task, onClose, onSave }) {
             Cancel
           </Button>
           <Button type="submit" form="task-editor-form" variant="primary">
-            Save task
+            Save
           </Button>
         </>
       }
@@ -131,6 +140,18 @@ export function TaskEditor({ task, onClose, onSave }) {
           </p>
         </div>
 
+        <Select
+          label="Event"
+          id="task-event"
+          error={errors.eventId}
+          options={[
+            { value: '', label: 'Choose an event' },
+            ...events.map((e) => ({ value: e.id, label: `${e.name} · ${e.dateShort}` }))
+          ]}
+          value={draft.eventId}
+          onChange={set('eventId')}
+        />
+
         <Textarea
           label="Description (optional)"
           id="task-detail"
@@ -140,7 +161,7 @@ export function TaskEditor({ task, onClose, onSave }) {
         />
 
         <WhoPicker
-          label="Couple (optional)"
+          label="People Tag (optional)"
           id="task-who"
           options={whoChoices}
           value={draft.who}

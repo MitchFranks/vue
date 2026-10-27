@@ -240,7 +240,6 @@ The one thing the user can change. Lives in `StoreProvider`; seeded from the fil
 | `readMessageIds` | string[] | Messages opened (replying also marks read) |
 | `signedDocumentIds` | string[] | Documents the manager has signed — flips status to "Signed" |
 | `publishedEventIds` | string[] | Events whose schedule is "Published". Starts as `johnson`, `taylor` |
-| `dismissedAttentionIds` | string[] | Attention items hidden by the user |
 | `offers` | `{ [positionId]: { staffIds } }` | Open positions offered to several eligible people. Nothing is assigned until one claims it (Staff replies → Simulate claim) |
 | `seenIntro` | boolean | Has the early-stage prototype modal been shown |
 
@@ -309,12 +308,11 @@ Built fresh on every state change from four sources, then sorted `urgent → war
 | `type` | The task type (see above) |
 | `dueDate`, `dueTime`, `due`, `dueTone` | Every task has a due date, so all can be sorted and filtered together |
 | `coupleIds`, `contactIds`, `vendorIds` | Who it is for |
-| `hideable` | Staffing tasks cannot be hidden |
 | `kind` | `staffing` \| `message` \| `task` \| `document` |
 | `tone` | `urgent` (shown as **Do first**) or `warn` (shown as **Coming up**) |
 | `title`, `what`, `why`, `meta` | The three lines of copy on each card: what happened / why it matters / short tag |
 | `eventId`, `eventName` | Which event |
-| `actionLabel`, `href` | Button text and target, e.g. "Find replacement" → `/staffing/open-positions/<positionId>` |
+| `href` | Where the card's "Action" button goes, e.g. `/staffing/open-positions/<positionId>` |
 
 | Source | Raises an item when |
 |---|---|

@@ -8,6 +8,7 @@
 // borders, status colours and button hierarchy stay consistent.
 // ---------------------------------------------------------------------------
 
+import { ClampedText } from './ClampedText'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { cx } from '@/lib/cx'
@@ -22,19 +23,18 @@ export function openSpots(n) {
 /* ---------------------------------------------------------- TaskRow --
  *
  * The single most important component in the product. It answers, in order:
- *   how soon  ->  what happened  ->  which event  ->  why it matters  ->  what to do.
+ *   how soon  ->  what happened  ->  which event  ->  what to do.
  *
  * Status before detail: the chip says whether it needs the user today
  * (status-now) or this week (status-soon) in words, before the title. Only
  * the first task in a list gets the filled ink button, so one action leads.
  * Lists of these sit in a container with `divide-y divide-line`.
  *
- * `onHide` adds a quiet "Hide" next to the action, but only for items that
- * are `hideable`: staffing items can't be hidden, because hiding them would
- * look like fixing them. Pair it with useHideWithUndo so a hide can be undone.
+ * The button says "Action" for every task: which action a task needs is not
+ * decided yet, so the row does not guess.
  */
 
-export function TaskRow({ task, compact = false, first = false, badge = false, onHide }) {
+export function TaskRow({ task, compact = false, first = false, badge = false }) {
   const urgent = task.tone === 'urgent'
   return (
     <article className="bg-surface px-4 py-4 transition-colors duration-150 hover:bg-surface-sunken/40 sm:px-6">
@@ -54,49 +54,19 @@ export function TaskRow({ task, compact = false, first = false, badge = false, o
 
           <h3 className="text-heading font-medium text-ink">{task.title}</h3>
 
-          {!compact && (
-            <dl className="mt-2 space-y-1 text-small">
-              <div className="flex gap-3">
-                <dt className="w-16 shrink-0 text-ink-muted">What</dt>
-                <dd className="text-ink">{task.what}</dd>
-              </div>
-              <div className="flex gap-3">
-                <dt className="w-16 shrink-0 text-ink-muted">Why</dt>
-                <dd className="text-ink">{task.why}</dd>
-              </div>
-            </dl>
-          )}
+          {!compact && <ClampedText className="mt-2">{task.what}</ClampedText>}
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          {onHide && task.hideable && (
-            <Button variant="ghost" size="sm" onClick={() => onHide(task)}>
-              Hide
-            </Button>
-          )}
           <Button href={task.href} variant={first ? 'primary' : 'secondary'} size="sm">
-            {task.actionLabel}
+            Action
+            <span className="sr-only"> for {task.title}</span>
             <Icon name="arrowRight" size={14} />
           </Button>
         </div>
       </div>
     </article>
   )
-}
-
-/**
- * Hide a task, with a toast that can undo it. Returns the handler to
- * pass to TaskRow's onHide. `store` is the useStore() value.
- */
-export function useHideWithUndo(store) {
-  const { hideTask, unhideTask, toast } = store
-  return (task) => {
-    hideTask(task.id)
-    toast(`Hid "${task.title}".`, 'done', {
-      small: 'It is still open. Show hidden items on Tasks or in Settings brings it back.',
-      actions: [{ label: 'Undo', onClick: () => unhideTask(task.id) }]
-    })
-  }
 }
 
 /* -------------------------------------------------------------- EventCard -- */

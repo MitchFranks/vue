@@ -210,7 +210,7 @@ Every route has a job; none are filler.
 | Route | Screen |
 |---|---|
 | `/account` | Account (read-only) |
-| `/settings` | Settings: show my goal, restore hidden tasks, reset all prototype data |
+| `/settings` | Settings: show my goal, reset all prototype data |
 | `/style-guide` | Design library (for reviewers) |
 
 Dynamic routes are statically generated for every seeded record, so any of them can be deep-linked.
