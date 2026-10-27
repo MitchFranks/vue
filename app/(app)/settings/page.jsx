@@ -2,7 +2,7 @@
 
 // Settings: only things that really work in the prototype.
 //   Goal & notice          reopen the first-load modal
-//   Hidden Up Next items   bring back everything hidden with "Hide"
+//   Hidden tasks   bring back everything hidden with "Hide"
 //   Reset prototype data   put every screen back to its starting state (asks first)
 //   Design library         the components the screens are built from, for reviewers
 // These live here, not in the main menu, so the menu stays about the work.
@@ -14,12 +14,12 @@ import { usePrototypeReset } from '@/lib/usePrototypeReset'
 
 export default function SettingsPage() {
   const { showIntro } = useOnboarding()
-  const { dismissedCount, restoreAllAttention, toast } = useStore()
+  const { hiddenCount, unhideAllTasks, toast } = useStore()
   const { resetPrototype, dialog } = usePrototypeReset()
 
   const showHidden = () => {
-    restoreAllAttention()
-    toast(`${dismissedCount} hidden ${dismissedCount === 1 ? 'item is' : 'items are'} back in Up Next.`)
+    unhideAllTasks()
+    toast(`${hiddenCount} hidden ${hiddenCount === 1 ? 'item is' : 'items are'} back in Tasks.`)
   }
 
   return (
@@ -40,15 +40,15 @@ export default function SettingsPage() {
           </div>
         </Card>
 
-        <Card title="Hidden Up Next items" subtitle="Items you hid with “Hide” are still open." icon="inbox">
+        <Card title="Hidden tasks" subtitle="Items you hid with “Hide” are still open." icon="inbox">
           <p className="text-body leading-relaxed text-ink">
-            {dismissedCount
-              ? `${dismissedCount} ${dismissedCount === 1 ? 'item is' : 'items are'} hidden from Up Next right now.`
-              : 'Nothing is hidden. Everything open is in Up Next.'}
+            {hiddenCount
+              ? `${hiddenCount} ${hiddenCount === 1 ? 'item is' : 'items are'} hidden from Tasks right now.`
+              : 'Nothing is hidden. Everything open is in Tasks.'}
           </p>
           <div className="mt-4">
-            <Button variant="secondary" size="sm" onClick={showHidden} disabled={!dismissedCount}>
-              Show hidden Up Next items ({dismissedCount})
+            <Button variant="secondary" size="sm" onClick={showHidden} disabled={!hiddenCount}>
+              Show hidden tasks ({hiddenCount})
             </Button>
           </div>
         </Card>
@@ -69,7 +69,7 @@ export default function SettingsPage() {
 
         <Card title="Design library (for reviewers)" subtitle="Not part of the venue manager's work." icon="book">
           <p className="text-body leading-relaxed text-ink">
-            Buttons, status badges, cards and Up Next items are defined once and reused on every screen. This page shows
+            Buttons, status badges, cards and tasks are defined once and reused on every screen. This page shows
             them all in one place.
           </p>
           <div className="mt-4">

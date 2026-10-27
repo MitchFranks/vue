@@ -1,182 +1,203 @@
 'use client'
 
 // ---------------------------------------------------------------------------
-// TaskBoard — the Tasks view of Up Next: every task, sortable and filterable.
+// TaskBoard — the Tasks page: every task, sortable and filterable.
 //
-// Unlike the rest of Up Next, this lists tasks that are not due yet too, so
-// the manager can plan ahead. Completed tasks are one toggle away.
+// Everything that needs the manager is a task, so messages, open spots and
+// documents sit in the same list as tasks someone wrote, and one set of sorts
+// and filters works across all of them. The list includes tasks that are not
+// due yet so the manager can plan ahead.
 //
-// Sorts and filters live in lib/tasks.js. The event filter is owned by the
-// Up Next page, so it is passed in.
+// Layout, top to bottom:
+//   Toolbar   the count on the left; Filter, Sort and Search icon buttons on
+//             the right (TaskToolbar), each opening a panel only when wanted.
+//             Completed tasks are the "Status" filter, not a button.
+//   The list  open tasks, then (when Status includes them) a Completed card.
+//
+// Sorts and filters live in lib/tasks.js.
 // ---------------------------------------------------------------------------
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useStore } from '@/lib/store'
-import { eventById } from '@/lib/mock/events'
 import {
   activeFilterCount,
-  contactOptions,
-  coupleOptions,
+  DUE_MODES,
   EMPTY_TASK_FILTERS,
   filterTasks,
-  shortDate,
+  taskFromRecord,
   sortTasks,
-  TASK_SORTS,
-  TASK_TYPES,
-  vendorOptions,
-  WEEK
+    vendorOptions,
+  STATUS_MODES,
+  whoOptions
 } from '@/lib/tasks'
-import { Button, Card, EmptyState, FilterChip, Select, TextInput } from '@/components/ui/primitives'
+import { Button, Card, EmptyState } from '@/components/ui/primitives'
+import { useHideWithUndo } from '@/components/ui/domain'
 import { TaskCard } from './TaskCard'
 import { TaskEditor } from './TaskEditor'
+import { TaskToolbar } from './TaskToolbar'
 
-const any = (label) => [{ value: '', label }]
 
-export function TaskBoard({ eventFilter = 'all', onClearEvent }) {
-  const { taskList, toggleTask, updateTask, toast } = useStore()
+export function TaskBoard() {
+  const store = useStore()
+  const { openTasks, completedTasks, manualTaskList, taskTypes, hiddenCount, unhideAllTasks, toggleManualTask, updateManualTask, toast } =
+    store
+  const hide = useHideWithUndo(store)
+
   const [sort, setSort] = useState('due')
+  const [direction, setDirection] = useState('asc')
   const [filters, setFilters] = useState(EMPTY_TASK_FILTERS)
+  const [rows, setRows] = useState([])
   const [editing, setEditing] = useState(null)
 
   const set = (field, value) => setFilters((f) => ({ ...f, [field]: value }))
-  const onChange = (field) => (e) => set(field, e.target.value)
 
-  const inEvent = taskList.filter((t) => eventFilter === 'all' || t.eventId === eventFilter)
-  const shown = sortTasks(filterTasks(inEvent, filters), sort)
-  const narrowing = activeFilterCount(filters) + (eventFilter === 'all' ? 0 : 1)
-  const weekCount = filterTasks(inEvent, { ...filters, thisWeek: true }).length
-  const doneCount = inEvent.filter((t) => t.done).length
+  // What needs the manager now, plus tasks that are not due yet (nothing to hide there).
+  const items = useMemo(() => {
+    const upcoming = manualTaskList
+      .filter((t) => !t.done && t.dueTone === 'info')
+      .map((t) => taskFromRecord(t, { hideable: false }))
+    return [...openTasks, ...upcoming]
+  }, [openTasks, manualTaskList])
 
+  // Completed tasks are in the pool; the Status filter decides whether they show.
+  const pool = useMemo(() => [...items, ...completedTasks], [items, completedTasks])
+
+  const matching = filterTasks(pool, filters)
+  const shown = sortTasks(matching.filter((t) => !t.done), sort, direction)
+  const shownDone = sortTasks(matching.filter((t) => t.done), sort, direction)
+  const narrowing = activeFilterCount(filters)
+
+  // How many tasks each choice would show, given every OTHER filter. A choice
+  // with none is disabled (unless already picked) so it cannot dead-end.
+  const facets = useMemo(() => {
+    // `field` is replaced by just this one value; the other filters stay as set.
+    const count = (field, value, withOthers = true) =>
+      filterTasks(pool, { ...(withOthers ? filters : EMPTY_TASK_FILTERS), [field]: value }).length
+    const mark = (o, field, picked) => {
+      const n = count(field, [o.value])
+      if (o.disabled || picked.includes(o.value) || n > 0) return { ...o, count: n }
+      const ever = count(field, [o.value], false)
+      return { ...o, count: 0, disabled: true, reason: ever ? 'No tasks match your other filters' : 'No tasks yet' }
+    }
+    return {
+      types: taskTypes.map((t) => mark({ value: t, label: t }, 'types', filters.types)),
+      who: whoOptions(filters.who).map((o) => mark(o, 'who', filters.who)),
+      vendors: vendorOptions.map((o) => mark(o, 'vendorIds', filters.vendorIds)),
+      status: STATUS_MODES.map((m) => ({
+        ...m,
+        label: `${m.label} (${filterTasks(pool, { ...filters, status: m.value }).length})`
+      })),
+      due: DUE_MODES.map((m) => {
+        if (m.value === 'any' || m.value === 'date') return m
+        const n = filterTasks(pool, { ...filters, due: m.value, dueDate: '' }).length
+        return { ...m, label: `${m.label} (${n})`, disabled: n === 0 && filters.due !== m.value }
+      })
+    }
+  }, [pool, filters, taskTypes])
+
+  // Ticking a manual task completes it; unticking a completed one reopens it.
   function handleToggle(task) {
-    toggleTask(task.id)
+    toggleManualTask(task.recordId)
     toast(task.done ? `Reopened "${task.title}".` : `Completed "${task.title}".`, 'done', {
-      actions: [{ label: 'Undo', onClick: () => toggleTask(task.id) }]
+      actions: [{ label: 'Undo', onClick: () => toggleManualTask(task.recordId) }]
     })
   }
 
   function handleSave(patch) {
-    updateTask(editing.id, patch)
+    updateManualTask(editing.id, patch)
     setEditing(null)
     toast(`Saved "${patch.title}".`)
   }
 
-  function clearAll() {
-    setFilters((f) => ({ ...EMPTY_TASK_FILTERS, showDone: f.showDone }))
-    onClearEvent?.()
+  function showHidden() {
+    unhideAllTasks()
+    toast(`${hiddenCount} hidden ${hiddenCount === 1 ? 'task is' : 'tasks are'} back in Tasks.`)
   }
 
-  const sortLabel = TASK_SORTS.find((s) => s.value === sort)?.label
+  const clearAll = () => {
+    setFilters(EMPTY_TASK_FILTERS)
+    setRows([])
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-3 rounded-md border border-line bg-surface px-4 py-4 sm:px-6">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Select label="Sort by" id="task-sort" options={TASK_SORTS} value={sort} onChange={(e) => setSort(e.target.value)} />
-          <TextInput
-            label="Task name"
-            id="task-query"
-            type="search"
-            placeholder="Search task names"
-            value={filters.query}
-            onChange={onChange('query')}
-          />
-          <Select
-            label="Task type"
-            id="task-filter-type"
-            options={[...any('Any type'), ...TASK_TYPES]}
-            value={filters.type}
-            onChange={onChange('type')}
-          />
-          <Select
-            label="Couple"
-            id="task-filter-couple"
-            options={[...any('Any couple'), ...coupleOptions]}
-            value={filters.coupleId}
-            onChange={onChange('coupleId')}
-          />
-          <Select
-            label="Contact"
-            id="task-filter-contact"
-            options={[...any('Any contact'), ...contactOptions]}
-            value={filters.contactId}
-            onChange={onChange('contactId')}
-            hint="Includes tasks for their couple."
-          />
-          <Select
-            label="Vendor"
-            id="task-filter-vendor"
-            options={[...any('Any vendor'), ...vendorOptions]}
-            value={filters.vendorId}
-            onChange={onChange('vendorId')}
-          />
-          <TextInput
-            label="Due on"
-            id="task-filter-date"
-            type="date"
-            value={filters.dueDate}
-            onChange={onChange('dueDate')}
-          />
-        </div>
+    <div className="space-y-4">
+      {/* ---- Toolbar: count on the left; filter, sort and search on the right ---- */}
+      <TaskToolbar
+        filters={filters}
+        setFilters={setFilters}
+        rows={rows}
+        setRows={setRows}
+        facets={facets}
+        sort={sort}
+        direction={direction}
+        onSort={(s, d) => {
+          setSort(s)
+          setDirection(d)
+        }}
+        summary={
+          <>
+            <span className="font-medium text-ink">
+              {shown.length} {shown.length === 1 ? 'task' : 'tasks'}
+            </span>
+            {narrowing > 0 && filters.status === 'open' && ` of ${pool.filter((t) => !t.done).length}`}
+            {filters.status !== 'open' && ` · ${shownDone.length} completed`}
+            {hiddenCount > 0 && (
+              <>
+                {' '}
+                · {hiddenCount} hidden ·{' '}
+                <button type="button" onClick={showHidden} className="underline underline-offset-2 hover:text-ink">
+                  Show them
+                </button>
+              </>
+            )}
+          </>
+        }
+      />
 
-        <div className="flex flex-wrap items-center gap-2 border-t border-line pt-3">
-          <FilterChip pressed={filters.thisWeek} onClick={() => set('thisWeek', !filters.thisWeek)} count={weekCount}>
-            Due this week
-          </FilterChip>
-          <FilterChip pressed={filters.showDone} onClick={() => set('showDone', !filters.showDone)} count={doneCount}>
-            Show completed
-          </FilterChip>
-          <span className="text-label text-ink-muted">
-            This week is {shortDate(WEEK.start)} – {shortDate(WEEK.end)}.
-          </span>
-          {narrowing > 0 && (
-            <Button variant="ghost" size="sm" className="ml-auto" onClick={clearAll}>
-              Clear {narrowing} {narrowing === 1 ? 'filter' : 'filters'}
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {shown.length === 0 ? (
+      {shown.length === 0 && shownDone.length === 0 ? (
         <EmptyState
           title="No tasks match"
           body={
             narrowing
-              ? 'The filters above are hiding every task. Clear them to see the full list.'
-              : 'Every task is done. Turn on Show completed to see them.'
+              ? 'Your filters are hiding every task. Clear them to see the full list.'
+              : 'Nothing needs you right now. Add a Status filter to see what you have done.'
           }
           action={
             narrowing > 0 && (
               <Button variant="secondary" size="sm" onClick={clearAll}>
-                Clear filters
+                Clear all filters
               </Button>
             )
           }
         />
-      ) : (
-        <Card
-          title={`Tasks (${shown.length})`}
-          subtitle={sort === 'due' ? 'Soonest first. On the same day, tasks with no time come first.' : `Sorted by ${sortLabel}`}
-          icon="list"
-          bodyClassName="px-0 py-0"
-        >
+      ) : shown.length === 0 ? null : (
+        <Card bodyClassName="px-0 py-0">
           <div className="divide-y divide-line">
             {shown.map((task, i) => (
               <TaskCard
                 key={task.id}
                 task={task}
-                eventName={eventById(task.eventId)?.name}
-                first={i === 0 && !task.done}
+                first={i === 0}
                 onToggle={handleToggle}
-                onEdit={setEditing}
+                onEdit={(t) => setEditing(manualTaskList.find((r) => r.id === t.recordId))}
+                onHide={hide}
               />
             ))}
           </div>
         </Card>
       )}
 
-      {editing && (
-        <TaskEditor key={editing.id} task={editing} onClose={() => setEditing(null)} onSave={handleSave} />
+      {shownDone.length > 0 && (
+        <Card title={`Completed (${shownDone.length})`} icon="check" bodyClassName="px-0 py-0">
+          <div className="divide-y divide-line">
+            {shownDone.map((task) => (
+              <TaskCard key={task.id} task={task} onToggle={handleToggle} onEdit={() => {}} />
+            ))}
+          </div>
+        </Card>
       )}
+
+      {editing && <TaskEditor key={editing.id} task={editing} onClose={() => setEditing(null)} onSave={handleSave} />}
     </div>
   )
 }

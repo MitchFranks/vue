@@ -18,7 +18,7 @@ import {
   StatusBadge,
   TextInput
 } from '@/components/ui/primitives'
-import { UpNextItem } from '@/components/ui/domain'
+import { TaskRow } from '@/components/ui/domain'
 import { FilterDemo, ModalDemo } from './demos'
 
 // Swatch classes are spelled out in full so Tailwind generates them.
@@ -54,18 +54,18 @@ const TYPE = [
 
 // One vocabulary, product-wide.
 const VOCABULARY = [
-  ['Up Next', 'The list of everything that needs the manager. Title case everywhere.'],
-  ['Do first · Coming up', 'The two groups in Up Next: today, then this week.'],
+  ['Tasks', 'The list of everything that needs the manager. Title case everywhere.'],
+  ['Sort by · Filters', 'Every task can be sorted and filtered by due date, contact, couple, vendor, name and type.'],
   ['Open spot', 'A role nobody has confirmed yet: "1 open spot", "3 open spots".'],
   ['Fully staffed', 'Every spot on an event is confirmed.'],
   ['Not sent · Waiting · Confirmed · Can\'t make it', 'The four states of a staff request.'],
-  ['N in Up Next', 'How many Up Next items belong to an event or couple.'],
+  ['N in Tasks', 'How many tasks belong to an event or couple.'],
   ['Needs reply · Replied · No reply needed', 'The states of a message.']
 ]
 
 // One icon per destination. Status icons (alert, clock, check) are never nav icons.
 const NAV_ICONS = [
-  ['inbox', 'Up Next'],
+  ['inbox', 'Tasks'],
   ['users', 'Staffing Planner'],
   ['home', 'Dashboard'],
   ['list', 'Events'],
@@ -87,7 +87,7 @@ const SAMPLE_ITEM = {
   eventName: 'Johnson Wedding',
   meta: 'Reception · 5:00 PM–11:00 PM',
   actionLabel: 'Fill spots',
-  href: '/up-next'
+  href: '/tasks'
 }
 
 export const metadata = { title: 'Design library — Vue' }
@@ -216,8 +216,8 @@ export default function StyleGuidePage() {
           </div>
         </Card>
 
-        <Card title="Up Next item" subtitle="Status, what, which event, why, then one action." icon="inbox" bodyClassName="px-0 py-0">
-          <UpNextItem item={SAMPLE_ITEM} first badge />
+        <Card title="task" subtitle="Status, what, which event, why, then one action." icon="inbox" bodyClassName="px-0 py-0">
+          <TaskRow task={SAMPLE_ITEM} first badge />
         </Card>
 
         <div className="grid gap-6 lg:grid-cols-2">
@@ -228,7 +228,7 @@ export default function StyleGuidePage() {
               sub="Johnson Wedding · Sat, Oct 10"
               trailing={
                 <StatusBadge tone="urgent" size="sm">
-                  3 in Up Next
+                  3 in Tasks
                 </StatusBadge>
               }
               href="/couples/cpl-2001"
@@ -262,7 +262,7 @@ export default function StyleGuidePage() {
         <div className="grid gap-6 sm:grid-cols-3">
           <MetricTile label="Open spots" value="2" tone="urgent" sub="Across your upcoming events" />
           <MetricTile label="Confirmed" value="18" tone="done" sub="Across 2 events" />
-          <MetricTile label="Tasks due" value="1" sub="In Up Next, across all events" />
+          <MetricTile label="Tasks due" value="1" sub="In Tasks, across all events" />
         </div>
 
         <div className="grid items-start gap-6 lg:grid-cols-2">

@@ -47,7 +47,7 @@ export function ModalDemo() {
           </>
         }
       >
-        <p className="text-ink">The spot opens again and shows up in Up Next. Used for confirmations and short forms.</p>
+        <p className="text-ink">The spot opens again and shows up in Tasks. Used for confirmations and short forms.</p>
       </Modal>
 
       <Modal

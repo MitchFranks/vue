@@ -47,7 +47,7 @@ function TodayMark() {
 }
 
 export default function CalendarPage() {
-  const { attentionForEvent } = useStore()
+  const { tasksForEvent } = useStore()
   // Months counted from January of year 0 so prev/next is a plain +1 / -1.
   const [month, setMonth] = useState(TODAY_Y * 12 + (TODAY_M - 1))
   const y = Math.floor(month / 12)
@@ -117,7 +117,7 @@ export default function CalendarPage() {
                 <div className="mt-1 space-y-1">
                   {dayEvents.map((event) => (
                     <Link key={event.id} href={`/events/${event.id}`} title={event.name} className="block max-w-full hover:underline">
-                      <StatusBadge tone={chipTone(attentionForEvent(event.id))} size="sm" className="max-w-full overflow-hidden">
+                      <StatusBadge tone={chipTone(tasksForEvent(event.id))} size="sm" className="max-w-full overflow-hidden">
                         <span className="min-w-0 truncate">{event.name}</span>
                       </StatusBadge>
                     </Link>

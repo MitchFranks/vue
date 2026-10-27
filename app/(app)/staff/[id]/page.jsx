@@ -3,7 +3,7 @@
 // SCREEN 16 — Staff Member Detail. Profile and contact, plus every event this
 // person has been asked to work, read from the Staffing Planner with its real
 // status. Recording an answer here is the planner's own recordReply, so the
-// event page and Up Next update at once, and the toast offers Undo.
+// event page and Tasks update at once, and the toast offers Undo.
 
 import { use } from 'react'
 import { staffById as mockStaffById } from '@/lib/mock/staff'
@@ -42,7 +42,7 @@ export default function StaffDetailPage({ params }) {
   const recordNo = (r, ev) =>
     confirm({
       title: `Record that ${first} can't make it?`,
-      body: `${first}'s spot as ${r.role} at the ${ev.name} opens again and shows in Up Next as an open spot to fill. You can undo this from the message that appears.`,
+      body: `${first}'s spot as ${r.role} at the ${ev.name} opens again and shows in Tasks as an open spot to fill. You can undo this from the message that appears.`,
       confirmLabel: `Record: can't make it`,
       danger: true,
       onConfirm: () => recordReply(r.id, false)

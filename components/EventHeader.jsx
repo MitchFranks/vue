@@ -4,7 +4,7 @@
 // The persistent header + tab bar shared by every event sub-screen.
 //
 // RECOGNITION OVER RECALL: the event's date, time, guest count, staffing state
-// and attention count stay on screen no matter which tab you are on, so nobody
+// and eventTasks count stay on screen no matter which tab you are on, so nobody
 // has to remember them while moving around.
 //
 // The staffing badge and the "Staffing planner" tab both lead to the planner,
@@ -13,7 +13,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { upNextLabel, useStore } from '@/lib/store'
+import { taskSummaryLabel, useStore } from '@/lib/store'
 import { useStaffing2 } from '@/lib/staffing/store'
 import { eventOf } from '@/lib/staffing/derive'
 import { openSpots } from './ui/domain'
@@ -21,13 +21,13 @@ import { Breadcrumbs, Field, Icon, PageHeader, StatusBadge, Tabs } from './ui/pr
 
 export function EventHeader({ event }) {
   const pathname = usePathname()
-  const { coverageForEvent, attentionForEvent, taskList, messageList, documentList, paymentsForEvent } = useStore()
+  const { coverageForEvent, tasksForEvent, manualTaskList, messageList, documentList, paymentsForEvent } = useStore()
   const { state: planner } = useStaffing2()
 
   const coverage = coverageForEvent(event.id)
-  const attention = attentionForEvent(event.id)
-  const anyUrgent = attention.some((a) => a.tone === 'urgent')
-  const openTasks = taskList.filter((t) => t.eventId === event.id && !t.done)
+  const eventTasks = tasksForEvent(event.id)
+  const anyUrgent = eventTasks.some((a) => a.tone === 'urgent')
+  const openTasks = manualTaskList.filter((t) => t.eventId === event.id && !t.done)
   const urgentTask = openTasks.some((t) => t.dueTone === 'urgent')
   const unreplied = messageList.filter((m) => m.eventId === event.id && m.needsReply && !m.replied).length
   const toSign = documentList.filter((d) => d.eventId === event.id && d.tone === 'urgent').length
@@ -41,7 +41,7 @@ export function EventHeader({ event }) {
   const base = `/events/${event.id}`
   const plannerHref = `/staffing/${event.id}`
   const tabs = [
-    { id: 'overview', label: 'Up Next', href: base, count: attention.length || null, tone: anyUrgent ? 'urgent' : null },
+    { id: 'overview', label: 'Overview', href: base, count: eventTasks.length || null, tone: anyUrgent ? 'urgent' : null },
     {
       id: 'staffing',
       label: (
@@ -80,8 +80,8 @@ export function EventHeader({ event }) {
         lead={`${event.couple} · ${event.type}`}
         actions={
           <div className="flex flex-wrap gap-2">
-            {attention.length > 0 ? (
-              <StatusBadge tone={anyUrgent ? 'urgent' : 'warn'}>{upNextLabel(attention)}</StatusBadge>
+            {eventTasks.length > 0 ? (
+              <StatusBadge tone={anyUrgent ? 'urgent' : 'warn'}>{taskSummaryLabel(eventTasks)}</StatusBadge>
             ) : (
               <StatusBadge tone="done">All set</StatusBadge>
             )}

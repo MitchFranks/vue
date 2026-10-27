@@ -12,11 +12,11 @@ look alike.*
 
 **Proximity.** On every event tab, the four facts a venue manager is asked for constantly — date,
 schedule, guests (expected and guaranteed), spaces — sit in one strip directly under the event
-name (`components/EventHeader.jsx`). Each Up Next item keeps its event, block and time on one line
+name (`components/EventHeader.jsx`). Each task keeps its event, block and time on one line
 above the title, and its What / Why directly underneath.
 
 **Common region.** Every card is a bordered region on a grey page, and each card holds exactly one
-subject: one Up Next section, one timeline block in the planner, the payment schedule. The border
+subject: one tasks section, one timeline block in the planner, the payment schedule. The border
 does the grouping work, so no headings need to shout.
 
 **Similarity.** Items with the same job share one shape everywhere in the product. Every status is
@@ -29,12 +29,12 @@ obvious.
 | Screen | Bands, top to bottom |
 |--------|---------------------|
 | Welcome | What Vue does + one way in → how it works (3 steps) → what's inside → way in again |
-| Dashboard | Headline → **Up Next** → counters → events + staffing status + recent activity |
-| Up Next | Filters → **Do first** → Coming up |
+| Dashboard | Headline → **Tasks** → counters → events + staffing status + recent activity |
+| Tasks | Filter bar → results bar (count, sort) → the task list |
 | Event workspace | Identity + facts → tabs → the tab's one subject |
 | Staffing Planner event | Status → notices → one card per block, one row per role → chart and history (collapsed) |
 
-The sidebar is grouped the same way: **Start here** (Up Next, Staffing Planner) has full weight,
+The sidebar is grouped the same way: **Start here** (Tasks, Staffing Planner) has full weight,
 **Overview** is ordinary, and **More** is visually quieter.
 
 ---
@@ -47,7 +47,7 @@ useless if nobody can see them.*
 - **Buttons look like buttons at rest.** Every button is bordered or filled before you hover, and
   shifts down 1px when pressed.
 - **Rows that go somewhere carry a chevron.** `ListRow` adds one only when the row is a link.
-- **Each Up Next item names its fix.** The button says what it does ("Fill spot", "Open and reply",
+- **Each task names its fix.** The button says what it does ("Fill spot", "Open and reply",
   "Open payments"), not "View" or "Go".
 - **Filters show their state.** A pressed `FilterChip` is filled ink and announces `aria-pressed`.
 - **The way back is always visible.** Breadcrumbs on every screen inside the app, the product name
@@ -68,7 +68,7 @@ useless if nobody can see them.*
   decoratively, and every colour comes with an icon and a word.
 - **Quiet everywhere else.** Neutral surfaces, hairlines, two soft shadow levels and no decorative
   motion, so the few status colours are the only thing competing for attention.
-- **One primary action per region.** Only the first Up Next item on a screen gets the filled
+- **One primary action per region.** Only the first task on a screen gets the filled
   button; everything else is outlined. The welcome screen has one way in, worded the same in all
   three places it appears.
 - **Things you can't act on move out of the way.** A spot where everyone needed has been asked
@@ -90,14 +90,14 @@ The full product concept includes CRM, contracts, payments, vendor management, s
 scheduling, task management, email integration, reporting and floor plans. Building that from
 scratch would produce something that does not work and cannot be tested.
 
-So the prototype grew from **one loop that works** — an open spot appears in Up Next, the manager
+So the prototype grew from **one loop that works** — an open spot appears in Tasks, the manager
 asks someone, they say yes, the spot fills, and every count updates — and everything else was
 added around it:
 
 - **One source of truth for staffing.** The Staffing Planner's state (`lib/staffing/store.jsx`) is
-  the only place staffing lives. Up Next, the dashboard, the event header and the sidebar all
+  the only place staffing lives. Tasks, the dashboard, the event header and the sidebar all
   derive from it, so one reply propagates correctly to every count on every screen.
-- **Derived, not scripted.** Up Next items are computed from tasks, messages, documents, payments
+- **Derived, not scripted.** tasks are computed from tasks, messages, documents, payments
   and the planner (`lib/store.jsx`). Nothing on screen is a hard-coded list.
 - **Small, fixed data.** Two events, two couples, two vendors and a small team
   (`lib/mock/scope.js`), so the scenario is the same for every tester. The full sample set stays in

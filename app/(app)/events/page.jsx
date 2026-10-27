@@ -10,7 +10,7 @@ import { Breadcrumbs, Button, EmptyState, Icon, PageHeader, Select, TextInput } 
 import { EventCard } from '@/components/ui/domain'
 
 export default function EventsPage() {
-  const { coverageForEvent, attentionForEvent } = useStore()
+  const { coverageForEvent, tasksForEvent } = useStore()
   const [type, setType] = useState('All types')
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState('soonest')
@@ -99,7 +99,7 @@ export default function EventsPage() {
               event={event}
               guide={i === 0}
               coverage={coverageForEvent(event.id)}
-              attentionCount={attentionForEvent(event.id).length}
+              taskCount={tasksForEvent(event.id).length}
             />
           ))}
         </div>

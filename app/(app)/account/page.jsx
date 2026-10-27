@@ -47,7 +47,7 @@ export default function AccountPage() {
         </Card>
 
         <Card title="Where to next" bodyClassName="px-0 py-0">
-          <ListRow href="/up-next" leading={<Icon name="inbox" size={16} />} title="Up Next" sub="What needs you across every event" />
+          <ListRow href="/tasks" leading={<Icon name="inbox" size={16} />} title="Tasks" sub="What needs you across every event" />
           <ListRow href="/settings" leading={<Icon name="settings" size={16} />} title="Settings" sub="Your goal, hidden items and resetting the prototype" />
           <ListRow href="/dashboard" leading={<Icon name="home" size={16} />} title="Dashboard" sub="Back to the overview" />
         </Card>

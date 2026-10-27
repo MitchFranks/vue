@@ -1,7 +1,7 @@
 'use client'
 
 // SCREEN 7 — Event Tasks.
-// Ticking a task off removes its Up Next item, because the Up Next list is
+// Ticking a task off removes its task, because the task list is
 // derived from task state rather than stored separately. A task that needs a
 // number (the catering guarantee) is completed by sending the number, not by
 // ticking a box, so the event never looks done without the count.
@@ -12,7 +12,7 @@ import { useStaffing2 } from '@/lib/staffing/store'
 import { eventOf } from '@/lib/staffing/derive'
 import { eventById } from '@/lib/mock/events'
 import { Button, Card, EmptyState, StatusBadge, TextInput } from '@/components/ui/primitives'
-import { TaskRow } from '@/components/ui/domain'
+import { ManualTaskRow } from '@/components/ui/domain'
 
 /** The guarantee task: an inline form instead of a checkbox. */
 function GuestCountTask({ task, expected, onSubmit }) {
@@ -71,15 +71,15 @@ function GuestCountTask({ task, expected, onSubmit }) {
 
 export default function TasksPage({ params }) {
   const { id } = use(params)
-  const { taskList, toggleTask, submitGuestCount, toast } = useStore()
+  const { manualTaskList, toggleManualTask, submitGuestCount, toast } = useStore()
   const { state: planner } = useStaffing2()
   const plannerEvent = eventOf(planner, id)
-  const tasks = taskList.filter((t) => t.eventId === id)
+  const tasks = manualTaskList.filter((t) => t.eventId === id)
   const open = tasks.filter((t) => !t.done)
   const done = tasks.filter((t) => t.done)
 
   function handleToggle(task) {
-    toggleTask(task.id)
+    toggleManualTask(task.id)
     toast(task.done ? `Reopened "${task.title}".` : `Completed "${task.title}".`)
   }
 
@@ -97,7 +97,7 @@ export default function TasksPage({ params }) {
       : task
 
   if (tasks.length === 0) {
-    return <EmptyState title="No tasks on this event" body="Tasks added here appear in Up Next once they come due." />
+    return <EmptyState title="No tasks on this event" body="Tasks added here appear in Tasks once they come due." />
   }
 
   return (
@@ -115,7 +115,7 @@ export default function TasksPage({ params }) {
                 onSubmit={(n) => sendCount(task, n)}
               />
             ) : (
-              <TaskRow key={task.id} task={task} onToggle={() => handleToggle(task)} />
+              <ManualTaskRow key={task.id} task={task} onToggle={() => handleToggle(task)} />
             )
           )
         )}
@@ -125,7 +125,7 @@ export default function TasksPage({ params }) {
         {done.length === 0 ? (
           <p className="px-4 py-4 text-body text-ink-muted sm:px-6">Nothing completed yet.</p>
         ) : (
-          done.map((task) => <TaskRow key={task.id} task={withCount(task)} onToggle={() => handleToggle(task)} />)
+          done.map((task) => <ManualTaskRow key={task.id} task={withCount(task)} onToggle={() => handleToggle(task)} />)
         )}
       </Card>
     </div>

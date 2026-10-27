@@ -6,28 +6,22 @@
 // Required: Task name, Due date. Optional: Due time, Type, Description, who
 // it is for, Vendor tags.
 //
-// WHO IT IS FOR lists every couple with its two contacts. For each couple the
-// choice is one of: not tagged, the whole couple, or one partner. Making it a
-// single choice per couple means a task never tags "the Johnsons" and "Emily"
-// at once, which would read as two different people.
+// COUPLE and VENDORS are searchable pickers (components/ui/SearchPicker.jsx),
+// so they work the same with 2 couples or 200 vendors. The couple picker
+// offers couples; "Tag individual contact instead of couple" (WhoPicker)
+// switches it to contacts. A couple and one of its own partners cannot both
+// be picked, because the couple already covers both (see whoOptions in
+// lib/tasks.js), so a task never tags "the Johnsons" and "Emily" at once.
 // ---------------------------------------------------------------------------
 
-import { useState } from 'react'
-import { cx } from '@/lib/cx'
-import { contactById, contactName, couples } from '@/lib/mock/records'
-import { TASK_TYPES, vendorOptions } from '@/lib/tasks'
+import { useMemo, useState } from 'react'
+import Link from 'next/link'
+import { useStore } from '@/lib/store'
+import { splitWho, vendorOptions, whoKey, whoOptions } from '@/lib/tasks'
 import { Modal } from '@/components/ui/domain'
+import { SearchPicker } from '@/components/ui/SearchPicker'
+import { WhoPicker } from './WhoPicker'
 import { Button, Select, TextInput, Textarea } from '@/components/ui/primitives'
-
-/** For each couple: '' (not tagged), 'couple', or a contact id. */
-function whoFromTask(task) {
-  const who = {}
-  for (const c of couples) {
-    if (task.coupleIds?.includes(c.id)) who[c.id] = 'couple'
-    else who[c.id] = c.contactIds.find((id) => task.contactIds?.includes(id)) || ''
-  }
-  return who
-}
 
 function draftFrom(task) {
   return {
@@ -36,58 +30,17 @@ function draftFrom(task) {
     dueTime: task.dueTime || '',
     type: task.type || 'Other',
     detail: task.detail || '',
-    who: whoFromTask(task),
+    who: [
+      ...(task.coupleIds || []).map((id) => whoKey('couple', id)),
+      ...(task.contactIds || []).map((id) => whoKey('contact', id))
+    ],
     vendorIds: task.vendorIds || []
   }
 }
 
-function WhoChoice({ couple, value, onChange }) {
-  const partners = couple.contactIds
-    .map(contactById)
-    .filter(Boolean)
-    .sort((a, b) => a.firstName.localeCompare(b.firstName))
-  const options = [
-    { value: '', label: 'Not tagged' },
-    { value: 'couple', label: 'The couple' },
-    ...partners.map((p) => ({ value: p.id, label: `${p.firstName} only` }))
-  ]
-  return (
-    <fieldset className="rounded-sm border border-line px-3 py-2">
-      <legend className="px-1 text-small font-medium text-ink">{couple.name}</legend>
-      <div className="flex flex-wrap gap-1.5" role="radiogroup">
-        {options.map((o) => {
-          const checked = value === o.value
-          return (
-            <label
-              key={o.value || 'none'}
-              className={cx(
-                'inline-flex h-8 cursor-pointer items-center rounded-full border px-3 text-small transition-colors duration-150',
-                'has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent',
-                checked ? 'border-accent bg-surface-sunken text-accent' : 'border-line text-ink hover:border-line-strong'
-              )}
-            >
-              <input
-                type="radio"
-                className="sr-only"
-                name={`who-${couple.id}`}
-                value={o.value}
-                checked={checked}
-                onChange={() => onChange(o.value)}
-              />
-              {o.label}
-            </label>
-          )
-        })}
-      </div>
-      {value && value !== 'couple' && (
-        <p className="mt-1.5 text-label text-ink-muted">Tags {contactName(contactById(value))} on their own.</p>
-      )}
-    </fieldset>
-  )
-}
-
 /** Render with `key={task.id}` so a new task starts a fresh draft. */
 export function TaskEditor({ task, onClose, onSave }) {
+  const { taskTypes } = useStore()
   const [draft, setDraft] = useState(() => draftFrom(task))
   const [errors, setErrors] = useState({})
 
@@ -101,24 +54,18 @@ export function TaskEditor({ task, onClose, onSave }) {
     setErrors(next)
     if (Object.keys(next).length) return
 
-    const picks = Object.entries(draft.who).filter(([, v]) => v)
     onSave({
       title: draft.title.trim(),
       dueDate: draft.dueDate,
       dueTime: draft.dueTime || null,
       type: draft.type,
       detail: draft.detail.trim(),
-      coupleIds: picks.filter(([, v]) => v === 'couple').map(([coupleId]) => coupleId),
-      contactIds: picks.filter(([, v]) => v !== 'couple').map(([, contactId]) => contactId),
+      ...splitWho(draft.who),
       vendorIds: draft.vendorIds
     })
   }
 
-  const toggleVendor = (id) =>
-    setDraft((d) => ({
-      ...d,
-      vendorIds: d.vendorIds.includes(id) ? d.vendorIds.filter((v) => v !== id) : [...d.vendorIds, id]
-    }))
+  const whoChoices = useMemo(() => whoOptions(draft.who), [draft.who])
 
   return (
     <Modal
@@ -168,7 +115,21 @@ export function TaskEditor({ task, onClose, onSave }) {
           />
         </div>
 
-        <Select label="Task type" id="task-type" options={TASK_TYPES} value={draft.type} onChange={set('type')} />
+        <div>
+          <Select
+            label="Task type"
+            id="task-type"
+            options={taskTypes.includes(draft.type) ? taskTypes : [...taskTypes, draft.type]}
+            value={draft.type}
+            onChange={set('type')}
+          />
+          <p className="mt-1 text-label text-ink-muted">
+            Need another type?{' '}
+            <Link href="/tasks/types" className="underline underline-offset-2 hover:text-ink">
+              Manage task types
+            </Link>
+          </p>
+        </div>
 
         <Textarea
           label="Description (optional)"
@@ -178,37 +139,23 @@ export function TaskEditor({ task, onClose, onSave }) {
           onChange={set('detail')}
         />
 
-        <div>
-          <p className="mb-1 text-small font-medium text-ink">Who it is for (optional)</p>
-          <p className="mb-2 text-label text-ink-muted">Tag the whole couple, or one partner on their own.</p>
-          <div className="space-y-2">
-            {couples.map((c) => (
-              <WhoChoice
-                key={c.id}
-                couple={c}
-                value={draft.who[c.id] || ''}
-                onChange={(v) => setDraft((d) => ({ ...d, who: { ...d.who, [c.id]: v } }))}
-              />
-            ))}
-          </div>
-        </div>
+        <WhoPicker
+          label="Couple (optional)"
+          id="task-who"
+          options={whoChoices}
+          value={draft.who}
+          onChange={(who) => setDraft((d) => ({ ...d, who }))}
+        />
 
-        <fieldset>
-          <legend className="mb-2 text-small font-medium text-ink">Vendor tags (optional)</legend>
-          <div className="space-y-1.5">
-            {vendorOptions.map((v) => (
-              <label key={v.value} className="flex cursor-pointer items-center gap-2 text-body text-ink">
-                <input
-                  type="checkbox"
-                  checked={draft.vendorIds.includes(v.value)}
-                  onChange={() => toggleVendor(v.value)}
-                  className="h-4 w-4 accent-[var(--ink)]"
-                />
-                {v.label}
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <SearchPicker
+          label="Vendor tags (optional)"
+          id="task-vendors"
+          options={vendorOptions}
+          value={draft.vendorIds}
+          onChange={(vendorIds) => setDraft((d) => ({ ...d, vendorIds }))}
+          placeholder="Search vendors"
+          noun="vendors"
+        />
       </form>
     </Modal>
   )
