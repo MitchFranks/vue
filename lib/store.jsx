@@ -21,6 +21,7 @@
 // reload) without losing their progress. "Reset prototype data" clears it.
 // ---------------------------------------------------------------------------
 
+import { scopedKey } from '@/lib/account/session'
 import { useTimelineVersion } from '@/lib/timelineEdits'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { events, eventById, daysOutLabel } from './mock/events.js'
@@ -31,7 +32,7 @@ import { changed, coverage, requestList, rolesOf, staffById as plannerStaffById 
 
 const StoreContext = createContext(null)
 
-const STORAGE_KEY = 'vue-lowfi-prototype-v6'
+const STORAGE_KEY = scopedKey('vue-lowfi-prototype-v6')
 
 function initialState() {
   return {

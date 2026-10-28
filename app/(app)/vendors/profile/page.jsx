@@ -10,7 +10,8 @@ import { events } from '@/lib/mock/events'
 import { Breadcrumbs, Button, Card, EmptyState, Field, ListRow, PageHeader, StatusBadge } from '@/components/ui/primitives'
 import { ContactInfo, DetailGrid, QueryRecord, RecordStatusBadge, RecordStatusCard } from '@/components/ui/records'
 import { RecordNotFound } from '@/components/directory/RecordNotFound'
-import { optionName, vendorEditHref } from '@/lib/directory/model'
+import { tasks } from '@/lib/mock/records'
+import { optionName, tasksNaming, vendorEditHref } from '@/lib/directory/model'
 import { useDirectory } from '@/lib/directory/store'
 
 function VendorProfile({ id }) {
@@ -83,7 +84,11 @@ function VendorProfile({ id }) {
               status={vendor.status}
               onToggleStatus={toggleStatus}
               onDelete={remove}
-              deleteBlockedReason={bookings.length ? `${vendor.name} is booked on events, so keep the record and mark it inactive instead.` : ''}
+              deleteBlockedReason={
+                bookings.length || tasksNaming(tasks, 'vendor', id).length
+                  ? `${vendor.name} is booked on events or named on tasks, so keep the record and mark it inactive instead.`
+                  : ''
+              }
             />
           </>
         }

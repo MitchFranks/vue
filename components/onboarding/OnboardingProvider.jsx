@@ -13,6 +13,7 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { GUIDE_KEY } from '@/lib/onboarding'
+import { ensureDemoSession } from '@/lib/account/session'
 import { IntroModal } from './IntroModal'
 import { GuidedTour } from './GuidedTour'
 
@@ -79,6 +80,8 @@ export function OnboardingProvider({ children }) {
   const showIntro = useCallback(() => setIntroOpen(true), [])
   const closeIntro = useCallback(() => setIntroOpen(false), [])
   const startTour = useCallback(() => {
+    // The tour walks the sample venue, so a signed-out visitor is signed in to the demo.
+    ensureDemoSession()
     setIntroOpen(false)
     setTourStep(0)
     router.push(TOUR_STEPS[0].path)

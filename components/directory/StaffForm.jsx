@@ -10,11 +10,13 @@ import { blankStaff, formToStaff, fullName, staffHref, STATUS_OPTIONS, staffToFo
 import { Select, TextInput, Textarea } from '@/components/ui/primitives'
 import { CheckboxGroup, FormSection, RecordForm, useRecordForm, Wide } from '@/components/ui/records'
 import { AvailabilityEditor, availabilityIsValid } from './Availability'
+import { OptionSelect, useResolveOption } from './OptionSelect'
 
 export function StaffForm({ person }) {
   const router = useRouter()
   const { roles, saveStaff } = useDirectory()
   const { toast } = useStore()
+  const resolveOption = useResolveOption()
   const form = useRecordForm(person ? staffToForm(person) : blankStaff(roles), {
     idPrefix: 'staff',
     validate: (v) => ({
@@ -26,7 +28,7 @@ export function StaffForm({ person }) {
   const roleOptions = roles.map((r) => ({ value: r.id, label: r.name }))
 
   const onValid = (v) => {
-    const fields = formToStaff(v)
+    const fields = formToStaff({ ...v, primaryRoleId: resolveOption('roles', v.primaryRoleId, v.primaryRoleIdCustom) })
     const id = saveStaff(person?.id, fields)
     toast(person ? `Saved ${fullName(fields)}.` : `Added ${fullName(fields)} to your staff.`)
     router.push(staffHref(id))
@@ -46,7 +48,7 @@ export function StaffForm({ person }) {
       </FormSection>
 
       <FormSection title="Role and status" icon="users" subtitle="The main role is what they are usually scheduled as.">
-        <Select label="Main role" options={roleOptions} {...field('primaryRoleId')} />
+        <OptionSelect kind="roles" label="Main role" field={field('primaryRoleId')} customField={field('primaryRoleIdCustom')} />
         <Select label="Status" options={STATUS_OPTIONS} hint="Inactive staff are not offered for new events." {...field('status')} />
         <Wide>
           <CheckboxGroup

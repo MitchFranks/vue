@@ -13,6 +13,7 @@ import { useOnboarding } from '@/components/onboarding/OnboardingProvider'
 import { Breadcrumbs, Button, Card, Icon, PageHeader } from '@/components/ui/primitives'
 import { usePrototypeReset } from '@/lib/usePrototypeReset'
 import { useDirectory } from '@/lib/directory/store'
+import { IS_SAMPLE_WORKSPACE } from '@/lib/account/session'
 
 export default function SettingsPage() {
   const { showIntro } = useOnboarding()
@@ -70,9 +71,15 @@ export default function SettingsPage() {
         </Card>
 
         <div id="reset-prototype">
-          <Card title="Reset prototype data" subtitle="Start over with the original sample weddings and staff." icon="refresh">
+          <Card
+            title={IS_SAMPLE_WORKSPACE ? 'Reset prototype data' : 'Reset workspace data'}
+            subtitle={IS_SAMPLE_WORKSPACE ? 'Start over with the original sample weddings and staff.' : 'Start this workspace over from empty. Your account stays.'}
+            icon="refresh"
+          >
             <p className="text-body leading-relaxed text-ink">
-              Undoes your changes to replies, tasks, messages, staffing, timelines and hidden items, then shows the first message again.
+              {IS_SAMPLE_WORKSPACE
+                ? 'Undoes your changes to replies, tasks, messages, staffing, timelines, staff, vendors and hidden items, then shows the first message again.'
+                : 'Erases the staff, vendors and changes saved in this workspace.'}
             </p>
             <div className="mt-4">
               <Button variant="danger" size="sm" onClick={resetPrototype}>

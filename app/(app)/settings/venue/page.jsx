@@ -4,7 +4,9 @@
 // main menu, because it is set up once and rarely changed. The primary
 // contact is a person from the Staff Directory, not free text.
 
-import { Breadcrumbs, PageHeader, Select, TextInput, Textarea } from '@/components/ui/primitives'
+import { Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Alert, Breadcrumbs, Button, PageHeader, Select, TextInput, Textarea } from '@/components/ui/primitives'
 import { FormSection, RecordForm, useRecordForm, Wide } from '@/components/ui/records'
 import { fullName, trimStrings, validateVenue } from '@/lib/directory/model'
 import { VENUE_TYPES } from '@/lib/mock/directory'
@@ -72,12 +74,40 @@ function VenueForm({ venue }) {
   )
 }
 
+/** Shown once, right after an account is created (?welcome=1). */
+function Welcome() {
+  if (useSearchParams().get('welcome') !== '1') return null
+  return (
+    <div className="mb-6">
+      <Alert
+        tone="done"
+        title="Your workspace is ready"
+        action={
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" href="/staff/new">
+              Add staff
+            </Button>
+            <Button size="sm" href="/vendors/new">
+              Add a vendor
+            </Button>
+          </div>
+        }
+      >
+        Finish your venue's details below, then add the people and vendors you work with. You're already listed as the first staff member.
+      </Alert>
+    </div>
+  )
+}
+
 export default function VenueProfilePage() {
   const { venue, hydrated } = useDirectory()
   return (
     <div>
       <Breadcrumbs items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Settings', href: '/settings' }, { label: 'Venue profile' }]} />
       <PageHeader title="Venue profile" lead="Your venue's name, address and main contact details." />
+      <Suspense fallback={null}>
+        <Welcome />
+      </Suspense>
       {/* Wait for saved details so the form starts from them, not the sample. */}
       {hydrated && <VenueForm venue={venue} />}
     </div>

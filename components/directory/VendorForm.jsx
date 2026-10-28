@@ -8,16 +8,19 @@ import { useStore } from '@/lib/store'
 import { blankVendor, STATUS_OPTIONS, trimStrings, validateVendor, vendorHref } from '@/lib/directory/model'
 import { Select, TextInput, Textarea } from '@/components/ui/primitives'
 import { FormSection, RecordForm, useRecordForm, Wide } from '@/components/ui/records'
+import { OptionSelect, useResolveOption } from './OptionSelect'
 
 export function VendorForm({ vendor }) {
   const router = useRouter()
   const { categories, saveVendor } = useDirectory()
   const { toast } = useStore()
+  const resolveOption = useResolveOption()
   const form = useRecordForm(vendor || blankVendor(categories), { idPrefix: 'vendor', validate: validateVendor })
   const { field } = form
 
   const onValid = (v) => {
-    const { id: _id, venueId: _venue, createdAt: _created, updatedAt: _updated, ...fields } = trimStrings(v)
+    const { id: _id, venueId: _venue, createdAt: _created, updatedAt: _updated, categoryIdCustom, ...fields } = trimStrings(v)
+    fields.categoryId = resolveOption('categories', fields.categoryId, categoryIdCustom)
     const id = saveVendor(vendor?.id, fields)
     toast(vendor ? `Saved ${fields.name}.` : `Added ${fields.name} to your vendors.`)
     router.push(vendorHref(id))
@@ -29,7 +32,7 @@ export function VendorForm({ vendor }) {
         <Wide>
           <TextInput label="Company name" autoComplete="off" {...field('name')} />
         </Wide>
-        <Select label="Category" options={categories.map((c) => ({ value: c.id, label: c.name }))} {...field('categoryId')} />
+        <OptionSelect kind="categories" label="Category" field={field('categoryId')} customField={field('categoryIdCustom')} />
         <Select label="Status" options={STATUS_OPTIONS} hint="Inactive vendors stay on file but are not offered for new events." {...field('status')} />
       </FormSection>
 

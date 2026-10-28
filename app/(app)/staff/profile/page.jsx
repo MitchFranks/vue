@@ -14,7 +14,8 @@ import { ContactInfo, DetailGrid, QueryRecord, RecordStatusBadge, RecordStatusCa
 import { AvailabilityEditor, AvailabilitySummary, availabilityIsValid } from '@/components/directory/Availability'
 import { RecordNotFound } from '@/components/directory/RecordNotFound'
 import { RequestStatus } from '@/components/staffing/StatusChip'
-import { fullName, initialsOf, optionName, staffEditHref } from '@/lib/directory/model'
+import { tasks } from '@/lib/mock/records'
+import { fullName, initialsOf, optionName, staffEditHref, tasksNaming } from '@/lib/directory/model'
 import { useDirectory } from '@/lib/directory/store'
 import { useStore } from '@/lib/store'
 import { WORLD } from '@/lib/staffing/adapter'
@@ -42,6 +43,8 @@ function StaffProfile({ id }) {
   const credentials = WORLD.staffMap[id]?.credentials || []
   // Everything the planner has on file for this person, past and future, decides whether they can be deleted.
   const anyRequests = requestList(state).some((r) => r.staffId === id)
+  const onTasks = tasksNaming(tasks, 'staff', id).length
+  const signsIn = !!person.accountId
   const requests = requestList(state)
     .filter((r) => r.staffId === id && r.status !== 'cancelled' && WORLD.eventMap[r.eventId])
     .filter((r) => WORLD.eventMap[r.eventId].dateKey >= TODAY_KEY)
@@ -130,7 +133,13 @@ function StaffProfile({ id }) {
               status={person.status}
               onToggleStatus={toggleStatus}
               onDelete={remove}
-              deleteBlockedReason={anyRequests ? `${first} has been asked to work events, so keep the record and mark them inactive instead.` : ''}
+              deleteBlockedReason={
+                signsIn
+                  ? `${first} owns this workspace's account, so the record stays.`
+                  : anyRequests || onTasks
+                    ? `${first} has been asked to work events or is on tasks, so keep the record and mark them inactive instead.`
+                    : ''
+              }
               inactiveNote={`${first} stays on file, and on any events already planned, but is not suggested for new shifts.`}
             />
           </>

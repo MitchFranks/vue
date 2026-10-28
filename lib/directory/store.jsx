@@ -10,11 +10,12 @@
 // is what the planner ranks with on the next draw.
 // ---------------------------------------------------------------------------
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { scopedKey } from '@/lib/account/session'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { syncDirectoryStaff } from '@/lib/staffing/adapter'
-import { optionId, seedDirectory, toPlannerPerson } from './model'
+import { optionId, sameName, seedDirectory, toPlannerPerson } from './model'
 
-const STORAGE_KEY = 'vue-directory-v1'
+const STORAGE_KEY = scopedKey('vue-directory-v1')
 
 const Ctx = createContext(null)
 
@@ -23,6 +24,9 @@ const newId = (prefix) => `${prefix}-${Date.now().toString(36)}${Math.random().t
 export function DirectoryProvider({ children }) {
   const [state, setState] = useState(seedDirectory)
   const [hydrated, setHydrated] = useState(false)
+  // The latest state, for actions that must return an id straight away.
+  const stateRef = useRef(state)
+  stateRef.current = state
 
   useEffect(() => {
     try {
@@ -82,6 +86,19 @@ export function DirectoryProvider({ children }) {
           })
           return { [kind]: next }
         }),
+      /**
+       * The id of the role or category with this name, adding it if it is new.
+       * Lets a form offer "type a new one" without a trip to the list editor.
+       */
+      ensureOption: (kind, name) => {
+        const list = stateRef.current[kind]
+        const found = list.find((o) => sameName(o.name, name))
+        if (found) return found.id
+        const id = optionId(kind === 'roles' ? 'role' : 'cat', name, list.map((o) => o.id))
+        stateRef.current = { ...stateRef.current, [kind]: [...list, { id, name: name.trim() }] }
+        update((s) => (s[kind].some((o) => o.id === id) ? {} : { [kind]: [...s[kind], { id, name: name.trim() }] }))
+        return id
+      },
       reset: () => {
         try {
           window.localStorage.removeItem(STORAGE_KEY)
