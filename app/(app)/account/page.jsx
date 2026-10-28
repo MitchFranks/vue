@@ -87,8 +87,9 @@ export default function AccountPage() {
         </Card>
 
         <Card title="Where to next" bodyClassName="px-0 py-0">
+          <ListRow href="/tasks" leading={<Icon name="inbox" size={16} />} title="Tasks" sub="What needs you across every event" />
           <ListRow href="/settings/venue" leading={<Icon name="home" size={16} />} title="Venue profile" sub="Your venue's name, address and main contact" />
-          <ListRow href="/settings" leading={<Icon name="settings" size={16} />} title="Settings" sub="Your goal, hidden items and resetting data" />
+          <ListRow href="/settings" leading={<Icon name="settings" size={16} />} title="Settings" sub="Your goal and resetting data" />
           <ListRow href="/dashboard" leading={<Icon name="home" size={16} />} title="Dashboard" sub="Back to the overview" />
         </Card>
       </div>

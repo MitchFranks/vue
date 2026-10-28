@@ -8,7 +8,7 @@ import { useStore } from '@/lib/store'
 import { Avatar, Breadcrumbs, Card, ListRow, PageHeader, StatusBadge } from '@/components/ui/primitives'
 
 export default function CouplesPage() {
-  const { attentionForEvent } = useStore()
+  const { tasksForEvent } = useStore()
 
   return (
     <div>
@@ -18,7 +18,7 @@ export default function CouplesPage() {
       <Card bodyClassName="px-0 py-0">
         {couples.map((c) => {
           const theirEvents = events.filter((e) => c.eventIds.includes(e.id))
-          const needs = theirEvents.reduce((n, e) => n + attentionForEvent(e.id).length, 0)
+          const needs = theirEvents.reduce((n, e) => n + tasksForEvent(e.id).length, 0)
           return (
             <ListRow
               key={c.id}
@@ -30,7 +30,7 @@ export default function CouplesPage() {
               trailing={
                 needs > 0 ? (
                   <StatusBadge tone="urgent" size="sm">
-                    {needs} in Up Next
+                    {needs} in Tasks
                   </StatusBadge>
                 ) : (
                   <StatusBadge tone="done" size="sm">

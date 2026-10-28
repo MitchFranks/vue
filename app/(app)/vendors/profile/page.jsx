@@ -10,14 +10,13 @@ import { events } from '@/lib/mock/events'
 import { Breadcrumbs, Button, Card, EmptyState, Field, ListRow, PageHeader, StatusBadge } from '@/components/ui/primitives'
 import { ContactInfo, DetailGrid, QueryRecord, RecordStatusBadge, RecordStatusCard } from '@/components/ui/records'
 import { RecordNotFound } from '@/components/directory/RecordNotFound'
-import { tasks } from '@/lib/mock/records'
 import { optionName, tasksNaming, vendorEditHref } from '@/lib/directory/model'
 import { useDirectory } from '@/lib/directory/store'
 
 function VendorProfile({ id }) {
   const router = useRouter()
   const dir = useDirectory()
-  const { messageList, toast } = useStore()
+  const { messageList, toast, manualTaskList } = useStore()
   const vendor = dir.vendorById(id)
 
   if (!dir.hydrated) return null
@@ -85,7 +84,7 @@ function VendorProfile({ id }) {
               onToggleStatus={toggleStatus}
               onDelete={remove}
               deleteBlockedReason={
-                bookings.length || tasksNaming(tasks, 'vendor', id).length
+                bookings.length || tasksNaming(manualTaskList, 'vendor', id).length
                   ? `${vendor.name} is booked on events or named on tasks, so keep the record and mark it inactive instead.`
                   : ''
               }

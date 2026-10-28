@@ -8,14 +8,14 @@
 // on a laptop and a phone. Scrolling down gives short sections on how it
 // works, what is inside, and who it is for, each kept to a line or two.
 //
-// ONE WAY IN: the product is entered through "Open Up Next" everywhere on the
+// ONE WAY IN: the product is entered through "Open Tasks" everywhere on the
 // page (header, hero, closing). The only other button, "Fill open spots",
 // goes somewhere different on purpose: straight to the Staffing Planner.
 //
 // PHOTO STUBS: this is a prototype, so where a photo will go there is a
 // labelled placeholder (PhotoStub) saying what the photo should show.
 //
-// The two previews are simplified drawings of the Up Next screen, mostly grey
+// The two previews are simplified drawings of the Tasks screen, mostly grey
 // bars. The only words in them are the top items' titles, read from the live
 // store, so the picture always matches what the product will show.
 // ---------------------------------------------------------------------------
@@ -26,7 +26,7 @@ import { cx } from '@/lib/cx'
 import { Button, Icon } from './ui/primitives'
 import { PrototypeNotice } from './onboarding/PrototypeNotice'
 
-const CTA = { href: '/up-next', label: 'Open Up Next' }
+const CTA = { href: '/tasks', label: 'Open Tasks' }
 
 /**
  * Where a photo will go: a box with a diagonal cross and a label saying what
@@ -69,7 +69,7 @@ function Bar({ className }) {
   return <span className={cx('block h-1.5 rounded-full bg-line-strong', className)} />
 }
 
-/** One Up Next row: status dot, title (or a grey bar), and the action button. */
+/** One task row: status dot, title (or a grey bar), and the action button. */
 function PreviewRow({ title, urgent, first, small = false }) {
   return (
     <div className={cx('flex items-center gap-2 border-b border-line last:border-b-0', small ? 'px-3 py-2.5' : 'px-4 py-3')}>
@@ -112,7 +112,7 @@ function DesktopPreview({ items }) {
           <Bar className="w-10" />
           <Bar className="w-16" />
         </div>
-        {/* Up Next */}
+        {/* Tasks */}
         <div className="min-w-0 flex-1 p-4">
           <p className="mb-3 text-small font-medium text-ink">Up next</p>
           <div className="rounded-sm border border-line">
@@ -157,7 +157,7 @@ function MiniCard({ children }) {
   )
 }
 
-/** Step 1: a new item lands at the top of Up Next. */
+/** Step 1: a new item lands at the top of Tasks. */
 function SpotPreview({ item }) {
   return (
     <MiniCard>
@@ -218,7 +218,7 @@ const STEPS = [
 ]
 
 const FEATURES = [
-  { icon: 'list', title: 'Up Next', body: 'One list of everything that needs you, most urgent first.', href: '/up-next' },
+  { icon: 'list', title: 'Tasks', body: 'One list of everything that needs you, most urgent first.', href: '/tasks' },
   { icon: 'users', title: 'Staffing Planner', body: 'See open spots, text your team, and track who said yes.', href: '/staffing' },
   { icon: 'clock', title: 'Staff availability', body: 'Know who is free before you ask them to work.', href: '/staffing/team' },
   { icon: 'calendar', title: 'Events', body: 'Weddings, rehearsal dinners and brunches, each with its own run of show.', href: '/events' },
@@ -249,9 +249,9 @@ function SectionHeading({ eyebrow, title }) {
 }
 
 export function Landing() {
-  const { attention } = useStore()
-  const items = attention.slice(0, 4)
-  const first = attention[0]
+  const { openTasks } = useStore()
+  const items = openTasks.slice(0, 4)
+  const first = openTasks[0]
 
   return (
     <div className="relative flex min-h-dvh flex-col bg-canvas text-ink">
@@ -303,7 +303,7 @@ export function Landing() {
 
         {/* Product preview: laptop with a phone overlapping its corner. */}
         {items.length > 0 && (
-          <div role="img" aria-label="Vue's Up Next list on a computer and a phone">
+          <div role="img" aria-label="Vue's Tasks list on a computer and a phone">
             {/* Small screens: just the phone. */}
             <div aria-hidden="true" className="flex justify-center sm:hidden">
               <PhonePreview items={items.slice(0, 3)} />

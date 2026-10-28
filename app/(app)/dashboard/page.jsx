@@ -4,7 +4,7 @@
 // SCREEN 1 — Dashboard (entry screen).
 //
 // ENTRY SIGNIFIES THE CAPABILITY: the first line on the page states the product
-// promise in plain words, and the very next block is Up Next. There are no
+// promise in plain words, and the very next block is Tasks. There are no
 // vanity metrics above it — the counters below it all describe work, and each
 // one is a link into that work.
 // ---------------------------------------------------------------------------
@@ -16,19 +16,19 @@ import { agoLabel } from '@/lib/staffing/derive'
 import { events, eventById, venue } from '@/lib/mock/events'
 import { activityLog } from '@/lib/mock/records'
 import { Card, EmptyState, ListRow, MetricTile, PageHeader, StatusBadge } from '@/components/ui/primitives'
-import { UpNextItem, EventCard, openSpots } from '@/components/ui/domain'
+import { TaskRow, EventCard, openSpots } from '@/components/ui/domain'
 
 const LINK = 'text-small text-accent underline-offset-4 hover:underline'
 
 export default function DashboardPage() {
-  const { attention, openPositions, coverageForEvent, attentionForEvent, messageList } = useStore()
+  const { openTasks, openPositions, coverageForEvent, tasksForEvent, messageList } = useStore()
   const { state: planner } = useStaffing2()
 
-  const urgent = attention.filter((a) => a.tone === 'urgent')
-  const soon = attention.filter((a) => a.tone !== 'urgent')
+  const urgent = openTasks.filter((a) => a.tone === 'urgent')
+  const soon = openTasks.filter((a) => a.tone !== 'urgent')
   const spots = openPositions.reduce((n, p) => n + p.short, 0)
   const unreplied = messageList.filter((m) => m.needsReply && !m.replied).length
-  const tasksDue = attention.filter((a) => a.kind === 'task').length
+  const tasksDue = openTasks.filter((a) => a.source === 'manual').length
   const upcoming = events.slice(0, 3)
 
   // Recent activity, derived from real state so every line can be found again
@@ -61,28 +61,28 @@ export default function DashboardPage() {
         lead={`${venue.name} · ${venue.today}`}
       />
 
-      {/* ---- Up Next. First and visually dominant by design. ---- */}
+      {/* ---- Tasks. First and visually dominant by design. ---- */}
       <section className="mb-8">
-        {attention.length === 0 ? (
+        {openTasks.length === 0 ? (
           <EmptyState title="All caught up" body="Nothing needs you right now. Every event is fully staffed." />
         ) : (
           <Card
-            title="Up Next"
+            title="Tasks"
             icon="inbox"
-            subtitle={urgent.length ? `${urgent.length} to do first` : `${attention.length} coming up`}
+            subtitle={urgent.length ? `${urgent.length} to do first` : `${openTasks.length} coming up`}
             action={
-              <Link href="/up-next" className={LINK}>
-                See everything ({attention.length})
+              <Link href="/tasks" className={LINK}>
+                See everything ({openTasks.length})
               </Link>
             }
             bodyClassName="px-0 py-0"
           >
             <div className="divide-y divide-line">
               {urgent.slice(0, 3).map((item, i) => (
-                <UpNextItem key={item.id} item={item} badge first={i === 0} />
+                <TaskRow key={item.id} task={item} badge first={i === 0} />
               ))}
               {soon.slice(0, 2).map((item, i) => (
-                <UpNextItem key={item.id} item={item} badge compact first={urgent.length === 0 && i === 0} />
+                <TaskRow key={item.id} task={item} badge compact first={urgent.length === 0 && i === 0} />
               ))}
             </div>
           </Card>
@@ -105,7 +105,7 @@ export default function DashboardPage() {
           sub="Couple and vendor messages"
           href="/messages"
         />
-        <MetricTile label="Tasks due" value={tasksDue} sub="In Up Next, across all events" href="/up-next?kind=task" />
+        <MetricTile label="Tasks due" value={tasksDue} sub="In Tasks, across all events" href="/tasks" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
@@ -123,7 +123,7 @@ export default function DashboardPage() {
                 key={event.id}
                 event={event}
                 coverage={coverageForEvent(event.id)}
-                attentionCount={attentionForEvent(event.id).length}
+                taskCount={tasksForEvent(event.id).length}
               />
             ))}
           </div>

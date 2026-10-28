@@ -26,7 +26,7 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body>
         <TimelineEditsProvider>
-          {/* The planner sits outside the store so Up Next can be derived from it. */}
+          {/* The planner sits outside the store so tasks can be derived from it. */}
           {/* The venue directory feeds the planner its staff, so it sits outside it. */}
           <DirectoryProvider>
             <Staffing2Provider>

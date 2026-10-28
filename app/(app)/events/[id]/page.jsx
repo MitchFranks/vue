@@ -1,71 +1,42 @@
 'use client'
 
-// SCREEN 5 — Event Up Next.
+// SCREEN 5 — Event Overview.
 //
-// The same queue as the Up Next page, scoped to this one event: what to do
-// first, and what is coming up, for this wedding only. "Hide" works the same
-// in both groups and can be undone; staffing items can't be hidden.
+// The same queue as the Tasks page, scoped to this one event: what to do
+// first, and what is coming up, for this wedding only.
 
 import { use, useState } from 'react'
 import { useStore } from '@/lib/store'
 import { Button, EmptyState, FilterChip, FilterGroup, Icon } from '@/components/ui/primitives'
-import { UpNextItem, openSpots, useHideWithUndo } from '@/components/ui/domain'
+import { TaskRow, openSpots } from '@/components/ui/domain'
 
-const KINDS = [
+const SOURCES = [
   { id: 'all', label: 'Everything' },
   { id: 'staffing', label: 'Staffing' },
   { id: 'message', label: 'Messages' },
-  { id: 'task', label: 'Tasks' },
+  { id: 'manual', label: 'Added tasks' },
   { id: 'document', label: 'Documents' },
   { id: 'payment', label: 'Payments' }
 ]
 
-export default function EventUpNextPage({ params }) {
+export default function EventOverviewPage({ params }) {
   const { id } = use(params)
-  const store = useStore()
-  const { attentionForEvent, hiddenAttention, coverageForEvent, restoreAttention, toast } = store
-  const hide = useHideWithUndo(store)
-  const [kind, setKind] = useState('all')
+  const { tasksForEvent, coverageForEvent } = useStore()
+  const [source, setSource] = useState('all')
 
-  const all = attentionForEvent(id)
+  const all = tasksForEvent(id)
   const coverage = coverageForEvent(id)
-  const hidden = hiddenAttention.filter((a) => a.eventId === id).map((a) => a.id)
-  const filtered = all.filter((a) => kind === 'all' || a.kind === kind)
+  const filtered = all.filter((a) => source === 'all' || a.source === source)
   const urgent = filtered.filter((a) => a.tone === 'urgent')
   const rest = filtered.filter((a) => a.tone !== 'urgent')
-
-  const showHidden = () => {
-    hidden.forEach(restoreAttention)
-    toast(`Showing ${hidden.length} hidden ${hidden.length === 1 ? 'item' : 'items'} again.`)
-  }
-
-  const hiddenNote = hidden.length > 0 && (
-    <p className="mt-4 flex flex-wrap items-center gap-2 text-small text-ink-muted">
-      {hidden.length} hidden
-      <Button variant="ghost" size="sm" onClick={showHidden}>
-        Show hidden
-      </Button>
-    </p>
-  )
 
   if (all.length === 0) {
     return (
       <div>
         {coverage.complete ? (
           <EmptyState
-            title={hidden.length ? 'Nothing else needs you' : 'All caught up'}
-            body={
-              hidden.length
-                ? `${hidden.length} hidden ${hidden.length === 1 ? 'item is' : 'items are'} still open.`
-                : 'Nothing needs you on this event right now. New items appear here as soon as something changes.'
-            }
-            action={
-              hidden.length > 0 && (
-                <Button variant="secondary" size="sm" onClick={showHidden}>
-                  Show hidden
-                </Button>
-              )
-            }
+            title="All caught up"
+            body="Nothing needs you on this event right now. New items appear here as soon as something changes."
           />
         ) : (
           // Never "caught up" while the header still shows open spots.
@@ -89,11 +60,11 @@ export default function EventUpNextPage({ params }) {
     <div>
       <div className="mb-4">
         <FilterGroup label="Show">
-          {KINDS.map((k) => {
-            const n = k.id === 'all' ? all.length : all.filter((a) => a.kind === k.id).length
+          {SOURCES.map((k) => {
+            const n = k.id === 'all' ? all.length : all.filter((a) => a.source === k.id).length
             if (k.id !== 'all' && n === 0) return null
             return (
-              <FilterChip key={k.id} pressed={kind === k.id} count={n} onClick={() => setKind(k.id)}>
+              <FilterChip key={k.id} pressed={source === k.id} count={n} onClick={() => setSource(k.id)}>
                 {k.label}
               </FilterChip>
             )
@@ -106,7 +77,7 @@ export default function EventUpNextPage({ params }) {
           title="Nothing in this view"
           body="Switch back to Everything to see the rest."
           action={
-            <Button variant="secondary" size="sm" onClick={() => setKind('all')}>
+            <Button variant="secondary" size="sm" onClick={() => setSource('all')}>
               Show everything
             </Button>
           }
@@ -121,7 +92,7 @@ export default function EventUpNextPage({ params }) {
               </h2>
               <div className="divide-y divide-line overflow-hidden rounded-md border border-line bg-surface">
                 {urgent.map((item, i) => (
-                  <UpNextItem key={item.id} item={item} first={i === 0} onDismiss={hide} />
+                  <TaskRow key={item.id} task={item} first={i === 0} />
                 ))}
               </div>
             </section>
@@ -135,7 +106,7 @@ export default function EventUpNextPage({ params }) {
               </h2>
               <div className="divide-y divide-line overflow-hidden rounded-md border border-line bg-surface">
                 {rest.map((item, i) => (
-                  <UpNextItem key={item.id} item={item} first={urgent.length === 0 && i === 0} onDismiss={hide} />
+                  <TaskRow key={item.id} task={item} first={urgent.length === 0 && i === 0} />
                 ))}
               </div>
             </section>
@@ -143,7 +114,6 @@ export default function EventUpNextPage({ params }) {
         </>
       )}
 
-      {hiddenNote}
     </div>
   )
 }

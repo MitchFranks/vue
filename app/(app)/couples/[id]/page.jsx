@@ -21,7 +21,7 @@ import { openSpots } from '@/components/ui/domain'
 
 export default function CoupleDetailPage({ params }) {
   const { id } = use(params)
-  const { messageList, attentionForEvent, coverageForEvent } = useStore()
+  const { messageList, tasksForEvent, coverageForEvent } = useStore()
   const couple = coupleById(id)
 
   if (!couple) return <EmptyState title="No such couple" />
@@ -67,7 +67,7 @@ export default function CoupleDetailPage({ params }) {
               </div>
             )}
             {theirEvents.map((e) => {
-              const needs = attentionForEvent(e.id).length
+              const needs = tasksForEvent(e.id).length
               const cov = coverageForEvent(e.id)
               return (
                 <ListRow
@@ -79,7 +79,7 @@ export default function CoupleDetailPage({ params }) {
                     <div className="hidden gap-1.5 sm:flex">
                       {needs > 0 && (
                         <StatusBadge tone="urgent" size="sm">
-                          {needs} in Up Next
+                          {needs} in Tasks
                         </StatusBadge>
                       )}
                       {cov.complete ? (

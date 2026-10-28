@@ -22,7 +22,7 @@ export function usePrototypeReset() {
       title: 'Reset everything?',
       // In an account's own workspace "the start" is empty: say so plainly.
       body: IS_SAMPLE_WORKSPACE
-        ? 'Replies, tasks, messages, staffing changes, timeline edits, staff, vendors, the venue profile, hidden items, and display preferences will return to the sample state. This cannot be undone.'
+        ? 'Replies, tasks, messages, staffing changes, timeline edits, staff, vendors, the venue profile, and display preferences will return to the sample state. This cannot be undone.'
         : 'Every staff member, vendor, role, category and change in this workspace will be erased, and the venue profile will go back to what you entered when you signed up. Your account stays. This cannot be undone.',
       confirmLabel: 'Reset everything',
       danger: true,

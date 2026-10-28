@@ -14,6 +14,7 @@ import { scopedKey } from '@/lib/account/session'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { syncDirectoryStaff } from '@/lib/staffing/adapter'
 import { optionId, sameName, seedDirectory, toPlannerPerson } from './model'
+import { setDirectoryVendors } from './registry'
 
 const STORAGE_KEY = scopedKey('vue-directory-v1')
 
@@ -50,6 +51,8 @@ export function DirectoryProvider({ children }) {
   // Keep the planner's people in step before anything below draws. This
   // writes to the shared WORLD object (as timeline edits do) and is idempotent.
   useMemo(() => syncDirectoryStaff(state.staff.map((p) => toPlannerPerson(p, state.roles))), [state.staff, state.roles])
+  // ...and the vendors Tasks tags, sorts and filters by.
+  useMemo(() => setDirectoryVendors(state.vendors), [state.vendors])
 
   const update = useCallback((fn) => setState((s) => ({ ...s, ...fn(s) })), [])
 
@@ -138,3 +141,6 @@ export function useDirectory() {
 
 /** For readers of the shared WORLD (the planner): draw again after a directory edit. */
 export const useDirectoryVersion = () => useContext(Ctx)?.staff
+
+/** For readers of the vendor registry (Tasks): draw again after a vendor edit. */
+export const useDirectoryVendors = () => useContext(Ctx)?.vendors

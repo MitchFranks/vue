@@ -3,7 +3,7 @@
 // SCREEN 16 — Staff Member Detail (?id=). Profile, contact and weekly hours
 // from the venue directory, plus every event this person has been asked to
 // work, read from the Staffing Planner with its real status. Recording an
-// answer here is the planner's own recordReply, so the event page and Up Next
+// answer here is the planner's own recordReply, so the event page and Tasks
 // update at once, and the toast offers Undo.
 
 import { useState } from 'react'
@@ -14,7 +14,6 @@ import { ContactInfo, DetailGrid, QueryRecord, RecordStatusBadge, RecordStatusCa
 import { AvailabilityEditor, AvailabilitySummary, availabilityIsValid } from '@/components/directory/Availability'
 import { RecordNotFound } from '@/components/directory/RecordNotFound'
 import { RequestStatus } from '@/components/staffing/StatusChip'
-import { tasks } from '@/lib/mock/records'
 import { fullName, initialsOf, optionName, staffEditHref, tasksNaming } from '@/lib/directory/model'
 import { useDirectory } from '@/lib/directory/store'
 import { useStore } from '@/lib/store'
@@ -28,7 +27,7 @@ const STATUS_ORDER = { pending: 0, draft: 1, accepted: 2, backup: 3, declined: 4
 function StaffProfile({ id }) {
   const router = useRouter()
   const dir = useDirectory()
-  const { toast } = useStore()
+  const { toast, manualTaskList } = useStore()
   const { state, hydrated, recordReply, openPhone } = useStaffing2()
   const { confirm, dialog } = useConfirm()
   const [editingHours, setEditingHours] = useState(false)
@@ -43,7 +42,7 @@ function StaffProfile({ id }) {
   const credentials = WORLD.staffMap[id]?.credentials || []
   // Everything the planner has on file for this person, past and future, decides whether they can be deleted.
   const anyRequests = requestList(state).some((r) => r.staffId === id)
-  const onTasks = tasksNaming(tasks, 'staff', id).length
+  const onTasks = tasksNaming(manualTaskList, 'staff', id).length
   const signsIn = !!person.accountId
   const requests = requestList(state)
     .filter((r) => r.staffId === id && r.status !== 'cancelled' && WORLD.eventMap[r.eventId])
@@ -60,7 +59,7 @@ function StaffProfile({ id }) {
   const recordNo = (r, ev) =>
     confirm({
       title: `Record that ${first} can't make it?`,
-      body: `${first}'s spot as ${r.role} at the ${ev.name} opens again and shows in Up Next as an open spot to fill. You can undo this from the message that appears.`,
+      body: `${first}'s spot as ${r.role} at the ${ev.name} opens again and shows in Tasks as an open spot to fill. You can undo this from the message that appears.`,
       confirmLabel: `Record: can't make it`,
       danger: true,
       onConfirm: () => recordReply(r.id, false)

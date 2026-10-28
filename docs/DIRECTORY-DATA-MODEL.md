@@ -76,13 +76,13 @@ Each day can hold several windows. The editor currently edits the first window o
 
 ## Assigning work (tasks, shifts, requirements)
 
-Work points at whoever does it with an **assignee reference**, `{ type: 'staff' | 'vendor', id }`. A task stores these as `staffIds` / `vendorIds`, matching the `vendorIds` in the Tasks work on `danny-tasks`. Helpers in `model.js`:
+Work points at whoever does it with an **assignee reference**, `{ type: 'staff' | 'vendor', id }`. A task stores these as `staffIds` / `vendorIds`, matching the Tasks page's existing `vendorIds`. Helpers in `model.js`:
 
 - `assigneeOptions(directory)`: everyone a task can be given to (active staff and vendors), for a picker.
 - `resolveAssignee(directory, ref)`: what a task row shows (label, profile link, inactive flag), or `null` if the record was deleted.
 - `tasksNaming(tasks, type, id)`: tasks that name a person or vendor. The profiles use it to block deleting them.
 
-When Tasks merges, its vendor picker should read vendors from the directory (`useDirectory().vendors`), not `lib/mock/records.js`. Otherwise vendors created in the app won't appear in it.
+Tasks reads vendors from the directory through `lib/directory/registry.js`, so vendors added in the app can be tagged, filtered and sorted on tasks, and a rename shows on every task. The picker offers active vendors; one already tagged stays visible after it is made inactive. Delete guards count every task in the store (`manualTaskList`), not just the samples.
 
 ## Deleting records
 
