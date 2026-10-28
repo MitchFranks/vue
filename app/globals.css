@@ -120,6 +120,10 @@
   --radius-md: 12px;
   --radius-pill: 999px;
 
+  /* Reading widths. max-w-form keeps create/edit forms and settings panels
+     to one comfortable column on wide screens. */
+  --container-form: 44rem;
+
   /* Type scale — the only sizes in the product. */
   --text-display: 40px;
   --text-display--line-height: 44px;

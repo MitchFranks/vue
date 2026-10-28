@@ -17,6 +17,7 @@ import { WORLD } from '@/lib/staffing/adapter'
 import { awayDateText, dayStartMin, monthDay, next30, usuallyFreeText } from '@/lib/staffing/derive'
 import { useStaffing2 } from '@/lib/staffing/store'
 import { TODAY_KEY } from '@/lib/mock/events'
+import { staffHref } from '@/lib/directory/model'
 
 function TeamList() {
   const params = useSearchParams()
@@ -123,7 +124,7 @@ function TeamList() {
                     </div>
                   )}
                   {inDirectory ? (
-                    <Button href={`/staff/${p.id}`} size="sm">
+                    <Button href={staffHref(p.id)} size="sm">
                       Profile, contact and requests
                       <Icon name="arrowRight" size={13} />
                     </Button>

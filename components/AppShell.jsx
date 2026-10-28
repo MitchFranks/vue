@@ -16,7 +16,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cx } from '@/lib/cx'
 import { useStore } from '@/lib/store'
-import { venue } from '@/lib/mock/events'
+import { useDirectory } from '@/lib/directory/store'
 import { Button, Count, Icon } from './ui/primitives'
 import { ToastHost, openSpots } from './ui/domain'
 import { PrototypeNotice } from './onboarding/PrototypeNotice'
@@ -25,14 +25,14 @@ import { usePlannerToasts } from './staffing/plannerToasts'
 import { PhoneDrawer } from './staffing/StaffPhone'
 
 // The two things the product is for come first and are the only items with
-// full weight: Up Next and the Staffing Planner. Everything else is
+// full weight: Tasks and the Staffing Planner. Everything else is
 // supporting context and sits under "More", visually quieter. Icons follow
 // the mapping at the top of components/ui/primitives.jsx.
 const NAV = [
   {
     heading: 'Start here',
     items: [
-      { href: '/up-next', label: 'Up Next', icon: 'inbox', badge: 'attention' },
+      { href: '/tasks', label: 'Tasks', icon: 'inbox', badge: 'openTasks' },
       // One workflow, one menu item. The tab bar inside it links its screens.
       { href: '/staffing', match: '/staffing', label: 'Staffing Planner', icon: 'users', badge: 'openPositions' }
     ]
@@ -60,17 +60,18 @@ const NAV = [
 export function AppShell({ children }) {
   const pathname = usePathname()
   const [navOpen, setNavOpen] = useState(false)
-  const { attention, openPositions, messageList, toasts, dismissToast } = useStore()
+  const { openTasks, openPositions, messageList, toasts, dismissToast } = useStore()
+  const { venue } = useDirectory()
   // The planner keeps its own toast (with Undo); both go in the one stack below.
   const planner = usePlannerToasts()
   const plannerIds = new Set(planner.toasts.map((t) => t.id))
 
   const unreplied = messageList.filter((m) => m.needsReply && !m.replied).length
-  const toDoFirst = attention.filter((a) => a.tone === 'urgent').length
+  const toDoFirst = openTasks.filter((a) => a.tone === 'urgent').length
   const spots = openPositions.reduce((n, p) => n + p.short, 0)
   // Each badge is a number plus the words it stands for (tooltip and screen readers).
   const counts = {
-    attention: { n: toDoFirst, label: `${toDoFirst} to do first` },
+    openTasks: { n: toDoFirst, label: `${toDoFirst} to do first` },
     openPositions: { n: spots, label: openSpots(spots) },
     messages: { n: unreplied, label: `${unreplied} awaiting a reply` }
   }
@@ -161,7 +162,7 @@ export function AppShell({ children }) {
                             <span title={badge.label}>
                               <span aria-hidden="true">
                                 {/* Only the "to do first" count is urgent; other counts stay neutral. */}
-                                <Count tone={item.badge === 'attention' ? 'urgent' : undefined}>{badge.n}</Count>
+                                <Count tone={item.badge === 'openTasks' ? 'urgent' : undefined}>{badge.n}</Count>
                               </span>
                               <span className="sr-only">{badge.label}</span>
                             </span>
@@ -205,7 +206,7 @@ export function AppShell({ children }) {
         </main>
       </div>
 
-      {/* The prototype staff phone: any screen can open it (Up Next, staffing, staff profiles). */}
+      {/* The prototype staff phone: any screen can open it (Tasks, staffing, staff profiles). */}
       <PhoneDrawer />
       <ToastHost
         toasts={[...planner.toasts, ...toasts]}

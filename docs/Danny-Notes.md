@@ -4,10 +4,48 @@
 
 - [ ] ****
 
+- [x] **Up Next Tasks view with sorts and filters.**
+  Task card data: Task Name, Due Date (required); Description, Due Time, Couple, Vendor Tags (optional). Contacts are stored per person and the couple name is calculated from them in alphabetical order (Ava & Zack). A task tags either the whole couple or one partner. Sorts: Due Date (all-day before timed), Contact, Couple, Vendor, Task Name. Filters: Due on, Due this week, Contact, Couple, Vendor, Task Name, Task Type.
+
 - [ ] **The Couples page needs a button to add a new couple**
 
+- [ ] **Events** 
+  Staff Planner 2 is a great improvement on the previous. Delete the deprecated one and remove the " 2" from the button so it takes over.
+  "Johnson Wedding has 2 people to check, 2 days out." is not a very scalable splash for this screen. Let's remove that.
+  
+  Events should have a sort feature so you can see events in chronological order
 
-- [ ] **Upcoming Events should have a sort feature so you can see events in chronological order**
+  We should be able to edit the timeline. On the Timeline Page, make the timeline editable.
+
+   Let's actually merge the current 2 timeline editors. Instead of Staffable block getting it's own, this should be a checkbox called 'Needs Staff'. If checked true, this block shows up in the Staff Planner. A simple icon should denote that blocks are dragable. When clicked and dragged, they should rearrange to whereever they're dropped (mouse lets go). In the final merged timeline editor, i want a plus button that will add a new row below. a minus button will delete the row and it needs a quick and small pop up to confirm whether you want to delete it. the left side of each timeline block should have a checkbox for bulk edits (2 actions possible when selected: delete or bulk move). Run of Show is the name.
+
+   The Overview tab on the Events page should actually be the "Next Up" scoped to that event only. LIke the specific event's version of the "Next Up" page. 
+
+- [ ] **Staff Planner** 
+  Staff Planner 2 is a great improvement on the previous. Delete the deprecated one and remove the " 2" from the button so it takes over.
+  "Johnson Wedding has 2 people to check, 2 days out." is not a very scalable splash for this screen. Let's remove that.
+  
+  The first card of any todo oriented page should have an outline in the preference color chosen by the user. This draws their attention to their next todo item, highlighting the first one, which the backend system will handle the logic for what should be first priority.
+  
+  We need a user guide, 3 pop ups like the welcome guide, to walk the user through using the Staff Planner tool. When they first click on the Staff Planner button, it should walk them through the guide only for their first visit to the tool. 
+
+  I need a way to reset the Staff Planner User guide. Put that in settings next to the welcome one.
+  1. "Ask your team, see who said yes, and fill gaps. Click on the event to see staffing needs."
+  2. "
+
+  The way that pop up 3 on the welcome guide is the standard for directing attention. We need that on each pop up. Specifically, it points to the button we want the user to click. It has a color flasher highlighting around the button we want them to click. Use that as a standar every pop up. Exceptions: welcome 1 and 2 don't point to buttons since they are standalone screen flows.
+  
+  It will be easier for users to see what needs to be staffed in a chronological order so the event page under the staffing planner tool needs to show the event timeline flow top to bottom. Right now it shows roles as the main object and details it with times. Flip that. It should show the event timeline as the main object and detail with roles that staff the areas. I'm also thinking we could display time as the Y axis and use the X axis to display roles (like a discrete bar chart). For example, From 5-9 pm the bar is open so it needs to be staffed and dinner is served between 6-7 so that get's its own discrete column needing to be staffed. 
+  
+  The segments of the event should actually be on the left side just to the right of the times. that way we don't repeat info across the columns. The blocks on the grid should display something other than the segment name, i need suggestions.
+
+  To simplify and streamline onboarding the user to the system, we want only 2 of each prototype data. Implement this.
+
+  On the Ask page where users ask for staff to fill a time slot, it should display a dropdown with a back-end filtered set (from a pool of names that are assigned that role) to choose from. Recognition better than recall. It should still allow the user to input a value if the pool is empty.
+
+  We've started with the assumption that filing in the first couple's name is the first the user wants to do. This could bit us. Instead, we want to ask them what they want to do first and have them choose from a menu. The most likely 3 are shown and there should be a more options button that unfolds a list of other options. Their choice here will dictate which User Guide screen flow they get taken to next.
+
+  Make the "Timeline" title from the Staff Planner>Event page a link to the events>timeline page.
 
 
 - [x] **Guide the user quickly into solving problems that need attention for weddings, with small, rapid wins.** *(batch 2, #7)*

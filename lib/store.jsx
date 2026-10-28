@@ -5,44 +5,50 @@
 //
 // STAFFING comes from the Staffing Planner's state (lib/staffing/store.jsx):
 // open spots, event coverage and unsent texts are derived from its requests,
-// so asking, sending and a reply in the planner clear the matching Up Next
+// so asking, sending and a reply in the planner clear the matching Tasks
 // item. Tasks, messages, documents and payments live here.
 //
-// The whole point of this file: nothing in the Up Next list is hard-coded.
-// Up Next items are DERIVED from the current state:
+// The whole point of this file: nothing in the task list is hard-coded.
+// tasks are DERIVED from the current state:
 //
-//   planner requests  ->  open spots  ->  Up Next items
-//   tasks             ->  Up Next items
-//   messages          ->  Up Next items
-//   documents         ->  Up Next items
-//   payments          ->  Up Next items
+//   planner requests  ->  open spots  ->  tasks
+//   tasks             ->  tasks
+//   messages          ->  tasks
+//   documents         ->  tasks
+//   payments          ->  tasks
 //
 // State persists to localStorage so a tester can move between screens (and
 // reload) without losing their progress. "Reset prototype data" clears it.
 // ---------------------------------------------------------------------------
 
+import { scopedKey } from '@/lib/account/session'
 import { useTimelineVersion } from '@/lib/timelineEdits'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { events, eventById, daysOutLabel } from './mock/events.js'
-import { documents, messages, money, payments, tasks } from './mock/records.js'
+import { events, eventById, daysOutLabel, TODAY_KEY } from './mock/events.js'
+import { contacts, contactName, documents, messages, money, payments, manualTasks } from './mock/records.js'
 import { pluralRole } from './mock/staff.js'
+import { allTaskTypes, DEFAULT_TASK_TYPES, dueInfo, eventTags, taskFromRecord, taskTypeError } from './tasks.js'
 import { useStaffing2 } from './staffing/store'
 import { changed, coverage, requestList, rolesOf, staffById as plannerStaffById } from './staffing/derive'
 
 const StoreContext = createContext(null)
 
-const STORAGE_KEY = 'vue-lowfi-prototype-v6'
+const STORAGE_KEY = scopedKey('vue-lowfi-prototype-v9')
 
 function initialState() {
   return {
-    doneTaskIds: tasks.filter((t) => t.done).map((t) => t.id),
+    doneManualTaskIds: manualTasks.filter((t) => t.done).map((t) => t.id),
+    // recordId -> fields changed from Tasks (name, due date/time, type, description, tags)
+    manualTaskEdits: {},
+    // tasks added from the Tasks page ("New"), in the same shape as lib/mock/records.js manualTasks
+    createdTasks: [],
+    // The venue's own task types (the system ones are fixed, see lib/tasks.js)
+    taskTypes: DEFAULT_TASK_TYPES,
     repliedMessageIds: [],
     readMessageIds: [],
     signedDocumentIds: [],
     // `${eventId}:${paymentId}` recorded as paid in the prototype
-    paidPaymentIds: [],
-    // Up Next item ids the manager chose to hide. Staffing items can't be hidden.
-    dismissedAttentionIds: []
+    paidPaymentIds: []
   }
 }
 
@@ -94,20 +100,81 @@ export function StoreProvider({ children }) {
 
   // ---- actions ------------------------------------------------------------
 
-  const toggleTask = useCallback((taskId) => {
+  const toggleManualTask = useCallback((recordId) => {
     setState((s) => ({
       ...s,
-      doneTaskIds: s.doneTaskIds.includes(taskId)
-        ? s.doneTaskIds.filter((t) => t !== taskId)
-        : [...s.doneTaskIds, taskId]
+      doneManualTaskIds: s.doneManualTaskIds.includes(recordId)
+        ? s.doneManualTaskIds.filter((t) => t !== recordId)
+        : [...s.doneManualTaskIds, recordId]
     }))
+  }, [])
+
+  /** Add a task from the Tasks page. `fields` is what TaskEditor collects. Returns the new record's id. */
+  const addManualTask = useCallback((fields) => {
+    const id = `t-new-${Date.now()}`
+    setState((s) => ({
+      ...s,
+      createdTasks: [
+        ...(s.createdTasks || []),
+        // Owned by the signed-in venue manager, as the sidebar shows.
+        { owner: 'Dana Whitcomb', done: false, ...fields, id }
+      ]
+    }))
+    return id
+  }, [])
+
+  /** Change a task's fields. `patch` holds only the fields that changed. */
+  const updateManualTask = useCallback((recordId, patch) => {
+    setState((s) => ({ ...s, manualTaskEdits: { ...s.manualTaskEdits, [recordId]: { ...s.manualTaskEdits?.[recordId], ...patch } } }))
+  }, [])
+
+  // ---- task types (the Task types screen) ----------------------------------
+  //
+  // Each returns an error message to show, or null on success.
+
+  const addTaskType = useCallback(
+    (name) => {
+      const error = taskTypeError(name, state.taskTypes)
+      if (!error) setState((s) => ({ ...s, taskTypes: [...s.taskTypes, name.trim()] }))
+      return error
+    },
+    [state.taskTypes]
+  )
+
+  /** Rename a type. Tasks that use it move to the new name. */
+  const renameTaskType = useCallback(
+    (from, to) => {
+      const error = taskTypeError(to, state.taskTypes, from)
+      if (error) return error
+      const next = to.trim()
+      setState((s) => {
+        const edits = { ...s.manualTaskEdits }
+        for (const t of [...manualTasks, ...(s.createdTasks || [])]) {
+          if ((edits[t.id]?.type ?? t.type) === from) edits[t.id] = { ...edits[t.id], type: next }
+        }
+        return { ...s, manualTaskEdits: edits, taskTypes: s.taskTypes.map((t) => (t === from ? next : t)) }
+      })
+      return null
+    },
+    [state.taskTypes]
+  )
+
+  /** Delete a type. Tasks that use it move to `moveTo`, which is required if any do. */
+  const deleteTaskType = useCallback((name, moveTo) => {
+    setState((s) => {
+      const edits = { ...s.manualTaskEdits }
+      for (const t of [...manualTasks, ...(s.createdTasks || [])]) {
+        if ((edits[t.id]?.type ?? t.type) === name && moveTo) edits[t.id] = { ...edits[t.id], type: moveTo }
+      }
+      return { ...s, manualTaskEdits: edits, taskTypes: s.taskTypes.filter((t) => t !== name) }
+    })
   }, [])
 
   /** Submit the guaranteed guest count: sets it on the event and completes the task. */
   const submitGuestCount = useCallback(
-    (taskId, eventId, count) => {
+    (recordId, eventId, count) => {
       setGuarantee(eventId, count)
-      setState((s) => (s.doneTaskIds.includes(taskId) ? s : { ...s, doneTaskIds: [...s.doneTaskIds, taskId] }))
+      setState((s) => (s.doneManualTaskIds.includes(recordId) ? s : { ...s, doneManualTaskIds: [...s.doneManualTaskIds, recordId] }))
     },
     [setGuarantee]
   )
@@ -150,18 +217,6 @@ export function StoreProvider({ children }) {
     const key = `${eventId}:${paymentId}`
     setState((s) => ({ ...s, paidPaymentIds: s.paidPaymentIds.filter((k) => k !== key) }))
   }, [])
-
-  const dismissAttention = useCallback((id) => {
-    setState((s) =>
-      s.dismissedAttentionIds.includes(id) ? s : { ...s, dismissedAttentionIds: [...s.dismissedAttentionIds, id] }
-    )
-  }, [])
-
-  const restoreAttention = useCallback((id) => {
-    setState((s) => ({ ...s, dismissedAttentionIds: s.dismissedAttentionIds.filter((x) => x !== id) }))
-  }, [])
-
-  const restoreAllAttention = useCallback(() => setState((s) => ({ ...s, dismissedAttentionIds: [] })), [])
 
   const reset = useCallback(() => {
     setState(initialState())
@@ -237,9 +292,15 @@ export function StoreProvider({ children }) {
 
   // ---- derived: tasks / messages / documents ------------------------------
 
-  const taskList = useMemo(
-    () => tasks.map((t) => ({ ...t, done: state.doneTaskIds.includes(t.id) })),
-    [state.doneTaskIds]
+  // `due` and `dueTone` are worked out from the due date (lib/tasks.js), so an
+  // edited date moves the task in and out of Tasks.
+  const manualTaskList = useMemo(
+    () =>
+      [...manualTasks, ...(state.createdTasks || [])].map((t) => {
+        const task = { ...t, ...state.manualTaskEdits?.[t.id], done: state.doneManualTaskIds.includes(t.id) }
+        return { ...task, ...dueInfo(task) }
+      }),
+    [state.doneManualTaskIds, state.manualTaskEdits, state.createdTasks]
   )
 
   const messageList = useMemo(
@@ -284,7 +345,7 @@ export function StoreProvider({ children }) {
   // the product is built around: what happened, which event, why it matters,
   // what you can do next.
 
-  const allAttention = useMemo(() => {
+  const allOpenTasks = useMemo(() => {
     const items = []
 
     // 1. Open spots. While nobody has been asked for a spot it is something to
@@ -293,11 +354,13 @@ export function StoreProvider({ children }) {
       const who = spot.declinedBy[0]
       const spotLink = `/staffing/${spot.event.id}?block=${spot.block.id}&role=${encodeURIComponent(spot.role)}`
       const base = {
-        kind: 'staffing',
+        source: 'staffing',
+        type: 'Staff',
+        dueDate: spot.event.dateKey,
+        ...eventTags(spot.event),
         eventId: spot.event.id,
         eventName: spot.event.name,
         meta: `${spot.block.name} · ${hourLabel(spot.block.start)}–${hourLabel(spot.block.end)}`,
-        dismissible: false
       }
       if (spot.toFind > 0) {
         items.push({
@@ -311,7 +374,6 @@ export function StoreProvider({ children }) {
           why: spot.event.primary
             ? `${daysOutLabel(spot.event)}. Until it is filled, this block runs short-staffed.`
             : `${daysOutLabel(spot.event)}.`,
-          actionLabel: spot.toFind === 1 ? 'Fill spot' : 'Fill spots',
           href: `${spotLink}&ask=1`
         })
       } else if (spot.pending > 0) {
@@ -322,7 +384,6 @@ export function StoreProvider({ children }) {
           title: `${spot.block.name}: waiting on ${spot.pending} ${spot.pending === 1 ? 'reply' : 'replies'} for ${pluralRole(spot.role, spot.short)}`,
           what: `You asked ${spot.pending} ${spot.pending === 1 ? 'person' : 'people'}. The spot stays open until someone says yes.`,
           why: `${daysOutLabel(spot.event)}. If nobody says yes, ask someone else.`,
-          actionLabel: 'Check replies',
           href: spotLink
         })
       }
@@ -336,7 +397,10 @@ export function StoreProvider({ children }) {
       if (!drafts) continue
       items.push({
         id: `publish:${event.id}`,
-        kind: 'staffing',
+        source: 'staffing',
+        type: 'Staff',
+        dueDate: event.dateKey,
+        ...eventTags(event),
         tone: 'warn',
         title: `Send ${drafts} ${drafts === 1 ? 'text' : 'texts'}`,
         what: 'People are chosen, but they have not been asked yet.',
@@ -344,8 +408,6 @@ export function StoreProvider({ children }) {
         eventId: event.id,
         eventName: event.name,
         meta: `${drafts} not sent`,
-        dismissible: false,
-        actionLabel: 'Review and send',
         href: `/staffing/${event.id}?send=1`
       })
     }
@@ -355,8 +417,15 @@ export function StoreProvider({ children }) {
       if (!m.needsReply || m.replied) continue
       const event = m.eventId ? eventById(m.eventId) : null
       items.push({
-        id: `msg:${m.id}`,
-        kind: 'message',
+        id: `message:${m.id}`,
+        source: 'message',
+        type: 'Message',
+        // A thread that needs a reply is due today.
+        dueDate: TODAY_KEY,
+        ...eventTags(event, {
+          coupleIds: m.coupleId ? [m.coupleId] : event?.coupleId ? [event.coupleId] : [],
+          contactIds: contacts.filter((c) => contactName(c) === m.from).map((c) => c.id)
+        }),
         tone: m.priority === 'urgent' ? 'urgent' : 'warn',
         title: `Reply to ${m.from}`,
         what: `"${m.subject}" — received ${m.received.toLowerCase()}.`,
@@ -366,30 +435,14 @@ export function StoreProvider({ children }) {
         eventId: m.eventId,
         eventName: event ? event.name : 'No event',
         meta: m.fromRole.split(' · ')[0],
-        dismissible: true,
-        actionLabel: 'Open and reply',
         href: `/messages/${m.id}`
       })
     }
 
     // 3. Tasks that are due and not done
-    for (const t of taskList) {
+    for (const t of manualTaskList) {
       if (t.done || t.dueTone === 'done' || t.dueTone === 'info') continue
-      const event = eventById(t.eventId)
-      items.push({
-        id: `task:${t.id}`,
-        kind: 'task',
-        tone: t.dueTone === 'urgent' ? 'urgent' : 'warn',
-        title: t.title,
-        what: t.detail,
-        why: `${t.due} · owned by ${t.owner}.`,
-        eventId: t.eventId,
-        eventName: event ? event.name : 'No event',
-        meta: t.due,
-        dismissible: true,
-        actionLabel: 'Open event tasks',
-        href: `/events/${t.eventId}/tasks`
-      })
+      items.push(taskFromRecord(t))
     }
 
     // 4. Documents awaiting signature
@@ -397,8 +450,12 @@ export function StoreProvider({ children }) {
       if (d.tone !== 'urgent') continue
       const event = eventById(d.eventId)
       items.push({
-        id: `doc:${d.id}`,
-        kind: 'document',
+        id: `document:${d.id}`,
+        source: 'document',
+        type: 'Sign Document',
+        // Signed off before the event it belongs to.
+        dueDate: event ? event.dateKey : TODAY_KEY,
+        ...eventTags(event),
         tone: 'warn',
         title: `${d.name} is ready for your signature`,
         what: `Last updated ${d.updated}.`,
@@ -406,8 +463,6 @@ export function StoreProvider({ children }) {
         eventId: d.eventId,
         eventName: event ? event.name : 'No event',
         meta: 'Awaiting signature',
-        dismissible: true,
-        actionLabel: 'Open documents',
         href: `/events/${d.eventId}/documents`
       })
     }
@@ -419,8 +474,11 @@ export function StoreProvider({ children }) {
       for (const p of plan.schedule) {
         if (p.state !== 'due') continue
         items.push({
-          id: `pay:${event.id}:${p.id}`,
-          kind: 'payment',
+          id: `payment:${event.id}:${p.id}`,
+          source: 'payment',
+          type: 'Payment',
+          dueDate: p.dueDate || event.dateKey,
+          ...eventTags(event),
           tone: 'warn',
           title: `Collect the ${p.label.toLowerCase()} of ${money(p.amount)}`,
           what: `${money(plan.total - plan.paid)} of ${money(plan.total)} is still unpaid.`,
@@ -428,47 +486,118 @@ export function StoreProvider({ children }) {
           eventId: event.id,
           eventName: event.name,
           meta: p.when,
-          dismissible: true,
-          actionLabel: 'Open payments',
           href: `/events/${event.id}/payments`
         })
       }
     }
 
+    // Every item answers "when is it due", so they can all be sorted and filtered together.
+    const dated = items.map((i) => ({ ...dueInfo(i), ...i }))
     const order = { urgent: 0, warn: 1, pending: 2, info: 3 }
-    return items.sort((a, b) => (order[a.tone] ?? 9) - (order[b.tone] ?? 9))
-  }, [openPositions, planner, messageList, taskList, documentList, paymentsForEvent])
+    return dated.sort((a, b) => (order[a.tone] ?? 9) - (order[b.tone] ?? 9))
+  }, [openPositions, planner, messageList, manualTaskList, documentList, paymentsForEvent])
 
-  // Hidden items are still open; they are only kept out of the list.
-  const attention = useMemo(
-    () => allAttention.filter((i) => !state.dismissedAttentionIds.includes(i.id)),
-    [allAttention, state.dismissedAttentionIds]
-  )
-  const hiddenAttention = useMemo(
-    () => allAttention.filter((i) => state.dismissedAttentionIds.includes(i.id)),
-    [allAttention, state.dismissedAttentionIds]
-  )
-  const dismissedCount = hiddenAttention.length
+  const openTasks = allOpenTasks
 
-  const attentionForEvent = useCallback((eventId) => attention.filter((a) => a.eventId === eventId), [attention])
+  // ---- derived: COMPLETED tasks -------------------------------------------
+  //
+  // The other side of the list above: everything the manager has dealt with.
+  // Each source has its own way of being done, and each leaves its task here
+  // so nothing vanishes without a trace: a ticked-off manual task, a replied
+  // message, a signed document, a recorded payment. (A filled open spot has no
+  // one moment of completion, so staffing does not appear here.)
+  const completedTasks = useMemo(() => {
+    const done = []
+
+    for (const t of manualTaskList) {
+      if (t.done) done.push(taskFromRecord(t, { done: true }))
+    }
+
+    for (const m of messageList) {
+      if (!m.needsReply || !m.replied) continue
+      const event = m.eventId ? eventById(m.eventId) : null
+      done.push({
+        id: `message:${m.id}`,
+        source: 'message',
+        type: 'Message',
+        title: `Replied to ${m.from}`,
+        what: `"${m.subject}"`,
+        eventId: m.eventId,
+        eventName: event ? event.name : 'No event',
+        dueDate: TODAY_KEY,
+        ...eventTags(event, {
+          coupleIds: m.coupleId ? [m.coupleId] : event?.coupleId ? [event.coupleId] : [],
+          contactIds: contacts.filter((c) => contactName(c) === m.from).map((c) => c.id)
+        }),
+        due: 'Replied',
+        href: `/messages/${m.id}`
+      })
+    }
+
+    for (const d of documentList) {
+      if (!state.signedDocumentIds.includes(d.id)) continue
+      const event = eventById(d.eventId)
+      done.push({
+        id: `document:${d.id}`,
+        source: 'document',
+        type: 'Sign Document',
+        title: `${d.name} signed`,
+        eventId: d.eventId,
+        eventName: event ? event.name : 'No event',
+        dueDate: event ? event.dateKey : TODAY_KEY,
+        ...eventTags(event),
+        due: 'Signed',
+        href: `/events/${d.eventId}/documents`
+      })
+    }
+
+    for (const event of events) {
+      const plan = paymentsForEvent(event.id)
+      for (const p of plan?.schedule || []) {
+        if (!p.recordedHere) continue
+        done.push({
+          id: `payment:${event.id}:${p.id}`,
+          source: 'payment',
+          type: 'Payment',
+          title: `Collected the ${p.label.toLowerCase()} of ${money(p.amount)}`,
+          eventId: event.id,
+          eventName: event.name,
+          dueDate: p.dueDate || event.dateKey,
+          ...eventTags(event),
+          due: 'Paid',
+          href: `/events/${event.id}/payments`
+        })
+      }
+    }
+
+    return done.map((t) => ({ ...t, done: true, dueTone: 'done', tone: 'done' }))
+  }, [manualTaskList, messageList, documentList, paymentsForEvent, state.signedDocumentIds])
+
+  const tasksForEvent = useCallback((eventId) => openTasks.filter((a) => a.eventId === eventId), [openTasks])
 
   const value = {
     hydrated,
     // collections
-    taskList,
+    manualTaskList,
     messageList,
     documentList,
     paymentsForEvent,
     // staffing
     openPositions,
     coverageForEvent,
-    // Up Next
-    attention,
-    attentionForEvent,
-    hiddenAttention,
-    dismissedCount,
+    // Tasks
+    openTasks,
+    tasksForEvent,
+    completedTasks,
+    taskTypes: allTaskTypes(state.taskTypes),
+    editableTaskTypes: state.taskTypes,
     // actions
-    toggleTask,
+    toggleManualTask,
+    addManualTask,
+    updateManualTask,
+    addTaskType,
+    renameTaskType,
+    deleteTaskType,
     submitGuestCount,
     markReplied,
     markRead,
@@ -476,9 +605,6 @@ export function StoreProvider({ children }) {
     unsignDocument,
     recordPayment,
     undoPayment,
-    dismissAttention,
-    restoreAttention,
-    restoreAllAttention,
     reset,
     // feedback
     toasts,
@@ -506,10 +632,10 @@ export function hourLabel(h) {
 }
 
 /**
- * Calm, priority-first summary of an Up Next list: "2 to do first", else
+ * Calm, priority-first summary of a task list: "2 to do first", else
  * "5 coming up", else "All caught up". Never a raw alarm count.
  */
-export function upNextLabel(items) {
+export function taskSummaryLabel(items) {
   const first = items.filter((i) => i.tone === 'urgent').length
   if (first) return `${first} to do first`
   if (items.length) return `${items.length} coming up`

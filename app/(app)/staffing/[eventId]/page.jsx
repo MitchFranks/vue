@@ -60,7 +60,7 @@ function Crew({ eventId }) {
   const [changing, setChanging] = useState(null)
   const [marking, setMarking] = useState(null)
   const [highlight, setHighlight] = useState(null) // a request id
-  const [spot, setSpot] = useState(null) // { blockId, role } from an Up Next link
+  const [spot, setSpot] = useState(null) // { blockId, role } from an Tasks link
   const handledQuery = useRef(null)
 
   const closeAsk = useCallback(() => setAsk(null), [])
@@ -81,8 +81,8 @@ function Crew({ eventId }) {
   const summary = base && hydrated ? eventSummary(eventId, state) : null
   const query = params.toString()
 
-  // Deep links (Up Next, the events list). Handled once per distinct query, so
-  // following a second Up Next link while already here still works.
+  // Deep links (Tasks, the events list). Handled once per distinct query, so
+  // following a second Tasks link while already here still works.
   //   ?send=1                     opens Send review
   //   ?block=..&role=..&ask=1     opens the Ask panel for that role and block
   //   ?ask=1                      opens it for the first role with open spots
@@ -180,8 +180,8 @@ function Crew({ eventId }) {
               Show warnings
             </Button>
           )}
-          <Button size="sm" variant="primary" href="/up-next">
-            Back to Up Next
+          <Button size="sm" variant="primary" href="/tasks">
+            Back to Tasks
             <Icon name="arrowRight" size={13} />
           </Button>
         </div>

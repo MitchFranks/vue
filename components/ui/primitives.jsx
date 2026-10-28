@@ -24,7 +24,7 @@ import { cx } from '@/lib/cx'
 // check = handled. Never use a status icon as a navigation icon.
 //
 // Navigation icons, one per destination (do not reuse across destinations):
-//   inbox Up Next · users Staffing Planner · home Dashboard · list Events ·
+//   inbox Tasks · users Staffing Planner · home Dashboard · list Events ·
 //   user Staff Directory · calendar Calendar · mail Messages · heart Couples ·
 //   truck Vendors · settings Settings · menu the mobile nav toggle.
 
@@ -99,6 +99,8 @@ const PATHS = {
       <path d="m16.5 16.5 4.5 4.5" />
     </>
   ),
+  filter: <path d="M3.5 5h17l-6.5 7.5V19l-4 1.5v-8Z" />,
+  sort: <path d="M7 20V4M3.5 7.5 7 4l3.5 3.5M17 4v16m-3.5-3.5L17 20l3.5-3.5" />,
   truck: (
     <>
       <path d="M2 7h12v9H2zM14 10h4l3 3v3h-7z" />
@@ -513,7 +515,8 @@ export function Avatar({ initials, size = 'md' }) {
 const LABEL = 'mb-1.5 block text-small text-ink-muted'
 const CONTROL =
   'block w-full rounded-sm border border-line-strong bg-surface px-3 text-body text-ink placeholder:text-ink-muted/70 transition-colors focus:border-accent focus-visible:outline-offset-0'
-const CONTROL_ERROR = 'border-status-now focus:border-status-now'
+// A missing or invalid field also gets the light red wash, not just a red edge.
+const CONTROL_ERROR = 'border-status-now bg-status-now-soft! focus:border-status-now'
 const HINT = 'mt-1.5 text-small text-ink-muted'
 const ERROR = 'mt-1.5 flex items-center gap-1 text-small text-status-now'
 
@@ -571,7 +574,7 @@ export function Select({ label, id, options = [], hint, error, className = '', i
         {options.map((o) => {
           const opt = typeof o === 'string' ? { value: o, label: o } : o
           return (
-            <option key={opt.value} value={opt.value}>
+            <option key={opt.value} value={opt.value} disabled={opt.disabled}>
               {opt.label}
             </option>
           )

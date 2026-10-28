@@ -10,7 +10,9 @@
 // state in memory; sending clears it (§C.6).
 // ---------------------------------------------------------------------------
 
+import { scopedKey } from '@/lib/account/session'
 import { useTimelineVersion } from '@/lib/timelineEdits'
+import { useDirectoryVersion } from '@/lib/directory/store'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { WORLD, makeGuest, registerPerson, seedState, syncPeople } from './adapter'
 import {
@@ -34,7 +36,7 @@ import {
   sortBlockIds
 } from './derive'
 
-export const STORAGE_KEY = 'vue-lowfi-staffing2-v3'
+export const STORAGE_KEY = scopedKey('vue-lowfi-staffing2-v3')
 
 /* ------------------------------------------------------------ pure ops --- */
 
@@ -581,6 +583,7 @@ function sentToast(ids, st) {
 export function useStaffing2() {
   const ctx = useContext(Ctx)
   useTimelineVersion() // draw again after a timeline edit
+  useDirectoryVersion() // ...and after a staff edit in the directory
   if (!ctx) throw new Error('useStaffing2 must be used inside Staffing2Provider')
   return ctx
 }

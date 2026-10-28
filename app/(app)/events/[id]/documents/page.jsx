@@ -1,7 +1,7 @@
 'use client'
 
 // SCREEN 12 — Event Documents.
-// Marking a document signed asks first, can be undone, and removes its Up Next
+// Marking a document signed asks first, can be undone, and removes its Tasks
 // item. Dana signs for the venue, so a waiting document is "Awaiting your
 // signature" until it is "Signed".
 

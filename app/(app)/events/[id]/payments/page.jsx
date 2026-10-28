@@ -2,7 +2,7 @@
 
 // SCREEN 10 — Event Payments.
 // Recording a due installment asks first, then offers an Undo; it also clears
-// the matching Up Next item, because Up Next is derived from payment state.
+// the matching task, because tasks are derived from payment state.
 
 import { use } from 'react'
 import { useStore } from '@/lib/store'

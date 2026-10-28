@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 // SCREEN 26 — Message Detail / Reply.
 //
-// Sending a reply marks the thread replied, which removes its Up Next
+// Sending a reply marks the thread replied, which removes its Tasks
 // item. The context panel beside the message exists so the manager does not
 // have to go and look up the event to answer — RECOGNITION OVER RECALL.
 // ---------------------------------------------------------------------------
@@ -80,9 +80,9 @@ export default function MessageDetailPage({ params }) {
       {replied && (
         <Alert tone="done" title="Reply sent">
           <p className="mt-1">
-            This thread is no longer in Up Next.{' '}
-            <Link href="/up-next" className="underline underline-offset-2">
-              Check Up Next
+            This thread is no longer in Tasks.{' '}
+            <Link href="/tasks" className="underline underline-offset-2">
+              Check Tasks
             </Link>
             .
           </p>

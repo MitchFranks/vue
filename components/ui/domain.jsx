@@ -3,11 +3,12 @@
 // ---------------------------------------------------------------------------
 // DESIGN LIBRARY — domain components
 //
-// These encode the product's own concepts: an attention item, an event, a
+// These encode the product's own concepts: a task, an event, a
 // task, an overlay, a toast. Built on the primitives so the
 // borders, status colours and button hierarchy stay consistent.
 // ---------------------------------------------------------------------------
 
+import { ClampedText } from './ClampedText'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { cx } from '@/lib/cx'
@@ -19,23 +20,22 @@ export function openSpots(n) {
   return `${n} open spot${n === 1 ? '' : 's'}`
 }
 
-/* ---------------------------------------------------------- UpNextItem --
+/* ---------------------------------------------------------- TaskRow --
  *
  * The single most important component in the product. It answers, in order:
- *   how soon  ->  what happened  ->  which event  ->  why it matters  ->  what to do.
+ *   how soon  ->  what happened  ->  which event  ->  what to do.
  *
  * Status before detail: the chip says whether it needs the user today
  * (status-now) or this week (status-soon) in words, before the title. Only
- * the first item in a list gets the filled ink button, so one action leads.
+ * the first task in a list gets the filled ink button, so one action leads.
  * Lists of these sit in a container with `divide-y divide-line`.
  *
- * `onDismiss` adds a quiet "Hide" next to the action, but only for items that
- * are `dismissible`: staffing items can't be hidden, because hiding them would
- * look like fixing them. Pair it with useHideWithUndo so a hide can be undone.
+ * The button says "Action" for every task: which action a task needs is not
+ * decided yet, so the row does not guess.
  */
 
-export function UpNextItem({ item, compact = false, first = false, badge = false, onDismiss }) {
-  const urgent = item.tone === 'urgent'
+export function TaskRow({ task, compact = false, first = false, badge = false }) {
+  const urgent = task.tone === 'urgent'
   return (
     <article className="bg-surface px-4 py-4 transition-colors duration-150 hover:bg-surface-sunken/40 sm:px-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-6">
@@ -48,34 +48,19 @@ export function UpNextItem({ item, compact = false, first = false, badge = false
               </StatusBadge>
             )}
             <span className="text-small text-ink-muted">
-              {item.eventName} · {item.meta}
+              {task.eventName} · {task.meta}
             </span>
           </div>
 
-          <h3 className="text-heading font-medium text-ink">{item.title}</h3>
+          <h3 className="text-heading font-medium text-ink">{task.title}</h3>
 
-          {!compact && (
-            <dl className="mt-2 space-y-1 text-small">
-              <div className="flex gap-3">
-                <dt className="w-16 shrink-0 text-ink-muted">What</dt>
-                <dd className="text-ink">{item.what}</dd>
-              </div>
-              <div className="flex gap-3">
-                <dt className="w-16 shrink-0 text-ink-muted">Why</dt>
-                <dd className="text-ink">{item.why}</dd>
-              </div>
-            </dl>
-          )}
+          {!compact && <ClampedText className="mt-2">{task.what}</ClampedText>}
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          {onDismiss && item.dismissible && (
-            <Button variant="ghost" size="sm" onClick={() => onDismiss(item)}>
-              Hide
-            </Button>
-          )}
-          <Button href={item.href} variant={first ? 'primary' : 'secondary'} size="sm">
-            {item.actionLabel}
+          <Button href={task.href} variant={first ? 'primary' : 'secondary'} size="sm">
+            Action
+            <span className="sr-only"> for {task.title}</span>
             <Icon name="arrowRight" size={14} />
           </Button>
         </div>
@@ -84,24 +69,9 @@ export function UpNextItem({ item, compact = false, first = false, badge = false
   )
 }
 
-/**
- * Hide an Up Next item, with a toast that can undo it. Returns the handler to
- * pass to UpNextItem's onDismiss. `store` is the useStore() value.
- */
-export function useHideWithUndo(store) {
-  const { dismissAttention, restoreAttention, toast } = store
-  return (item) => {
-    dismissAttention(item.id)
-    toast(`Hid "${item.title}".`, 'done', {
-      small: 'It is still open. Show hidden items on Up Next or in Settings brings it back.',
-      actions: [{ label: 'Undo', onClick: () => restoreAttention(item.id) }]
-    })
-  }
-}
-
 /* -------------------------------------------------------------- EventCard -- */
 
-export function EventCard({ event, coverage, attentionCount = 0, guide = false }) {
+export function EventCard({ event, coverage, taskCount = 0, guide = false }) {
   return (
     <Link
       href={`/events/${event.id}`}
@@ -123,9 +93,9 @@ export function EventCard({ event, coverage, attentionCount = 0, guide = false }
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-4">
-        {attentionCount > 0 ? (
+        {taskCount > 0 ? (
           <StatusBadge tone="urgent" size="sm">
-            {attentionCount} in Up Next
+            {taskCount} in Tasks
           </StatusBadge>
         ) : (
           <StatusBadge tone="done" size="sm">
@@ -150,7 +120,7 @@ export function EventCard({ event, coverage, attentionCount = 0, guide = false }
 
 /* --------------------------------------------------------------- EventRow -- */
 
-export function EventRow({ event, coverage, attentionCount = 0 }) {
+export function EventRow({ event, coverage, taskCount = 0 }) {
   return (
     <ListRow
       href={`/events/${event.id}`}
@@ -159,9 +129,9 @@ export function EventRow({ event, coverage, attentionCount = 0 }) {
       meta={event.spaces}
       trailing={
         <div className="hidden items-center gap-2 sm:flex">
-          {attentionCount > 0 && (
+          {taskCount > 0 && (
             <StatusBadge tone="urgent" size="sm">
-              {attentionCount} in Up Next
+              {taskCount} in Tasks
             </StatusBadge>
           )}
           {coverage && !coverage.complete && (
@@ -182,7 +152,7 @@ export function EventRow({ event, coverage, attentionCount = 0 }) {
 
 /* --------------------------------------------------------------- TaskRow --- */
 
-export function TaskRow({ task, onToggle }) {
+export function ManualTaskRow({ task, onToggle }) {
   return (
     <div className="flex items-start gap-3 border-b border-line px-4 py-3 last:border-b-0 sm:px-6">
       <input

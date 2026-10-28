@@ -1,57 +1,100 @@
 'use client'
 
-// Account: who is signed in. Read-only in this prototype, so the page ends
-// with links to where the work and the real controls are (no dead end).
+// Account: who is signed in, and the account's own controls (sign out, and
+// for an account someone created, deleting it). The page ends with links to
+// where the work and the other controls are (no dead end).
 
+import { ACTIVE_ACCOUNT, deleteAccount, endSession } from '@/lib/account/session'
+import { Alert, Avatar, Breadcrumbs, Button, Card, Field, Icon, ListRow, PageHeader, StatusBadge } from '@/components/ui/primitives'
+import { useConfirm } from '@/components/ui/domain'
+import { ContactInfo } from '@/components/ui/records'
+import { useDirectory } from '@/lib/directory/store'
 import { venue } from '@/lib/mock/events'
-import { Alert, Avatar, Breadcrumbs, Card, Field, Icon, ListRow, PageHeader, TextInput } from '@/components/ui/primitives'
-
-// Example contact details for the prototype. Not a real address or number.
-const CONTACT = {
-  email: 'dana@willowstone.example',
-  phone: '(555) 010-0142'
-}
 
 export default function AccountPage() {
+  const account = ACTIVE_ACCOUNT
+  const { venue: venueProfile } = useDirectory()
+  const { confirm, dialog } = useConfirm()
+  if (!account) return null
+
+  const removeAccount = () =>
+    confirm({
+      title: 'Delete your account?',
+      body: `This deletes your sign-in and every staff member, vendor and change saved in the ${account.venueName} workspace in this browser. This cannot be undone.`,
+      confirmLabel: 'Delete account',
+      danger: true,
+      onConfirm: () => {
+        deleteAccount(account.id)
+        endSession('/signup')
+      }
+    })
+
   return (
     <div>
       <Breadcrumbs items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Account' }]} />
-      <PageHeader title="Account" lead="Signed in on this device." />
+      <PageHeader title="Account" lead="Who is signed in on this device." />
 
       <div className="max-w-2xl space-y-4">
-        <Alert tone="info" title="This is a prototype">
-          These details are examples. Nothing here can be edited or is saved anywhere.
-        </Alert>
+        {account.demo && (
+          <Alert tone="info" title="This is the demo account">
+            Everyone shares the demo, so its sample data can be reset at any time. Create your own account to start a workspace for your venue.
+          </Alert>
+        )}
 
-        <Card title="Profile" icon="user">
+        <Card
+          title="Profile"
+          icon="user"
+          action={
+            <StatusBadge tone={account.demo ? 'info' : 'done'} size="sm">
+              {account.demo ? 'Demo' : 'Administrator'}
+            </StatusBadge>
+          }
+        >
           <div className="mb-5 flex items-center gap-3">
             <Avatar initials={venue.managerInitials} />
             <div>
-              <div className="text-heading font-medium text-ink">{venue.manager}</div>
-              <div className="text-small text-ink-muted">{venue.managerRole}</div>
+              <div className="text-heading font-medium text-ink">{account.name}</div>
+              <div className="text-small text-ink-muted">{account.title}</div>
             </div>
           </div>
           <dl className="grid gap-4 sm:grid-cols-2">
-            <Field label="Name" value={venue.manager} />
-            <Field label="Role" value={venue.managerRole} />
-            <Field label="Initials" value={venue.managerInitials} />
-            <Field label="Venue" value={venue.name} />
+            <Field label="Venue" value={venueProfile.name} />
+            <Field label="Signs in with" value={account.demo ? `${account.username} (username)` : account.email} />
           </dl>
+          <div className="mt-4">
+            <ContactInfo
+              columns={2}
+              items={[
+                { label: 'Email', value: account.email, type: 'email' },
+                { label: 'Phone', value: account.phone || (account.demo ? venue.managerPhone : ''), type: 'phone' }
+              ]}
+            />
+          </div>
         </Card>
 
-        <Card title="Contact" subtitle="Read only in this prototype." icon="mail">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <TextInput id="account-email" label="Email" value={CONTACT.email} readOnly />
-            <TextInput id="account-phone" label="Phone" value={CONTACT.phone} readOnly />
+        <Card title="Sign out" icon="arrowLeft" subtitle="Ends this session on this device.">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" size="sm" onClick={() => endSession()}>
+              Sign out
+            </Button>
+            {!account.demo && (
+              <Button variant="danger" size="sm" onClick={removeAccount}>
+                <Icon name="trash" size={13} />
+                Delete account
+              </Button>
+            )}
           </div>
         </Card>
 
         <Card title="Where to next" bodyClassName="px-0 py-0">
-          <ListRow href="/up-next" leading={<Icon name="inbox" size={16} />} title="Up Next" sub="What needs you across every event" />
-          <ListRow href="/settings" leading={<Icon name="settings" size={16} />} title="Settings" sub="Your goal, hidden items and resetting the prototype" />
+          <ListRow href="/tasks" leading={<Icon name="inbox" size={16} />} title="Tasks" sub="What needs you across every event" />
+          <ListRow href="/settings/venue" leading={<Icon name="home" size={16} />} title="Venue profile" sub="Your venue's name, address and main contact" />
+          <ListRow href="/settings" leading={<Icon name="settings" size={16} />} title="Settings" sub="Your goal and resetting data" />
           <ListRow href="/dashboard" leading={<Icon name="home" size={16} />} title="Dashboard" sub="Back to the overview" />
         </Card>
       </div>
+
+      {dialog}
     </div>
   )
 }

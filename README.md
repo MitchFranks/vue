@@ -47,13 +47,13 @@ to that: the system goes looking for problems so the manager does not have to.
 
 ## Core Design Features
 
-### 1. Up Next
+### 1. Tasks
 
 The system proactively surfaces anything that requires action rather than making the manager hunt
 for it: open staff spots, people still to text, unanswered couple messages, tasks due, documents
 awaiting signature and payments due.
 
-An Up Next item does not just say something is wrong. Every item states:
+A task does not just say something is wrong. Every item states:
 
 | | |
 |---|---|
@@ -65,7 +65,7 @@ An Up Next item does not just say something is wrong. Every item states:
 **Nothing in this list is hard-coded.** Items are *derived* from the live state of the Staffing
 Planner, tasks, messages, documents and payments (`lib/store.jsx`). Resolve the underlying thing and
 the item disappears on its own. Staffing items can't be hidden, because hiding them would look like
-fixing them; other items can be hidden, with Undo, and brought back from Up Next or Settings.
+fixing them; other items can be hidden, with Undo, and brought back from Tasks or Settings.
 
 ### 2. Staffing Planner
 
@@ -78,12 +78,12 @@ day) and who can't be asked, with the reason shown. The manager is never blocked
 
 ```
 open spot on the Johnson Wedding
-   → appears in Up Next ("Ceremony: 1 open spot for Event Staff")
+   → appears in Tasks ("Ceremony: 1 open spot for Event Staff")
    → "Fill spot" opens the Ask panel for that role and block
    → manager asks someone and sends the text
-   → Up Next now says "waiting on 1 reply" (asked is not covered)
+   → Tasks now says "waiting on 1 reply" (asked is not covered)
    → the staff member says yes (simulated in the prototype)
-   → the spot fills, the Up Next item resolves, every count updates
+   → the spot fills, the task resolves, every count updates
    → when every spot is filled: "The Johnson Wedding is fully staffed."
 ```
 
@@ -98,12 +98,12 @@ staffing items, shows the fully-staffed message, and updates the dashboard and s
 Discovery ranked these two highest, and they are causally linked rather than merely adjacent.
 Scheduling is where last-minute change does the most damage: a single "can't make it" two days
 before a wedding affects the timeline block, the event and the manager's confidence in the whole
-booking. An Up Next list with nothing feeding it is just a to-do list; staffing without a feedback
+booking. An task list with nothing feeding it is just a to-do list; staffing without a feedback
 loop is just a rota. Together they produce the actual outcome: the manager finds out about the
 problem without looking for it, and can fix it from wherever they happen to be.
 
 Everything else in the prototype (vendors, payments, documents, change history) is supporting
-context that exists so Up Next items have somewhere real to point.
+context that exists so tasks have somewhere real to point.
 
 ---
 
@@ -126,7 +126,7 @@ Users are told this in four places:
   (prototype)", "Prototype only: answer for staff", "Design library (for reviewers)".
 
 The opening modal offers two choices: explore freely, or take an optional four-step tour through
-the dashboard, Up Next, Staffing Planner and event workspace. The tour explains how these areas
+the dashboard, Tasks, Staffing Planner and event workspace. The tour explains how these areas
 support the staffing goal; users can go back, exit with a button or Esc, and continue exploring
 freely at any point. The "Your goal" button reopens the choice.
 
@@ -139,8 +139,8 @@ Testers are given this goal in the opening modal:
 
 The modal does **not** say which buttons to press. There are several routes to the fix:
 
-- Welcome screen → **Open Up Next** → "Fill spot" on any Johnson Wedding item
-- Dashboard → the Up Next list, the "Open spots" counter, or the Staffing status list
+- Welcome screen → **Open Tasks** → "Fill spot" on any Johnson Wedding item
+- Dashboard → the task list, the "Open spots" counter, or the Staffing status list
 - Sidebar → **Staffing Planner** → Johnson Wedding
 - Events → Johnson Wedding → the **Staffing planner** tab or the "5 open spots" badge
 - Staff Directory → a person → record their reply on a waiting request
@@ -157,7 +157,7 @@ The seeded scenario (two events, set in `lib/mock/scope.js`; "today" is Saturday
 - A catering guest-count guarantee due today (entered on the Tasks tab)
 - A day-of timeline awaiting your signature
 - A final balance of $4,250 due tomorrow
-- **Shah–Patel Rehearsal Dinner** — Saturday 17 October, a second, less urgent event, so Up Next
+- **Shah–Patel Rehearsal Dinner** — Saturday 17 October, a second, less urgent event, so Tasks
   has something to prioritise against
 
 ---
@@ -169,16 +169,17 @@ Every route has a job; none are filler.
 ### Entry and overview
 | Route | Screen |
 |---|---|
-| `/` | Welcome (entry): what Vue does, one way in ("Open Up Next") |
-| `/up-next` | Up Next (filterable by kind and event, e.g. `/up-next?kind=task`) |
-| `/dashboard` | Dashboard: Up Next first, then counts, events, staffing status, recent activity |
+| `/` | Welcome (entry): what Vue does, one way in ("Open Tasks") |
+| `/tasks` | Tasks: every task, sortable and filterable by due date, type, couple or contact and vendor |
+| `/tasks/types` | Task types: add, rename and delete the types a task can have |
+| `/dashboard` | Dashboard: Tasks first, then counts, events, staffing status, recent activity |
 | `/calendar` | Calendar, month by month |
 | `/events` | Events |
 
 ### Event workspace
 | Route | Screen |
 |---|---|
-| `/events/[id]` | Event Up Next |
+| `/events/[id]` | Event Overview: this event's tasks |
 | `/events/[id]/timeline` | Run of show (day view editor) |
 | `/events/[id]/tasks` | Tasks, including the guest-count guarantee |
 | `/events/[id]/vendors` | Vendors |
@@ -209,7 +210,7 @@ Every route has a job; none are filler.
 | Route | Screen |
 |---|---|
 | `/account` | Account (read-only) |
-| `/settings` | Settings: show my goal, restore hidden Up Next items, reset all prototype data |
+| `/settings` | Settings: show my goal, reset all prototype data |
 | `/style-guide` | Design library (for reviewers) |
 
 Dynamic routes are statically generated for every seeded record, so any of them can be deep-linked.
@@ -221,9 +222,9 @@ Dynamic routes are statically generated for every seeded record, so any of them 
 **Capability first on entry.** The welcome screen's headline is the product promise ("Know what
 needs fixing before the wedding."), followed by one primary action worded the same in the header,
 hero and closing section. The other areas are listed underneath as one consistent set of links.
-Inside the app, the dashboard opens on Up Next before any counter.
+Inside the app, the dashboard opens on Tasks before any counter.
 
-**Guide attention.** Up Next is split into **Do first** and **Coming up**. Only the first item on a
+**Guide attention.** The dashboard splits tasks into **Do first** and **Coming up**; the Tasks page sorts them. Only the first task on a
 screen has the filled button, so one action leads. Counters stay neutral unless they describe work.
 
 **Gestalt: proximity and common region.** The four facts a manager is constantly asked for (date,
@@ -242,7 +243,7 @@ dialogs with Cancel on the left and the action on the right. Each navigation des
 icon, and status icons (alert, clock, check) are never used as navigation icons.
 
 **One vocabulary.** An unfilled role is always an "open spot" ("3 open spots"); a covered event is
-"Fully staffed"; a staff request is Not sent, Waiting, Confirmed or Can't make it. "Up Next" is
+"Fully staffed"; a staff request is Not sent, Waiting, Confirmed or Can't make it. "Tasks" is
 always written the same way.
 
 **Feedback.** Every meaningful action shows a toast, most with Undo: "Recorded the final balance of
@@ -250,11 +251,11 @@ $4,250.", "Sent a guarantee of 142 guests to catering.", "Day-of timeline v2 is 
 the goal shows "The Johnson Wedding is fully staffed."
 
 **Visibility of system status.** "1 of 4 spots filled", Waiting vs Confirmed, "waiting on 1 reply"
-in Up Next, live counts in the sidebar, and the guarantee shown in the event header once it is sent.
+in Tasks, live counts in the sidebar, and the guarantee shown in the event header once it is sent.
 
 **Error prevention and recovery.** Recording a payment, signing a document, recording a "can't make
 it", resetting the run of show and resetting the prototype all ask first and say what will happen.
-Hiding an Up Next item, removing someone from an event, simulated replies and run-of-show edits can
+Hiding an task, removing someone from an event, simulated replies and run-of-show edits can
 be undone. Forms show inline errors (red, with an icon) instead of silently fixing input.
 
 **Recognition over recall.** The reply screen shows the event context beside the message. The Ask
@@ -273,9 +274,9 @@ bound to every form control, `aria-invalid` on fields with errors, `aria-current
 
 ---
 
-## Up Next Design
+## Tasks Design
 
-"Up Next" signals priority without creating chronic stress. Priority is shown by order and wording,
+Tasks signal priority without creating chronic stress. Priority is shown by order and wording,
 not alarm:
 
 - The list is split into **Do first** and **Coming up**. The sidebar count shows only what to do
@@ -321,7 +322,7 @@ Two files hold the visual system, and every screen is assembled from them. The f
 `MetricTile`
 
 **`components/ui/domain.jsx`**
-`UpNextItem` · `useHideWithUndo` · `EventCard` · `EventRow` · `TaskRow` · `Modal` (dialog and sheet) ·
+`TaskRow` · `TaskCard` · `SearchPicker` · `useHideWithUndo` · `EventCard` · `EventRow` · `TaskRow` · `Modal` (dialog and sheet) ·
 `ToastHost` (with actions such as Undo) · `useConfirm` · `openSpots`
 
 **Shell:** `components/AppShell.jsx` (sidebar, top bar, the one toast stack, the prototype phone) ·
@@ -337,7 +338,7 @@ the status ramps as CSS custom properties consumed through Tailwind v4's `@theme
 follow the OS.
 
 **State:** `lib/staffing/store.jsx` holds the Staffing Planner (requests, replies, undo);
-`lib/store.jsx` holds tasks, messages, documents and payments and derives Up Next from both. Both
+`lib/store.jsx` holds tasks, messages, documents and payments and derives Tasks from both. Both
 persist to `localStorage`.
 
 ---
@@ -347,7 +348,7 @@ persist to `localStorage`.
 Fill these in with real names. The codebase is split so these four areas can be worked on without
 editing the same files.
 
-- **[Team Member]** — Welcome / Dashboard / Up Next — `components/Landing.jsx`, `app/(app)/dashboard/`, `app/(app)/up-next/`, `app/(app)/calendar/`
+- **[Team Member]** — Welcome / Dashboard / Tasks — `components/Landing.jsx`, `app/(app)/dashboard/`, `app/(app)/tasks/`, `app/(app)/calendar/`
 - **[Team Member]** — Events — `app/(app)/events/`, `components/EventHeader.jsx`
 - **[Team Member]** — Staffing — `app/(app)/staffing/`, `app/(app)/staff/`, `components/staffing/`, `lib/staffing/`
 - **[Team Member]** — Communication & people — `app/(app)/messages/`, `app/(app)/couples/`, `app/(app)/vendors/`

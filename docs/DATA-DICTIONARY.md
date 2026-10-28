@@ -3,7 +3,7 @@
 The prototype's data model, in the words the screens use. There is no database. Everything is
 either **seed data** (static JS in `lib/mock/`) or **runtime state** (one React context in
 `lib/store.jsx`, persisted to `localStorage` under `vue-lowfi-prototype-v3`). Anything the UI
-calls an "open position", "Up Next item" or "coverage" is **derived** — never stored.
+calls an "open position", "task" or "coverage" is **derived** — never stored.
 
 Items marked ⚠️ are the most ambiguous; they are explained in [Ambiguities](#ambiguities).
 
@@ -100,14 +100,27 @@ about the **timeline** or **run of show**; the blocks are the staffed parts of i
 Availability is **weekly and recurring only** — there are no date-specific exceptions or time off.
 A person is "available" for a block only if one window **fully covers** it (`isAvailable`).
 
+### Contact &nbsp; `lib/mock/records.js` · screens: Tasks task filters and task editor
+
+One person. Each partner in a couple is a contact.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `id` | string | `con-emily-johnson` |
+| `firstName`, `lastName` | string | "Emily" / "Johnson" |
+| `coupleId` | string → Couple | The couple this person belongs to |
+| `email`, `phone` | string | Contact |
+
 ### Couple &nbsp; `lib/mock/records.js` · screens: *Couples*, couple profile
 
 | Field | Type | Meaning |
 |---|---|---|
-| `id` | string | `johnson-emily` (primary contact, not the couple) |
-| `name` | string | "Emily & Marcus Johnson" — the billing party |
-| `primaryContact` | string | The person you actually write to: "Emily Johnson" |
-| `email`, `phone`, `initials` | string | Contact |
+| `id` | string | `cpl-2001` |
+| `contactIds` | string[] → Contact | The two partners |
+| `primaryContactId` | string → Contact | The person you actually write to |
+| `name` | string, **calculated** | `coupleName()`: partners in alphabetical order by first name. "Emily & Marcus Johnson" when they share a last name, else "Dev Patel & Priya Shah". Sorting by couple name therefore sorts by the alphabetically-first partner |
+| `firstNames` | string, **calculated** | "Emily & Marcus" |
+| `primaryContact`, `email`, `phone`, `initials` | string, **calculated** | From the primary contact |
 | `eventIds` | string[] | Events booked (all currently length 1) |
 | `since` | string | "Booked February 2026". Display text |
 | `note` | string | Free text |
@@ -124,17 +137,37 @@ A person is "available" for a block only if one window **fully covers** it (`isA
 | `statusTone` | tone | Colour of the status pill ⚠️ |
 | `note` | string | Free text |
 
-### Task &nbsp; · screens: event *Tasks* tab
+### Manual task &nbsp; `lib/mock/records.js` (`manualTasks`), logic in `lib/tasks.js` · screens: *Tasks*, event *Tasks* tab
+
+A **task** is anything on the Tasks page: a message to answer, an open spot, a document to sign, a payment, or a task the venue wrote. A *manual task* is the stored kind, the others are derived (see *Task* below).
 
 | Field | Type | Meaning |
 |---|---|---|
 | `id` | string | `t-guest-count` |
 | `eventId` | string → Event | |
-| `title`, `detail` | string | "Submit the guarantee to Harvest Table Catering" |
-| `due` | string | Display text: "Due today", "Due Sun, Oct 11", "Completed Sep 12" ⚠️ |
-| `dueTone` | tone | `urgent`, `warn`, `info`, `done`. **Also decides whether the task appears in Up Next** ⚠️ |
+| `title` | string, **required** | Task Name: "Submit the guarantee to Harvest Table Catering" |
+| `dueDate` | `YYYY-MM-DD`, **required** | Due Date |
+| `dueTime` | `HH:MM` \| null | Due Time. Null means any time that day |
+| `type` | string | Task type: a system type (`Message`, `Payment`, `Sign Document`, `Staff`) or one of the venue's own, managed on `/tasks/types` (`taskTypes` in state; defaults in `lib/tasks.js`) |
+| `detail` | string | Description |
+| `coupleIds` | string[] → Couple | Couples tagged as a whole |
+| `contactIds` | string[] → Contact | Single partners tagged on their own. Per couple, a task tags the couple **or** one partner, never both |
+| `vendorIds` | string[] → Vendor | Vendor tags |
+| `due` | string, **calculated** | `dueInfo()`: "Due today · 5:00 PM", "Due tomorrow", "Due Wed, Oct 14", "Overdue · was due …", "Completed Sep 12" |
+| `dueTone` | tone, **calculated** | Overdue or today → `urgent`; within 7 days → `warn`; later → `info`; done → `done`. **Still decides whether the task is open or only upcoming** |
+| `completedOn` | string | Display text for seed tasks that start done |
 | `owner` | string | Person's name as text (not an id) |
-| `done` | boolean | Seed value only. Live value = `doneTaskIds` in state |
+| `done` | boolean | Seed value only. Live value = `doneManualTaskIds` in state |
+
+Edits made on the Tasks page are kept in `manualTaskEdits` in state and laid over the seed record.
+
+**Task sorts** (`sortTasks`): Due date (by date; on the same day, tasks with no time first, then by time) · Contact · Couple · Vendor · Task name, each ascending or descending. Tasks with nothing to sort on go last.
+
+**Task filters** (`filterTasks`): task name (text) · task types (several) · due (one of any time, overdue, today, this week, or on a date) · couples and contacts (several) · vendors (several) · plus *Show completed*, which adds completed tasks without narrowing. Several choices inside one filter are OR, filters together are AND.
+
+Choices that cannot be combined are kept apart: a couple and one of its own partners exclude each other (`whoOptions`), "due" is a single choice so "this week" and "on a date" cannot clash, and any choice that would leave nothing to show is disabled with the reason.
+
+**Task types** (`SYSTEM_TASK_TYPES`, `DEFAULT_TASK_TYPES`, `taskTypes` in state). System types are fixed because the product assigns them. The rest can be added, renamed (tasks that use them move along) and deleted (tasks that use them move to a type you choose).
 
 ### Message &nbsp; · screens: *Messages*, message detail, event *Messages* tab
 
@@ -162,7 +195,7 @@ An inbound email. The sender may be a couple, a vendor or a staff member.
 | `name`, `kind` | string | "Day-of timeline v2" / `PDF` \| `DOC` \| `XLS` |
 | `updated` | string | Display date |
 | `status` | string | "Signed", "On file", "Approved", "Final", "Awaiting signature", "Awaiting couple" |
-| `tone` | tone | `done`, `warn`, `urgent`. **`urgent` = appears in Up Next** ⚠️ |
+| `tone` | tone | `done`, `warn`, `urgent`. **`urgent` = appears in Tasks** ⚠️ |
 
 ### Payment plan &nbsp; · screens: event *Payments* tab
 
@@ -202,11 +235,11 @@ The one thing the user can change. Lives in `StoreProvider`; seeded from the fil
 |---|---|---|
 | `assignments` | `{ [assignmentId]: Assignment }` | Who is on which timeline block, and whether they said yes. See below |
 | `doneTaskIds` | string[] | Tasks ticked off. Starts with every task whose seed `done` is true |
+| `manualTaskEdits` | object | `recordId → { title, dueDate, dueTime, type, detail, coupleIds, contactIds, vendorIds }` changed in the Tasks editor |
 | `repliedMessageIds` | string[] | Messages the manager has answered |
 | `readMessageIds` | string[] | Messages opened (replying also marks read) |
 | `signedDocumentIds` | string[] | Documents the manager has signed — flips status to "Signed" |
 | `publishedEventIds` | string[] | Events whose schedule is "Published". Starts as `johnson`, `taylor` |
-| `dismissedAttentionIds` | string[] | Attention items hidden by the user |
 | `offers` | `{ [positionId]: { staffIds } }` | Open positions offered to several eligible people. Nothing is assigned until one claims it (Staff replies → Simulate claim) |
 | `seenIntro` | boolean | Has the early-stage prototype modal been shown |
 
@@ -263,18 +296,23 @@ Computed per open position: every Staff with the matching role who is not alread
 (`coverageForEvent`). `filled` never counts more than the requirement's `count` per role, so
 over-assigning doesn't hide an open position elsewhere.
 
-### Up Next item &nbsp; "Up Next" list, `/up-next` (internal name: `attention`)
+### Task &nbsp; the Tasks page, `/tasks` (internal name: `openTasks`, `completedTasks`)
 
 Built fresh on every state change from four sources, then sorted `urgent → warn → pending → info`.
 
 | Field | Meaning |
 |---|---|
-| `id` | Prefixed by source: `openPosition:…`, `msg:…`, `task:…`, `doc:…` |
+| `id` | Prefixed by source: `openPosition:…`, `message:…`, `manual:…`, `document:…`, `payment:…` |
+| `source` | `staffing`, `message`, `manual`, `document`, `payment` where the task comes from |
+| `recordId` | For a manual task, the id of its stored record |
+| `type` | The task type (see above) |
+| `dueDate`, `dueTime`, `due`, `dueTone` | Every task has a due date, so all can be sorted and filtered together |
+| `coupleIds`, `contactIds`, `vendorIds` | Who it is for |
 | `kind` | `staffing` \| `message` \| `task` \| `document` |
 | `tone` | `urgent` (shown as **Do first**) or `warn` (shown as **Coming up**) |
 | `title`, `what`, `why`, `meta` | The three lines of copy on each card: what happened / why it matters / short tag |
 | `eventId`, `eventName` | Which event |
-| `actionLabel`, `href` | Button text and target, e.g. "Find replacement" → `/staffing/open-positions/<positionId>` |
+| `href` | Where the card's "Action" button goes, e.g. `/staffing/open-positions/<positionId>` |
 
 | Source | Raises an item when |
 |---|---|
@@ -306,7 +344,7 @@ Built fresh on every state change from four sources, then sorted `urgent → war
 | Sidebar / screen phrase | Data behind it |
 |---|---|
 | Staff Planner (one sidebar item, four tabs: Week · Event board · Team availability · Staff replies) | The staffing feature, `/staffing/*`. The Event board (`/staffing/<eventId>`) is the primary screen: one row per timeline block, slots per required role, an assign panel with soft warnings, and a Publish and notify dialog |
-| Up Next | Attention items (derived) |
+| Tasks | Tasks (derived) |
 | Events | `events` |
 | Week tab | Events in one week with staffing and unsent-change badges |
 | Event board tab | Timeline blocks + Staffing requirements + Assignments, with the assign panel |
@@ -379,10 +417,10 @@ external parties, **BEO** (banquet event order), **ceremony site / reception spa
    - A **staffing request** (`/staffing/requests/[reqId]`) is a screen, not a record. Its `reqId` is actually an *open-position id*, and sending it stores nothing.
    - Net effect: there is no persisted "request to fill a position" — nothing remembers who was asked. If you want one, it needs to become a real entity.
 
-2. **"Tone" is both colour and logic.** The same vocabulary (`urgent / warn / info / done`) appears on Task (`dueTone`), Message (`priority`), Document (`tone`), Vendor (`statusTone`), Activity log and Run of show. In Task and Document it also *decides whether an Up Next item exists* — a document needs `tone: 'urgent'` and a task needs `urgent`/`warn`, while the text `status` ("Awaiting couple") is ignored. Restyling a pill would silently change what shows up on the dashboard. `pending` is in the sort order but nothing produces it.
+2. **"Tone" is both colour and logic.** The same vocabulary (`urgent / warn / info / done`) appears on Task (`dueTone`), Message (`priority`), Document (`tone`), Vendor (`statusTone`), Activity log and Run of show. In Task and Document it also *decides whether an Tasks item exists* — a document needs `tone: 'urgent'` and a task needs `urgent`/`warn`, while the text `status` ("Awaiting couple") is ignored. Restyling a pill would silently change what shows up on the dashboard. `pending` is in the sort order but nothing produces it.
 
 3. **Dates and "how soon" are mostly typed text, not values.** `Event.dateKey` is a real date and "days out" is now computed from it, but `date`, `dateShort`, `day`, `Task.due`, `Message.received`, payment `when` and `venue.today` are hand-written strings, and "today" is frozen at Oct 10, 2026. Nothing recomputes overdue or urgency; only the staffing-clash check and days-out use an actual date.
 
-4. **The same real-world fact is stored in several places.** The Johnson guest count lives in `Event.expectedGuests`, in the guarantee task, in the catering message ("Last number I have is 150"), in the vendor status "Guarantee due" and in a run-of-show note. `guaranteedCount` is `null` until the guarantee is submitted, and nothing sets it. The $4,250 balance is in a Task, a payment installment and the Activity log. Only the Task, Message and Document records are wired into Up Next, so resolving the *thing* (e.g. paying the balance) does not clear the *task* — ticking the task is what clears it.
+4. **The same real-world fact is stored in several places.** The Johnson guest count lives in `Event.expectedGuests`, in the guarantee task, in the catering message ("Last number I have is 150"), in the vendor status "Guarantee due" and in a run-of-show note. `guaranteedCount` is `null` until the guarantee is submitted, and nothing sets it. The $4,250 balance is in a Task, a payment installment and the Activity log. Only the Task, Message and Document records are wired into Tasks, so resolving the *thing* (e.g. paying the balance) does not clear the *task* — ticking the task is what clears it.
 
 5. **A person can have only one role, and role means two things.** `Staff.role` is a single value and a requirement's `role` is matched to it exactly. Nobody can be a Server *and* a Bartender, and the model can't say "Theo can run receptions, Dana can't". Venue Manager (Dana) and Event Captain (Theo) are now separate roles, but a block's `name` is still loose free text (the Shah–Patel rehearsal dinner's block is named "Dinner", the others "Reception").

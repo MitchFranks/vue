@@ -175,7 +175,7 @@ export default function NewEventPage() {
                 <li>You add the blocks to staff (setup, ceremony, reception, teardown) and who each one needs.</li>
                 <li>The Staffing Planner suggests staff from their stated availability.</li>
                 <li>You send the texts, and staff say yes or no.</li>
-                <li>Any open spot shows up in Up Next.</li>
+                <li>Any open spot shows up in Tasks.</li>
               </ol>
             </Card>
 

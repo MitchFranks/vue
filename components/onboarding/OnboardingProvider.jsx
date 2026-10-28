@@ -13,6 +13,7 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { GUIDE_KEY } from '@/lib/onboarding'
+import { ensureDemoSession } from '@/lib/account/session'
 import { IntroModal } from './IntroModal'
 import { GuidedTour } from './GuidedTour'
 
@@ -22,12 +23,12 @@ const TOUR_STEPS = [
   {
     path: '/dashboard',
     title: 'Your venue at a glance',
-    body: 'The dashboard brings the venue’s current picture together. Up Next is the priority list, and the counters and summaries below it add context without making you search every section.'
+    body: 'The dashboard brings the venue’s current picture together. Tasks is the priority list, and the counters and summaries below it add context without making you search every section.'
   },
   {
-    path: '/up-next',
+    path: '/tasks',
     title: 'Find what needs attention',
-    body: 'Up Next collects actionable items across events, including open staffing spots, messages, and tasks. Choose an item to go directly to the work that will resolve it.'
+    body: 'Tasks collects actionable items across events, including open staffing spots, messages, and tasks. Choose an item to go directly to the work that will resolve it.'
   },
   {
     path: '/staffing/evt-1001',
@@ -79,6 +80,8 @@ export function OnboardingProvider({ children }) {
   const showIntro = useCallback(() => setIntroOpen(true), [])
   const closeIntro = useCallback(() => setIntroOpen(false), [])
   const startTour = useCallback(() => {
+    // The tour walks the sample venue, so a signed-out visitor is signed in to the demo.
+    ensureDemoSession()
     setIntroOpen(false)
     setTourStep(0)
     router.push(TOUR_STEPS[0].path)

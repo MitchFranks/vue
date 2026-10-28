@@ -4,7 +4,7 @@
 // The signed-in person at the bottom of the sidebar, as a menu button.
 //
 // The button shows initials, name and role; it opens a small pop-out upward
-// with two links: Account and Settings. Behaves like a menu:
+// with links to Account, Venue profile and Settings, then Reset and Sign out. Behaves like a menu:
 // aria-haspopup / aria-expanded on the button, closes on outside click, Esc,
 // Tab out and choosing an item, and focus returns to the button. Arrow keys,
 // Home and End move between items; Tab and Enter work as normal.
@@ -16,10 +16,12 @@ import { cx } from '@/lib/cx'
 import { venue } from '@/lib/mock/events'
 import { Avatar, Icon } from './ui/primitives'
 import { usePrototypeReset } from '@/lib/usePrototypeReset'
+import { endSession, IS_SAMPLE_WORKSPACE } from '@/lib/account/session'
 
 const ITEMS = [
   { href: '/', label: 'Welcome page', icon: 'home' },
   { href: '/account', label: 'Account', icon: 'user' },
+  { href: '/settings/venue', label: 'Venue profile', icon: 'home' },
   { href: '/settings', label: 'Settings', icon: 'settings' }
 ]
 
@@ -72,9 +74,12 @@ export function AccountMenu() {
 
   return (
     <div ref={wrap} className="relative">
-      <p className="mb-2 rounded-sm border border-line bg-surface-sunken px-2 py-1.5 text-label leading-snug text-ink-muted">
-        Need a fresh start? Open this menu and choose &ldquo;Reset prototype data.&rdquo;
-      </p>
+      {/* A tip for people testing the demo; an own workspace doesn't need it. */}
+      {IS_SAMPLE_WORKSPACE && (
+        <p className="mb-2 rounded-sm border border-line bg-surface-sunken px-2 py-1.5 text-label leading-snug text-ink-muted">
+          Need a fresh start? Open this menu and choose &ldquo;Reset prototype data.&rdquo;
+        </p>
+      )}
       <button
         ref={button}
         type="button"
@@ -128,7 +133,18 @@ export function AccountMenu() {
                 className="flex h-9 w-full items-center gap-3 rounded-sm px-3 text-left text-small font-medium text-status-now transition-colors hover:bg-status-now-soft focus-visible:bg-status-now-soft focus-visible:outline-offset-0"
               >
                 <Icon name="refresh" size={15} />
-                Reset prototype data
+                {IS_SAMPLE_WORKSPACE ? 'Reset prototype data' : 'Reset workspace data'}
+              </button>
+            </li>
+            <li role="none" className="mt-1 border-t border-line pt-1">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => endSession()}
+                className="flex h-9 w-full items-center gap-3 rounded-sm px-3 text-left text-small font-medium text-ink transition-colors hover:bg-surface-sunken focus-visible:bg-surface-sunken focus-visible:outline-offset-0"
+              >
+                <Icon name="arrowLeft" size={15} className="text-ink-muted" />
+                Sign out
               </button>
             </li>
           </ul>

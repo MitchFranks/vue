@@ -15,12 +15,13 @@
 // tells every screen that reads a store to draw again.
 // ---------------------------------------------------------------------------
 
+import { scopedKey } from '@/lib/account/session'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { events } from '@/lib/mock/events'
 import { timelines } from '@/lib/mock/records'
 import { WORLD } from '@/lib/staffing/adapter'
 
-const RUN_KEY = 'vue-run-of-show-v2'
+const RUN_KEY = scopedKey('vue-run-of-show-v2')
 
 const Ctx = createContext({ version: 0, rowsFor: () => [], setRows: () => {}, resetEvent: () => {}, resetAll: () => {} })
 
