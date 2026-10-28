@@ -11,6 +11,7 @@
 // ---------------------------------------------------------------------------
 
 import { useTimelineVersion } from '@/lib/timelineEdits'
+import { useDirectoryVersion } from '@/lib/directory/store'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { WORLD, makeGuest, registerPerson, seedState, syncPeople } from './adapter'
 import {
@@ -581,6 +582,7 @@ function sentToast(ids, st) {
 export function useStaffing2() {
   const ctx = useContext(Ctx)
   useTimelineVersion() // draw again after a timeline edit
+  useDirectoryVersion() // ...and after a staff edit in the directory
   if (!ctx) throw new Error('useStaffing2 must be used inside Staffing2Provider')
   return ctx
 }

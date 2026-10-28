@@ -1,6 +1,7 @@
 'use client'
 
 // Settings: only things that really work in the prototype.
+//   Venue profile          the venue's name, address and main contact (/settings/venue)
 //   Goal & notice          reopen the first-load modal
 //   Hidden Up Next items   bring back everything hidden with "Hide"
 //   Reset prototype data   put every screen back to its starting state (asks first)
@@ -11,11 +12,13 @@ import { useStore } from '@/lib/store'
 import { useOnboarding } from '@/components/onboarding/OnboardingProvider'
 import { Breadcrumbs, Button, Card, Icon, PageHeader } from '@/components/ui/primitives'
 import { usePrototypeReset } from '@/lib/usePrototypeReset'
+import { useDirectory } from '@/lib/directory/store'
 
 export default function SettingsPage() {
   const { showIntro } = useOnboarding()
   const { dismissedCount, restoreAllAttention, toast } = useStore()
   const { resetPrototype, dialog } = usePrototypeReset()
+  const { venue } = useDirectory()
 
   const showHidden = () => {
     restoreAllAttention()
@@ -28,6 +31,19 @@ export default function SettingsPage() {
       <PageHeader title="Settings" lead="Prototype controls." />
 
       <div className="max-w-2xl space-y-4">
+        <Card title="Venue profile" subtitle="Name, address and main contact details." icon="home">
+          <p className="text-body leading-relaxed text-ink">
+            {venue.name}
+            {venue.address.city && <span className="text-ink-muted"> · {[venue.address.city, venue.address.region].filter(Boolean).join(', ')}</span>}
+          </p>
+          <div className="mt-4">
+            <Button href="/settings/venue" variant="secondary" size="sm">
+              Edit venue profile
+              <Icon name="arrowRight" size={13} />
+            </Button>
+          </div>
+        </Card>
+
         <Card title="Your goal and the prototype notice" subtitle="The message shown when you first opened the prototype." icon="info">
           <p className="text-body leading-relaxed text-ink">
             Forgot what you are trying to do, or want to read the early-stage notice again? Your progress stays as it is.

@@ -16,7 +16,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cx } from '@/lib/cx'
 import { useStore } from '@/lib/store'
-import { venue } from '@/lib/mock/events'
+import { useDirectory } from '@/lib/directory/store'
 import { Button, Count, Icon } from './ui/primitives'
 import { ToastHost, openSpots } from './ui/domain'
 import { PrototypeNotice } from './onboarding/PrototypeNotice'
@@ -61,6 +61,7 @@ export function AppShell({ children }) {
   const pathname = usePathname()
   const [navOpen, setNavOpen] = useState(false)
   const { attention, openPositions, messageList, toasts, dismissToast } = useStore()
+  const { venue } = useDirectory()
   // The planner keeps its own toast (with Undo); both go in the one stack below.
   const planner = usePlannerToasts()
   const plannerIds = new Set(planner.toasts.map((t) => t.id))

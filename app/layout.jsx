@@ -4,6 +4,7 @@ import './globals.css'
 import { StoreProvider } from '@/lib/store'
 import { Staffing2Provider } from '@/lib/staffing/store'
 import { TimelineEditsProvider } from '@/lib/timelineEdits'
+import { DirectoryProvider } from '@/lib/directory/store'
 import { OnboardingProvider } from '@/components/onboarding/OnboardingProvider'
 
 // One family: Geist for all UI text, Geist Mono for times, money and counts
@@ -26,11 +27,14 @@ export default function RootLayout({ children }) {
       <body>
         <TimelineEditsProvider>
           {/* The planner sits outside the store so Up Next can be derived from it. */}
-          <Staffing2Provider>
-            <StoreProvider>
-              <OnboardingProvider>{children}</OnboardingProvider>
-            </StoreProvider>
-          </Staffing2Provider>
+          {/* The venue directory feeds the planner its staff, so it sits outside it. */}
+          <DirectoryProvider>
+            <Staffing2Provider>
+              <StoreProvider>
+                <OnboardingProvider>{children}</OnboardingProvider>
+              </StoreProvider>
+            </Staffing2Provider>
+          </DirectoryProvider>
         </TimelineEditsProvider>
       </body>
     </html>

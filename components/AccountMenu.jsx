@@ -4,7 +4,7 @@
 // The signed-in person at the bottom of the sidebar, as a menu button.
 //
 // The button shows initials, name and role; it opens a small pop-out upward
-// with two links: Account and Settings. Behaves like a menu:
+// with links to Account, Venue profile and Settings. Behaves like a menu:
 // aria-haspopup / aria-expanded on the button, closes on outside click, Esc,
 // Tab out and choosing an item, and focus returns to the button. Arrow keys,
 // Home and End move between items; Tab and Enter work as normal.
@@ -20,6 +20,7 @@ import { usePrototypeReset } from '@/lib/usePrototypeReset'
 const ITEMS = [
   { href: '/', label: 'Welcome page', icon: 'home' },
   { href: '/account', label: 'Account', icon: 'user' },
+  { href: '/settings/venue', label: 'Venue profile', icon: 'home' },
   { href: '/settings', label: 'Settings', icon: 'settings' }
 ]
 

@@ -2,25 +2,15 @@
 
 // SCREEN 15 — Staff Directory. The people view: who works here, their role
 // and how to reach them, with request counts read from the Staffing Planner.
-// Availability and away dates are planned in Staffing Planner > Team; each
-// profile links to that person there.
+// Staff are kept in the venue directory (lib/directory); weekly hours are
+// edited on each profile, away dates in Staffing Planner > Team.
 
-import { useState } from 'react'
-import { ROLES, staff } from '@/lib/mock/staff'
 import { TODAY_KEY } from '@/lib/mock/events'
-import {
-  Avatar,
-  Breadcrumbs,
-  Button,
-  Card,
-  EmptyState,
-  Icon,
-  ListRow,
-  PageHeader,
-  Select,
-  StatusBadge,
-  TextInput
-} from '@/components/ui/primitives'
+import { Avatar, Breadcrumbs, Button, Icon, ListRow, PageHeader, StatusBadge } from '@/components/ui/primitives'
+import { EntityList, ListToolbar, RecordStatusBadge, useListFilters } from '@/components/ui/records'
+import { ManageOptionsButton } from '@/components/directory/ManageOptions'
+import { availabilitySummary, fullName, initialsOf, matchesQuery, optionName, staffHref, STATUS_FILTERS } from '@/lib/directory/model'
+import { useDirectory } from '@/lib/directory/store'
 import { WORLD } from '@/lib/staffing/adapter'
 import { requestList } from '@/lib/staffing/derive'
 import { useStaffing2 } from '@/lib/staffing/store'
@@ -37,103 +27,93 @@ function countsFor(staffId, st) {
 
 export default function StaffDirectoryPage() {
   const { state, hydrated } = useStaffing2()
-  const [role, setRole] = useState('All roles')
-  const [query, setQuery] = useState('')
+  const { staff, roles } = useDirectory()
+  const filters = useListFilters({ query: '', role: 'all', status: 'active' })
+  const { query, role, status } = filters.values
 
-  const people = staff.map((p) => WORLD.staffMap[p.id] || { ...p, roles: [p.role] })
-  const filtered = people.filter(
-    (p) =>
-      (role === 'All roles' || p.roles.includes(role)) &&
-      (query.trim() === '' || p.name.toLowerCase().includes(query.toLowerCase()))
-  )
+  const roleNames = (p) => p.roleIds.map((id) => optionName(roles, id)).filter(Boolean)
+  const filtered = staff
+    .filter(
+      (p) =>
+        (status === 'all' || p.status === status) &&
+        (role === 'all' || p.roleIds.includes(role)) &&
+        matchesQuery(query, [fullName(p), p.email, p.phone, ...roleNames(p), ...(p.skills || [])])
+    )
+    .sort((a, b) => fullName(a).localeCompare(fullName(b)))
 
   return (
     <div>
       <Breadcrumbs items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Staff Directory' }]} />
       <PageHeader
         title="Staff directory"
-        lead="Everyone who works here and how to reach them. Open a person for their profile and the events they've been asked to work."
+        lead="Everyone who works here and how to reach them. Open a person for their profile, weekly hours and the events they've been asked to work."
         actions={
-          <Button href="/staffing/team" variant="secondary" size="md" data-guide="view-availability">
-            <Icon name="clock" size={14} />
-            Availability and away dates
-          </Button>
+          <>
+            <Button href="/staffing/team" variant="secondary" size="md" data-guide="view-availability">
+              <Icon name="clock" size={14} />
+              Availability and away dates
+            </Button>
+            <ManageOptionsButton kind="roles" />
+            <Button href="/staff/new" variant="primary">
+              <Icon name="plus" size={14} />
+              Add staff member
+            </Button>
+          </>
         }
       />
 
-      <div className="mb-4 flex flex-wrap items-end gap-2">
-        <TextInput
-          label="Search"
-          id="staff-search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Name"
-          className="min-w-[180px] flex-1"
-        />
-        <Select
-          label="Role"
-          id="staff-role"
-          options={['All roles', ...ROLES]}
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-        />
-      </div>
+      <ListToolbar
+        search={{ id: 'staff-search', placeholder: 'Name, email, phone or skill', value: query, onChange: filters.set('query') }}
+        filters={[
+          { id: 'staff-role', label: 'Role', options: [{ value: 'all', label: 'All roles' }, ...roles.map((r) => ({ value: r.id, label: r.name }))], value: role, onChange: filters.set('role') },
+          { id: 'staff-status', label: 'Status', options: STATUS_FILTERS, value: status, onChange: filters.set('status') }
+        ]}
+      />
 
-      {filtered.length === 0 ? (
-        <EmptyState
-          title="No one matches"
-          body="Try a different role or clear the search."
-          action={
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                setRole('All roles')
-                setQuery('')
-              }}
-            >
-              Clear filters
-            </Button>
-          }
-        />
-      ) : (
-        <Card bodyClassName="px-0 py-0">
-          {filtered.map((person) => {
-            const n = hydrated ? countsFor(person.id, state) : null
-            return (
-              <ListRow
-                key={person.id}
-                href={`/staff/${person.id}`}
-                leading={<Avatar initials={person.initials} />}
-                title={person.name}
-                sub={`${person.roles.join(' · ')} · ${person.phone}`}
-                meta={person.email}
-                trailing={
-                  n && (
-                    <div className="hidden gap-1.5 sm:flex">
-                      {n.confirmed > 0 && (
-                        <StatusBadge tone="done" size="sm">
-                          {n.confirmed} confirmed
-                        </StatusBadge>
-                      )}
-                      {n.waiting > 0 && (
-                        <StatusBadge tone="pending" size="sm">
-                          {n.waiting} waiting
-                        </StatusBadge>
-                      )}
-                      {n.declined > 0 && (
-                        <StatusBadge tone="declined" size="sm">
-                          {n.declined} can&apos;t make it
-                        </StatusBadge>
-                      )}
-                    </div>
-                  )
-                }
-              />
-            )
-          })}
-        </Card>
-      )}
+      <EntityList
+        items={filtered}
+        emptyTitle="No one matches"
+        emptyBody="Try a different role or status, or clear the search."
+        onClear={filters.clear}
+        renderRow={(person) => {
+          const n = hydrated ? countsFor(person.id, state) : null
+          return (
+            <ListRow
+              key={person.id}
+              href={staffHref(person.id)}
+              leading={<Avatar initials={initialsOf(person)} />}
+              title={fullName(person)}
+              sub={[roleNames(person).join(' · '), person.phone].filter(Boolean).join(' · ')}
+              meta={[person.email, availabilitySummary(person)].filter(Boolean).join(' · ')}
+              trailing={
+                <div className="hidden gap-1.5 sm:flex">
+                  {person.status === 'inactive' && <RecordStatusBadge status="inactive" size="sm" />}
+                  {person.availabilityStatus === 'pending' && (
+                    <StatusBadge tone="pending" size="sm">
+                      Hours pending
+                    </StatusBadge>
+                  )}
+                  {n?.confirmed > 0 && (
+                    <StatusBadge tone="done" size="sm">
+                      {n.confirmed} confirmed
+                    </StatusBadge>
+                  )}
+                  {n?.waiting > 0 && (
+                    <StatusBadge tone="pending" size="sm">
+                      {n.waiting} waiting
+                    </StatusBadge>
+                  )}
+                  {n?.declined > 0 && (
+                    <StatusBadge tone="declined" size="sm">
+                      {n.declined} can&apos;t make it
+                    </StatusBadge>
+                  )}
+                </div>
+              }
+            />
+          )
+        }}
+      />
     </div>
   )
 }
