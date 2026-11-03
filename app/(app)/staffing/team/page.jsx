@@ -10,18 +10,18 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { cx } from '@/lib/cx'
-import { Avatar, Button, Card, EmptyState, Icon, PageHeader, StatusBadge } from '@/components/ui/primitives'
-import { Staffing2Nav, SkeletonCards } from '@/components/staffing/Nav'
+import { Avatar, Button, Card, EmptyState, Icon, PageHeader, StatusBadge } from '@/components/ui'
+import { StaffingNav, SkeletonCards } from '@/components/staffing/Nav'
 import { AwayDateForm } from '@/components/staffing/AwayDateForm'
 import { WORLD } from '@/lib/staffing/adapter'
 import { awayDateText, dayStartMin, monthDay, next30, usuallyFreeText } from '@/lib/staffing/derive'
-import { useStaffing2 } from '@/lib/staffing/store'
+import { useStaffing } from '@/lib/staffing/store'
 import { TODAY_KEY } from '@/lib/mock/events'
 import { staffHref } from '@/lib/directory/model'
 
 function TeamList() {
   const params = useSearchParams()
-  const { state, hydrated, removeAway } = useStaffing2()
+  const { state, hydrated, removeAway } = useStaffing()
   const [open, setOpen] = useState(null)
   const handled = useRef(null)
   const rowRefs = useRef({})
@@ -141,14 +141,14 @@ function TeamList() {
   )
 }
 
-export default function Staffing2TeamPage() {
+export default function StaffingTeamPage() {
   return (
     <div>
       <PageHeader
         title="Team"
         lead="For planning: when each person is usually free, how busy they are over the next 30 days, and the dates they can't work. Contact details are in the Staff Directory."
       />
-      <Staffing2Nav />
+      <StaffingNav />
       <Suspense fallback={<SkeletonCards count={4} />}>
         <TeamList />
       </Suspense>

@@ -11,10 +11,12 @@
 // ---------------------------------------------------------------------------
 
 import { scopedKey } from '@/lib/account/session'
+import { newId } from '@/lib/id'
 import { useTimelineVersion } from '@/lib/timelineEdits'
 import { useDirectoryVersion } from '@/lib/directory/store'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { WORLD, makeGuest, registerPerson, seedState, syncPeople } from './adapter'
+import { hourLabel } from '@/lib/format'
 import {
   activeRequest,
   blockById,
@@ -24,7 +26,6 @@ import {
   coverage,
   evaluate,
   firstName,
-  fmtH,
   isShortNotice,
   messageText,
   minToIso,
@@ -186,7 +187,7 @@ export function applyAnswer(st, id, yes, reason) {
     r.callOffsetMin = offset
     r.sent = { blockIds: [...r.blockIds], callOffsetMin: offset }
     r.status = 'accepted'
-    log(st, ev.id, `${name} can't do the change; still on from ${fmtH(callTimeH(r, ev))}`)
+    log(st, ev.id, `${name} can't do the change; still on from ${hourLabel(callTimeH(r, ev))}`)
     return 'reverted'
   }
   r.status = 'declined'
@@ -216,8 +217,11 @@ function dropDeletedBlocks(st) {
 /* -------------------------------------------------------------- context --- */
 
 const Ctx = createContext(null)
+// The planner's one toast lives in its own context, so showing or dismissing
+// it re-renders only the toast stack, not every useStaffing() reader.
+const ToastCtx = createContext(null)
 
-export function Staffing2Provider({ children }) {
+export function StaffingProvider({ children }) {
   const [state, setState] = useState(freshState)
   const stateRef = useRef(state)
   const [hydrated, setHydrated] = useState(false)
@@ -238,6 +242,7 @@ export function Staffing2Provider({ children }) {
       if (raw) {
         const parsed = JSON.parse(raw)
         if (parsed && parsed.version === 1 && parsed.requests) next = parsed
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- reads browser-only state after the first render so the static HTML and first render match
         else setLoadError(true)
       }
     } catch {
@@ -261,7 +266,7 @@ export function Staffing2Provider({ children }) {
     }
   }, [state, hydrated])
 
-  const showToast = useCallback((t) => setToast({ id: Math.random().toString(36).slice(2), ...t }), [])
+  const showToast = useCallback((t) => setToast({ id: newId('toast'), ...t }), [])
   // Pass the toast's id so a toast that replaced it (say "Undone.") stays up.
   const dismissToast = useCallback((id) => setToast((t) => (id == null || t?.id === id ? null : t)), [])
 
@@ -523,7 +528,7 @@ export function Staffing2Provider({ children }) {
         setState(next)
         setLoadError(false)
         setUndoSlot(undoable ? { state: prev } : null)
-        setToast(notify ? { id: `reset-${Date.now()}`, message: 'Sample data restored.', undo: true } : null)
+        setToast(notify ? { id: newId('reset'), message: 'Sample data restored.', undo: true } : null)
         setPhoneFor(null)
       },
       undo() {
@@ -533,14 +538,16 @@ export function Staffing2Provider({ children }) {
         syncPeople(slot.state.people)
         stateRef.current = slot.state
         setState(slot.state)
-        setToast({ id: `undone-${Date.now()}`, message: 'Undone.' })
+        setToast({ id: newId('undone'), message: 'Undone.' })
       }
     }
-  }, [commit, showToast, setUndoSlot])
+  }, [commit, setUndoSlot])
 
   // A deleted timeline block can still be named in saved requests. Hide those
   // references so nothing reads a block that is gone.
   const timelineVersion = useTimelineVersion()
+  // dropDeletedBlocks reads the live run of show, so it runs again after an edit.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- timelineVersion is the signal that the run of show changed
   const safeState = useMemo(() => dropDeletedBlocks(state), [state, timelineVersion])
 
   const value = useMemo(
@@ -549,7 +556,6 @@ export function Staffing2Provider({ children }) {
       hydrated,
       loadError,
       canUndo: !!undoSlot,
-      toast,
       dismissToast,
       showToast,
       phoneFor,
@@ -557,10 +563,14 @@ export function Staffing2Provider({ children }) {
       closePhone: () => setPhoneFor(null),
       ...actions
     }),
-    [safeState, hydrated, loadError, undoSlot, toast, dismissToast, showToast, phoneFor, actions]
+    [safeState, hydrated, loadError, undoSlot, dismissToast, showToast, phoneFor, actions]
   )
 
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>
+  return (
+    <Ctx.Provider value={value}>
+      <ToastCtx.Provider value={toast}>{children}</ToastCtx.Provider>
+    </Ctx.Provider>
+  )
 }
 
 function replyToast(name, res) {
@@ -580,12 +590,15 @@ function sentToast(ids, st) {
   }
 }
 
-export function useStaffing2() {
+export function useStaffing() {
   const ctx = useContext(Ctx)
   useTimelineVersion() // draw again after a timeline edit
   useDirectoryVersion() // ...and after a staff edit in the directory
-  if (!ctx) throw new Error('useStaffing2 must be used inside Staffing2Provider')
+  if (!ctx) throw new Error('useStaffing must be used inside StaffingProvider')
   return ctx
 }
+
+/** The planner's current toast, or null. Only the toast stack needs this. */
+export const usePlannerToast = () => useContext(ToastCtx)
 
 export { overdue }

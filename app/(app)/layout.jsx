@@ -1,4 +1,4 @@
-import { AppShell } from '@/components/AppShell'
+import { AppShell } from '@/components/layout/AppShell'
 import { RequireAccount } from '@/components/account/RequireAccount'
 
 // Everything inside the (app) route group is the product itself and gets the

@@ -22,7 +22,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { cx } from '@/lib/cx'
-import { Icon } from './primitives'
+import { Icon } from './Icon'
 
 const MAX_SHOWN = 50
 
@@ -59,13 +59,13 @@ export function SearchPicker({
   )
   const shown = matches.slice(0, MAX_SHOWN)
 
-  useEffect(() => setActive(0), [q])
-
   // A sheet closes on Escape through a native listener, which runs before
   // React's. So while the list is open, Escape must be stopped here, natively,
   // to close only the list.
   const openRef = useRef(open)
-  openRef.current = open
+  useEffect(() => {
+    openRef.current = open
+  }, [open])
   useEffect(() => {
     const input = inputRef.current
     const stop = (e) => {
@@ -89,6 +89,7 @@ export function SearchPicker({
     if (option.disabled && !value.includes(option.value)) return
     onChange(value.includes(option.value) ? value.filter((v) => v !== option.value) : [...value, option.value])
     setQuery('')
+    setActive(0)
     inputRef.current?.focus()
   }
 
@@ -113,7 +114,6 @@ export function SearchPicker({
   }
 
   // Group headings appear only when the options carry groups.
-  let lastGroup = null
 
   return (
     <div className={className} ref={rootRef}>
@@ -166,6 +166,8 @@ export function SearchPicker({
           placeholder={selected.length ? '' : placeholder}
           onChange={(e) => {
             setQuery(e.target.value)
+            // A new search starts with its first match highlighted.
+            setActive(0)
             setOpen(true)
           }}
           onFocus={() => setOpen(true)}
@@ -193,8 +195,8 @@ export function SearchPicker({
           {shown.map((o, i) => {
             const on = value.includes(o.value)
             const blocked = o.disabled && !on
-            const heading = o.group && o.group !== lastGroup ? o.group : null
-            lastGroup = o.group
+            // A group heading above the first option of each group.
+            const heading = o.group && o.group !== shown[i - 1]?.group ? o.group : null
             return (
               <li key={o.value} role="presentation">
                 {heading && (

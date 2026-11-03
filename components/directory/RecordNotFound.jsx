@@ -1,4 +1,4 @@
-import { Button, EmptyState } from '@/components/ui/primitives'
+import { Button, EmptyState } from '@/components/ui'
 
 /** A missing ?id= record: say so and offer the way back (no dead ends). */
 export function RecordNotFound({ noun, backHref, backLabel }) {

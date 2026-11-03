@@ -8,10 +8,11 @@
 
 import { useEffect } from 'react'
 import { firstName } from '@/lib/staffing/derive'
-import { useStaffing2 } from '@/lib/staffing/store'
+import { usePlannerToast, useStaffing } from '@/lib/staffing/store'
 
 export function usePlannerToasts() {
-  const { toast, dismissToast, canUndo, undo, openPhone } = useStaffing2()
+  const toast = usePlannerToast()
+  const { dismissToast, canUndo, undo, openPhone } = useStaffing()
 
   useEffect(() => {
     if (!toast) return undefined

@@ -5,7 +5,7 @@
 // it saves (resolveOption below), or reuses one that already has the name.
 // Used by the staff form (roles) and the vendor form (categories).
 
-import { Select, TextInput } from '@/components/ui/primitives'
+import { Select, TextInput } from '@/components/ui'
 import { CUSTOM_OPTION } from '@/lib/directory/model'
 import { useDirectory } from '@/lib/directory/store'
 

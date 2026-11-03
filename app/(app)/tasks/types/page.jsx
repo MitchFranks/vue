@@ -18,8 +18,7 @@
 import { useState } from 'react'
 import { useStore } from '@/lib/store'
 import { SYSTEM_TASK_TYPES, TASK_TYPE_MAX } from '@/lib/tasks'
-import { Modal } from '@/components/ui/domain'
-import { Breadcrumbs, Button, Card, Icon, PageHeader, Select, StatusBadge, TextInput } from '@/components/ui/primitives'
+import { Breadcrumbs, Button, Card, Icon, Modal, PageHeader, Select, StatusBadge, TextInput } from '@/components/ui'
 
 function TypeRow({ name, count, locked, editing, onEdit, onCancel, onRename, onDelete }) {
   const [draft, setDraft] = useState(name)

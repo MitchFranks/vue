@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation'
 import { useDirectory } from '@/lib/directory/store'
 import { useStore } from '@/lib/store'
 import { blankVendor, STATUS_OPTIONS, trimStrings, validateVendor, vendorHref } from '@/lib/directory/model'
-import { Select, TextInput, Textarea } from '@/components/ui/primitives'
-import { FormSection, RecordForm, useRecordForm, Wide } from '@/components/ui/records'
+import { Select, Textarea, TextInput } from '@/components/ui'
+import { FormSection, RecordForm, useRecordForm, Wide } from '@/components/records'
 import { OptionSelect, useResolveOption } from './OptionSelect'
 
 export function VendorForm({ vendor }) {

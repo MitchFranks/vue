@@ -12,7 +12,7 @@ look alike.*
 
 **Proximity.** On every event tab, the four facts a venue manager is asked for constantly — date,
 schedule, guests (expected and guaranteed), spaces — sit in one strip directly under the event
-name (`components/EventHeader.jsx`). Each task keeps its event, block and time on one line
+name (`components/events/EventHeader.jsx`). Each task keeps its event, block and time on one line
 above the title, and its What / Why directly underneath.
 
 **Common region.** Every card is a bordered region on a grey page, and each card holds exactly one

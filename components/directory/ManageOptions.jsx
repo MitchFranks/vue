@@ -10,8 +10,7 @@
 import { useState } from 'react'
 import { useDirectory } from '@/lib/directory/store'
 import { useStore } from '@/lib/store'
-import { Button, Icon, TextInput } from '@/components/ui/primitives'
-import { Modal } from '@/components/ui/domain'
+import { Button, Icon, Modal, TextInput } from '@/components/ui'
 
 const COPY = {
   roles: {

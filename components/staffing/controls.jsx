@@ -4,8 +4,9 @@
 // toggle chips, the call-time select and quick-pick reason chips. All built
 // from the design library's FilterChip and Select.
 
-import { FilterChip, Select } from '@/components/ui/primitives'
-import { fmtH, rangeLabel } from '@/lib/staffing/derive'
+import { FilterChip, Select } from '@/components/ui'
+import { hourLabel } from '@/lib/format'
+import { rangeLabel } from '@/lib/staffing/derive'
 
 export function BlockToggles({ blocks, selected, onChange, gaps = {}, label = 'Working' }) {
   const toggle = (id) => {
@@ -29,7 +30,7 @@ export function BlockToggles({ blocks, selected, onChange, gaps = {}, label = 'W
 export const CALL_OFFSETS = [0, -15, -30, -60]
 
 export function callOptionLabel(offset, startH) {
-  const t = fmtH(startH + offset / 60)
+  const t = hourLabel(startH + offset / 60)
   if (offset === 0) return `On time (${t})`
   if (offset === -60) return `1 hour early (${t})`
   return `${-offset} min early (${t})`

@@ -10,8 +10,8 @@
 import { Suspense, use, useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { pluralRole } from '@/lib/mock/staff'
-import { Alert, Breadcrumbs, Button, EmptyState, Icon, PageHeader, StatusBadge } from '@/components/ui/primitives'
-import { openSpots } from '@/components/ui/domain'
+import { Alert, Breadcrumbs, Button, EmptyState, Icon, PageHeader, StatusBadge } from '@/components/ui'
+import { openSpots } from '@/lib/format'
 import { SkeletonCards } from '@/components/staffing/Nav'
 import { BlockCard } from '@/components/staffing/RoleCard'
 import { TimeChart } from '@/components/staffing/TimeChart'
@@ -33,7 +33,7 @@ import {
   stampLabel,
   weekdayOf
 } from '@/lib/staffing/derive'
-import { useStaffing2 } from '@/lib/staffing/store'
+import { useStaffing } from '@/lib/staffing/store'
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
 const theName = (name) => (/^the /i.test(name) ? name : `The ${name}`)
@@ -52,7 +52,7 @@ function firstOpenRole(base, st) {
 
 function Crew({ eventId }) {
   const params = useSearchParams()
-  const store = useStaffing2()
+  const store = useStaffing()
   const { state, hydrated } = store
   const [ask, setAsk] = useState(null)
   const [review, setReview] = useState(null)
@@ -96,6 +96,7 @@ function Crew({ eventId }) {
     const role = roleParam && eventRoles(eventId, state).includes(roleParam) ? roleParam : null
     if (params.get('send')) {
       const ids = s.unsent.length ? s.unsent.map((r) => r.id) : s.overdueRs.map((r) => r.id)
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- a deep link (?send=, ?ask=) opens its dialog once the saved planner state has loaded
       if (ids.length) setReview({ ids })
       return
     }
@@ -378,7 +379,7 @@ function Crew({ eventId }) {
   )
 }
 
-export default function Staffing2EventPage({ params }) {
+export default function StaffingEventPage({ params }) {
   const { eventId } = use(params)
   return (
     <Suspense fallback={null}>

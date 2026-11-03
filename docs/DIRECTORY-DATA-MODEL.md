@@ -4,7 +4,7 @@ The venue profile, staff, staff roles, vendors and vendor categories a manager s
 
 - Code: `lib/directory/model.js` (shapes, helpers, seed), `lib/directory/store.jsx` (state + localStorage key `vue-directory-v1`)
 - Seed data: `lib/mock/directory.js`, plus the existing staff and vendors from `lib/mock/staff.js` and `lib/mock/records.js`
-- Shared UI: `components/ui/records.jsx` and `components/directory/*`
+- Shared UI: `components/records/*` and `components/directory/*`
 
 ## Relationships
 

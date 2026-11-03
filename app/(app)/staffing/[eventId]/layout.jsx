@@ -5,6 +5,6 @@ export function generateStaticParams() {
   return events.map((e) => ({ eventId: e.id }))
 }
 
-export default function Staffing2EventLayout({ children }) {
+export default function StaffingEventLayout({ children }) {
   return children
 }

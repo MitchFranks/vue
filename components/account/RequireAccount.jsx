@@ -47,9 +47,10 @@ export function RequireAccount({ children }) {
         managerPhone: account.phone || ''
       })
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the session is only readable in the browser; the gate opens once it has been checked
     setReady(true)
     // Checked once per load: signing in or out always reloads the page.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once; signing in or out reloads the page
   }, [])
 
   return ready ? children : <div className="min-h-screen bg-canvas" aria-busy="true" />

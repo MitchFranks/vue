@@ -3,29 +3,29 @@
 // Sign in. Three ways in: your own account, the demo (sample venue, shared
 // credentials shown on the page), or create an account from scratch.
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Alert, Button, Card, Icon, TextInput } from '@/components/ui/primitives'
-import { useRecordForm } from '@/components/ui/records'
+import { Alert, Button, Card, Icon, TextInput } from '@/components/ui'
+import { useRecordForm } from '@/components/records'
 import { AuthLayout, LocalAccountsNote } from '@/components/account/AuthLayout'
 import { checkPassword, currentAccount, DEMO_ACCOUNT, endSession, startSession } from '@/lib/account/session'
 import { validate } from '@/lib/directory/model'
+import { useIsClient } from '@/lib/useIsClient'
 
 /** Only same-site paths, so ?next= can't send anyone elsewhere. */
 const safeNext = (next) => (next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard')
 
 function SignIn() {
   const next = safeNext(useSearchParams().get('next'))
-  const [signedIn, setSignedIn] = useState(null)
+  // The account lives in localStorage, so it is only known in the browser.
+  const signedIn = useIsClient() ? currentAccount() : null
   const [failed, setFailed] = useState(false)
   const [busy, setBusy] = useState(false)
   const form = useRecordForm(
     { login: '', password: '' },
     { idPrefix: 'login', validate: (v) => validate(v, { required: { login: 'Enter your email.', password: 'Enter your password.' } }) }
   )
-
-  useEffect(() => setSignedIn(currentAccount()), [])
 
   const signIn = form.submit(async ({ login, password }) => {
     setBusy(true)

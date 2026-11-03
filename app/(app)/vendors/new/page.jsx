@@ -2,7 +2,7 @@
 
 // Add a vendor.
 
-import { Breadcrumbs, PageHeader } from '@/components/ui/primitives'
+import { Breadcrumbs, PageHeader } from '@/components/ui'
 import { VendorForm } from '@/components/directory/VendorForm'
 
 export default function NewVendorPage() {

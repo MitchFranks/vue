@@ -9,9 +9,9 @@
 
 import { useEffect, useState } from 'react'
 import { venue } from '@/lib/mock/events'
-import { Modal } from '@/components/ui/domain'
-import { Avatar, Button, FilterChip, Icon, StatusBadge, Textarea } from '@/components/ui/primitives'
+import { Avatar, Button, FilterChip, Icon, Modal, StatusBadge, Textarea } from '@/components/ui'
 import { WORLD } from '@/lib/staffing/adapter'
+import { hourLabel } from '@/lib/format'
 import {
   MANAGER,
   awayDateText,
@@ -21,12 +21,11 @@ import {
   displayStatus,
   doneH,
   firstName,
-  fmtH,
   spaceLabel,
   stampLabel,
   staffById
 } from '@/lib/staffing/derive'
-import { useStaffing2 } from '@/lib/staffing/store'
+import { useStaffing } from '@/lib/staffing/store'
 import { TODAY_KEY } from '@/lib/mock/events'
 import { AwayDateForm } from './AwayDateForm'
 import { PickChips } from './controls'
@@ -50,7 +49,7 @@ function ViewChips({ value, onChange }) {
 }
 
 function ReplyPage({ requestId, onDone }) {
-  const { state, answer, markSeen } = useStaffing2()
+  const { state, answer, markSeen } = useStaffing()
   const r = state.requests[requestId]
   const [mode, setMode] = useState('ask') // ask | no | result
   const [reason, setReason] = useState('')
@@ -60,13 +59,13 @@ function ReplyPage({ requestId, onDone }) {
   useEffect(() => {
     markSeen(requestId)
     // Only on open: opening the reply page records "seen".
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- record "seen" once per opened request
   }, [requestId])
 
   if (!r) return null
   const ev = WORLD.eventMap[r.eventId]
   const bs = blocksOfRequest(r, ev)
-  const call = fmtH(callTimeH(r, ev))
+  const call = hourLabel(callTimeH(r, ev))
 
   if (mode === 'result') {
     return (
@@ -112,7 +111,7 @@ function ReplyPage({ requestId, onDone }) {
         </div>
         <div className="flex gap-2">
           <dt className="w-24 shrink-0 text-ink-muted">Done about</dt>
-          <dd className="text-ink">{fmtH(doneH(r, ev))}</dd>
+          <dd className="text-ink">{hourLabel(doneH(r, ev))}</dd>
         </div>
         <div className="flex gap-2">
           <dt className="w-24 shrink-0 text-ink-muted">Working</dt>
@@ -175,7 +174,7 @@ function ReplyPage({ requestId, onDone }) {
 }
 
 function MyDates({ staffId }) {
-  const { state, dropOut, removeAway } = useStaffing2()
+  const { state, dropOut, removeAway } = useStaffing()
   const [confirming, setConfirming] = useState(null)
   const [reason, setReason] = useState('')
   const today = dayStartMin(TODAY_KEY)
@@ -199,7 +198,7 @@ function MyDates({ staffId }) {
                   <div className="min-w-0">
                     <p className="text-small font-medium text-ink">{ev.name}</p>
                     <p className="text-label text-ink-muted">
-                      {ev.dateShort} · {r.role} · call {fmtH(callTimeH(r, ev))}, done about {fmtH(doneH(r, ev))}
+                      {ev.dateShort} · {r.role} · call {hourLabel(callTimeH(r, ev))}, done about {hourLabel(doneH(r, ev))}
                     </p>
                   </div>
                   <StatusBadge tone={s.tone} size="sm">
@@ -259,32 +258,21 @@ function MyDates({ staffId }) {
   )
 }
 
+/**
+ * One person's prototype phone, wired to the planner. Callers pass
+ * key={staffId} so switching person starts on the Texts tab with nothing open.
+ */
 export function StaffPhone({ staffId }) {
-  const { state } = useStaffing2()
+  const { state } = useStaffing()
   const [tab, setTab] = useState('texts')
   const [replyTo, setReplyTo] = useState(null)
   const person = staffById(staffId)
-
-  useEffect(() => {
-    setReplyTo(null)
-    setTab('texts')
-  }, [staffId])
 
   if (!person) return null
   const texts = state.messages.filter((m) => m.staffId === staffId)
 
   return (
-    <div className="surface-card mx-auto flex w-full max-w-[360px] flex-col border-dashed border-line-strong sm:min-h-[640px]">
-      <p className="border-b border-dashed border-line-strong px-4 py-2 text-label text-ink-muted">
-        <span className="font-medium text-ink">Prototype only:</span> this pretends to be {firstName(staffId)}&apos;s phone.
-      </p>
-      <div className="flex items-center gap-2 border-b border-line px-4 py-3">
-        <Avatar initials={person.initials} size="sm" />
-        <div className="min-w-0">
-          <p className="text-small font-medium text-ink">{person.name}</p>
-          <p className="text-label text-ink-muted">{person.phone}</p>
-        </div>
-      </div>
+    <PhoneFrame person={person}>
       <div className="px-4 pt-3">
         <ViewChips
           value={tab}
@@ -298,44 +286,79 @@ export function StaffPhone({ staffId }) {
         {tab === 'texts' ? (
           replyTo ? (
             <ReplyPage requestId={replyTo} onDone={() => setReplyTo(null)} />
-          ) : !texts.length ? (
-            <p className="py-10 text-center text-small text-ink-muted">
-              No texts yet. When {MANAGER.first} asks {firstName(staffId)} to work, the text shows up here.
-            </p>
           ) : (
-            <ul className="space-y-3">
-              {texts.map((m) => {
-                const r = state.requests[m.requestId]
-                const canAnswer = ASKS.includes(m.kind) && r?.status === 'pending' && texts.find((x) => x.requestId === m.requestId && ASKS.includes(x.kind))?.id === m.id
-                return (
-                  <li key={m.id}>
-                    <p className="mb-1 text-label text-ink-muted">
-                      {venue.name} · {stampLabel(m.at)}
-                    </p>
-                    <div className="max-w-[92%] rounded-md bg-surface-sunken px-3 py-2.5 text-small leading-relaxed text-ink">
-                      {m.text}
-                      {canAnswer && (
-                        <Button size="sm" variant="primary" className="mt-2" onClick={() => setReplyTo(m.requestId)}>
-                          Tap to answer
-                        </Button>
-                      )}
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
+            <TextThread texts={texts} requests={state.requests} firstName={firstName(staffId)} venueName={venue.name} onAnswer={setReplyTo} />
           )
         ) : (
           <MyDates staffId={staffId} />
         )}
       </div>
+    </PhoneFrame>
+  )
+}
+
+/** The dashed "this pretends to be a phone" frame with the person's name and number. Props only. */
+export function PhoneFrame({ person, children }) {
+  return (
+    <div className="surface-card mx-auto flex w-full max-w-[360px] flex-col border-dashed border-line-strong sm:min-h-[640px]">
+      <p className="border-b border-dashed border-line-strong px-4 py-2 text-label text-ink-muted">
+        <span className="font-medium text-ink">Prototype only:</span> this pretends to be {person.name.split(' ')[0]}&apos;s phone.
+      </p>
+      <div className="flex items-center gap-2 border-b border-line px-4 py-3">
+        <Avatar initials={person.initials} size="sm" />
+        <div className="min-w-0">
+          <p className="text-small font-medium text-ink">{person.name}</p>
+          <p className="text-label text-ink-muted">{person.phone}</p>
+        </div>
+      </div>
+      {children}
     </div>
+  )
+}
+
+/**
+ * The venue's texts to one person, newest last. Only the latest ask for a
+ * request that is still waiting gets "Tap to answer". Props only.
+ *   texts     planner messages for this person
+ *   requests  planner requests by id
+ */
+export function TextThread({ texts, requests, firstName: first, venueName, onAnswer }) {
+  if (!texts.length) {
+    return (
+      <p className="py-10 text-center text-small text-ink-muted">
+        No texts yet. When {MANAGER.first} asks {first} to work, the text shows up here.
+      </p>
+    )
+  }
+  return (
+    <ul className="space-y-3">
+      {texts.map((m) => {
+        const r = requests[m.requestId]
+        const canAnswer =
+          ASKS.includes(m.kind) && r?.status === 'pending' && texts.find((x) => x.requestId === m.requestId && ASKS.includes(x.kind))?.id === m.id
+        return (
+          <li key={m.id}>
+            <p className="mb-1 text-label text-ink-muted">
+              {venueName} · {stampLabel(m.at)}
+            </p>
+            <div className="max-w-[92%] rounded-md bg-surface-sunken px-3 py-2.5 text-small leading-relaxed text-ink">
+              {m.text}
+              {canAnswer && (
+                <Button size="sm" variant="primary" className="mt-2" onClick={() => onAnswer(m.requestId)}>
+                  Tap to answer
+                </Button>
+              )}
+            </div>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 
 /** The same phone in a right-hand sheet, fixed to one person. */
 export function PhoneDrawer() {
-  const { phoneFor, closePhone } = useStaffing2()
+  const { phoneFor, closePhone } = useStaffing()
   const person = phoneFor ? staffById(phoneFor) : null
   return (
     <Modal
@@ -347,7 +370,7 @@ export function PhoneDrawer() {
       labelledBy="phone-drawer-title"
       width="sm:w-[420px]"
     >
-      {person && <StaffPhone staffId={person.id} />}
+      {person && <StaffPhone key={person.id} staffId={person.id} />}
     </Modal>
   )
 }

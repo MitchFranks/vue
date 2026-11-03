@@ -14,7 +14,7 @@
 // TaskBoard.jsx) works across all of them.
 // ---------------------------------------------------------------------------
 
-import { Breadcrumbs, Button, Icon, PageHeader } from '@/components/ui/primitives'
+import { Breadcrumbs, Button, Icon, PageHeader } from '@/components/ui'
 import { TaskBoard } from '@/components/tasks/TaskBoard'
 
 export default function TasksPage() {

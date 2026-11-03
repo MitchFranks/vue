@@ -6,8 +6,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Alert, Select, TextInput } from '@/components/ui/primitives'
-import { FormSection, RecordForm, useRecordForm, Wide } from '@/components/ui/records'
+import { Alert, Select, TextInput } from '@/components/ui'
+import { FormSection, RecordForm, useRecordForm, Wide } from '@/components/records'
 import { AuthLayout, LocalAccountsNote } from '@/components/account/AuthLayout'
 import { ACCOUNT_TITLES, createAccount, startSession } from '@/lib/account/session'
 import { validate } from '@/lib/directory/model'

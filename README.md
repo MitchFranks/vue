@@ -287,7 +287,7 @@ not alarm:
   the Do first list only holds things the manager can act on.
 - When the list is empty the product says "All caught up".
 
-The status tones are defined once, in `components/ui/primitives.jsx`:
+The status tones are defined once, in `components/ui/StatusBadge.jsx`:
 
 | Tone | Meaning | Colour | Glyph |
 |---|---|---|---|
@@ -312,22 +312,34 @@ selection. The underlying structure (timeline blocks, staffing, tasks, payments)
 
 ## Design Library / Component Reuse
 
-Two files hold the visual system, and every screen is assembled from them. The full rules are in
-[`docs/STYLE-GUIDE.md`](docs/STYLE-GUIDE.md), and a live version is at `/style-guide`.
+The visual system is one component per file, and every screen is assembled from it. The full
+rules are in [`docs/STYLE-GUIDE.md`](docs/STYLE-GUIDE.md), and a live version is at `/style-guide`.
 
-**`components/ui/primitives.jsx`**
+**`components/ui/`** — generic building blocks, no product knowledge. Import from `@/components/ui`.
 `Icon` · `Button` (4 variants × 3 sizes) · `StatusBadge` · `Card` · `PageHeader` · `Breadcrumbs` ·
 `Tabs` · `Count` · `FilterChip` · `FilterGroup` · `EmptyState` · `Alert` · `ListRow` · `Field` ·
-`Avatar` · `TextInput` / `Select` / `Textarea` (with hint and error states) · `SectionNote` ·
-`MetricTile`
+`Avatar` · `TextInput` / `Select` / `Textarea` (with hint and error states) · `MetricTile` ·
+`ClampedText` · `SearchPicker` · `Modal` (dialog and sheet) · `ToastHost` (with actions such as Undo) ·
+`useConfirm`
 
-**`components/ui/domain.jsx`**
-`TaskRow` · `TaskCard` · `SearchPicker` · `useHideWithUndo` · `EventCard` · `EventRow` · `TaskRow` · `Modal` (dialog and sheet) ·
-`ToastHost` (with actions such as Undo) · `useConfirm` · `openSpots`
+**`components/records/`** — the list / detail / form patterns behind Staff and Vendors. Import from
+`@/components/records`. `ListToolbar` · `EntityList` · `DetailGrid` · `ContactInfo` ·
+`RecordStatusCard` · `RecordStatusBadge` · `RecordForm` / `FormSection` / `Wide` · `CheckboxGroup` ·
+`useRecordForm` · `QueryRecord`
 
-**Shell:** `components/AppShell.jsx` (sidebar, top bar, the one toast stack, the prototype phone) ·
-`components/EventHeader.jsx` (event identity, facts strip, tabs) ·
-`components/onboarding/IntroModal.jsx` · `components/onboarding/PrototypeNotice.jsx`
+**Product components** live by area: `components/tasks/` (`TaskRow`, `ManualTaskRow`, `TaskCard`,
+`TaskBoard`, …), `components/events/` (`EventCard`, `EventHeader`), `components/timeline/` (the run
+of show), `components/staffing/`, `components/directory/`, `components/onboarding/`. Connected
+components (the ones that read a store) are thin wrappers over a props-only view where it matters:
+`TaskBoard` → `TaskBoardView`, `TaskCard` → `TaskCardView`, `EventHeader` → `EventHeaderView`,
+`AppShell` → `TopBar` + `Sidebar`.
+
+**Shell:** `components/layout/AppShell.jsx` (sidebar, top bar, the prototype phone) ·
+`components/layout/AppToasts.jsx` (the one toast stack) · `components/AppProviders.jsx` (every
+provider, in order) · `components/onboarding/IntroModal.jsx` · `components/onboarding/PrototypeNotice.jsx`
+
+**Shared helpers:** `lib/format.js` (`openSpots`, `clockLabel` / `hourLabel` / `timeLabel`) ·
+`lib/id.js` (`newId`) · `lib/toasts.jsx` (`useToast`) · `lib/timeline/layout.js` (run-of-show maths)
 
 **Staffing components** (`components/staffing/`) are built on the same library: the Ask panel and
 the staff phone are `Modal variant="sheet"`, statuses are `StatusBadge`, toasts go through the shared
@@ -349,11 +361,11 @@ Fill these in with real names. The codebase is split so these four areas can be 
 editing the same files.
 
 - **[Team Member]** — Welcome / Dashboard / Tasks — `components/Landing.jsx`, `app/(app)/dashboard/`, `app/(app)/tasks/`, `app/(app)/calendar/`
-- **[Team Member]** — Events — `app/(app)/events/`, `components/EventHeader.jsx`
+- **[Team Member]** — Events — `app/(app)/events/`, `components/events/`, `components/timeline/`
 - **[Team Member]** — Staffing — `app/(app)/staffing/`, `app/(app)/staff/`, `components/staffing/`, `lib/staffing/`
 - **[Team Member]** — Communication & people — `app/(app)/messages/`, `app/(app)/couples/`, `app/(app)/vendors/`
 
-Shared files to coordinate on before editing: `lib/store.jsx`, `lib/staffing/store.jsx`, `components/ui/*`, `app/globals.css`.
+Shared files to coordinate on before editing: `lib/store.jsx`, `lib/staffing/store.jsx`, `components/ui/*`, `components/records/*`, `app/globals.css`.
 
 ---
 
@@ -373,6 +385,12 @@ Production build:
 ```bash
 npm run build     # static export into out/
 npx serve out
+```
+
+Lint (ESLint with `eslint-config-next`, flat config in `eslint.config.mjs`):
+
+```bash
+npm run lint
 ```
 
 **Resetting:** the prototype remembers your changes in `localStorage`. Use **Account → Reset

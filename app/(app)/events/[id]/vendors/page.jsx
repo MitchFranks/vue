@@ -6,7 +6,7 @@
 import { use } from 'react'
 import { useDirectory } from '@/lib/directory/store'
 import { optionName, vendorHref } from '@/lib/directory/model'
-import { Card, EmptyState, ListRow, StatusBadge } from '@/components/ui/primitives'
+import { Card, EmptyState, ListRow, StatusBadge } from '@/components/ui'
 
 export default function EventVendorsPage({ params }) {
   const { id } = use(params)

@@ -8,11 +8,11 @@
 // ---------------------------------------------------------------------------
 
 import Link from 'next/link'
-import { Alert, EmptyState, Icon, PageHeader, StatusBadge } from '@/components/ui/primitives'
-import { Staffing2Nav, SkeletonCards } from '@/components/staffing/Nav'
+import { Alert, EmptyState, Icon, PageHeader, StatusBadge } from '@/components/ui'
+import { StaffingNav, SkeletonCards } from '@/components/staffing/Nav'
 import { WORLD } from '@/lib/staffing/adapter'
 import { daysOutOf, daysOutText, eventCardModel, eventOf, guestsText, summaryLine } from '@/lib/staffing/derive'
-import { useStaffing2 } from '@/lib/staffing/store'
+import { useStaffing } from '@/lib/staffing/store'
 
 const hrefFor = (ev, action) => {
   if (action.kind === 'send' || action.kind === 'remind') return `/staffing/${ev.id}?send=1`
@@ -20,8 +20,8 @@ const hrefFor = (ev, action) => {
   return `/staffing/${ev.id}`
 }
 
-export default function Staffing2EventsPage() {
-  const { state, hydrated, loadError } = useStaffing2()
+export default function StaffingEventsPage() {
+  const { state, hydrated, loadError } = useStaffing()
 
   const evs = [...WORLD.events].filter((e) => daysOutOf(e) >= 0 && daysOutOf(e) <= 30).sort((a, b) => (a.dateKey < b.dateKey ? -1 : a.dateKey > b.dateKey ? 1 : 0))
   const models = evs.map((e) => ({ ev: eventOf(state, e.id), m: eventCardModel(e.id, state) }))
@@ -30,7 +30,7 @@ export default function Staffing2EventsPage() {
   return (
     <div>
       <PageHeader title="Staffing Planner" lead="Which events still have open spots, and who you're waiting on." />
-      <Staffing2Nav />
+      <StaffingNav />
 
       {loadError && (
         <div className="mb-4">

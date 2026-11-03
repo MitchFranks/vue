@@ -4,8 +4,7 @@
 
 import { use } from 'react'
 import { useStore } from '@/lib/store'
-import { Card, EmptyState, ListRow, StatusBadge } from '@/components/ui/primitives'
-import { Avatar } from '@/components/ui/primitives'
+import { Avatar, Card, EmptyState, ListRow, StatusBadge } from '@/components/ui'
 
 export default function EventMessagesPage({ params }) {
   const { id } = use(params)

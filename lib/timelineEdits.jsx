@@ -16,6 +16,7 @@
 // ---------------------------------------------------------------------------
 
 import { scopedKey } from '@/lib/account/session'
+import { clockLabel, parseClock } from '@/lib/format'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { events } from '@/lib/mock/events'
 import { timelines } from '@/lib/mock/records'
@@ -39,37 +40,6 @@ function write(key, value) {
   } catch {
     /* blocked storage: the edit still applies for this visit */
   }
-}
-
-// ---- "9:00 AM" <-> minutes <-> "09:00" (for the time field) ----
-
-export function parseClock(text) {
-  const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(String(text || '').trim())
-  if (!m) return null
-  const hour = Number(m[1])
-  if (hour < 1 || hour > 12 || Number(m[2]) > 59) return null
-  let h = hour % 12
-  if (m[3].toUpperCase() === 'PM') h += 12
-  return h * 60 + Number(m[2])
-}
-
-export function clockLabel(mins) {
-  const total = ((Math.round(mins) % 1440) + 1440) % 1440
-  const h24 = Math.floor(total / 60)
-  const mm = String(total % 60).padStart(2, '0')
-  const suffix = h24 >= 12 ? 'PM' : 'AM'
-  const h12 = h24 % 12 === 0 ? 12 : h24 % 12
-  return `${h12}:${mm} ${suffix}`
-}
-
-export const toInputValue = (text) => {
-  const m = parseClock(text)
-  return m == null ? '' : `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
-}
-
-export const fromInputValue = (value) => {
-  const m = /^(\d{2}):(\d{2})$/.exec(value)
-  return m ? clockLabel(Number(m[1]) * 60 + Number(m[2])) : null
 }
 
 const hoursToClock = (h) => clockLabel(h * 60)
@@ -197,6 +167,7 @@ export function TimelineEditsProvider({ children }) {
         any = true
       }
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads browser-only state after the first render so the static HTML and first render match
     if (any) setVersion((v) => v + 1)
   }, [])
 

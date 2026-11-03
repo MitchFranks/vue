@@ -7,16 +7,16 @@
 // ---------------------------------------------------------------------------
 
 import { useMemo } from 'react'
-import { Modal, openSpots } from '@/components/ui/domain'
-import { Button, Icon, StatusBadge } from '@/components/ui/primitives'
+import { Button, Icon, Modal, StatusBadge } from '@/components/ui'
+import { openSpots } from '@/lib/format'
 import { pluralRole } from '@/lib/mock/staff'
 import { WORLD } from '@/lib/staffing/adapter'
 import { KIND_LABEL, coverage, isShortNotice, messageText, openIssues, rolesOf, sendKind, staffById } from '@/lib/staffing/derive'
-import { applyAsk, applySend, useStaffing2 } from '@/lib/staffing/store'
+import { applyAsk, applySend, useStaffing } from '@/lib/staffing/store'
 
 /** prepared = { askSpec?, ids?, opts? } */
 export function SendReview({ prepared, onClose, onDone, onChangeTimes }) {
-  const { state, askAndSend, send } = useStaffing2()
+  const { state, askAndSend, send } = useStaffing()
 
   const model = useMemo(() => {
     if (!prepared) return null

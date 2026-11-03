@@ -22,7 +22,7 @@ import { cx } from '@/lib/cx'
 import { eventById } from '@/lib/mock/events'
 import { contactName, contactById, coupleById } from '@/lib/mock/records'
 import { directoryVendorById as vendorById } from '@/lib/directory/registry'
-import { Button, Icon, StatusBadge } from '@/components/ui/primitives'
+import { Button, Icon, StatusBadge } from '@/components/ui'
 
 function Tag({ icon, children }) {
   return (
@@ -33,15 +33,27 @@ function Tag({ icon, children }) {
   )
 }
 
-export function TaskCard({ task, first = false, onToggle, onEdit }) {
-  const couples = (task.coupleIds || []).map(coupleById).filter(Boolean)
-  const contacts = (task.contactIds || []).map(contactById).filter(Boolean)
-  const vendors = (task.vendorIds || []).map(vendorById).filter(Boolean)
-  const tagged = couples.length + contacts.length + vendors.length > 0
+/** The couples, contacts and vendors a task is tagged with, as { id, icon, label }. */
+export function resolveTaskTags(task) {
+  return [
+    ...(task.coupleIds || []).map(coupleById).filter(Boolean).map((c) => ({ id: c.id, icon: 'heart', label: c.name })),
+    ...(task.contactIds || []).map(contactById).filter(Boolean).map((c) => ({ id: c.id, icon: 'user', label: contactName(c) })),
+    ...(task.vendorIds || []).map(vendorById).filter(Boolean).map((v) => ({ id: v.id, icon: 'truck', label: v.name }))
+  ]
+}
 
+/** Looks up the task's event date and tags, then draws TaskCardView. */
+export function TaskCard({ task, ...rest }) {
   // The event's own date, so tasks for different weddings are told apart at a glance.
-  const eventDate = eventById(task.eventId)?.dateShort
+  return <TaskCardView task={task} eventDate={eventById(task.eventId)?.dateShort} tags={resolveTaskTags(task)} {...rest} />
+}
 
+/**
+ * The card itself, props only.
+ *   tags       [{ id, icon, label }] from resolveTaskTags
+ *   eventDate  "Sat, Jun 14"
+ */
+export function TaskCardView({ task, eventDate, tags = [], first = false, onToggle, onEdit }) {
   const isTask = task.source === 'manual'
   const canTick = isTask && !task.input
 
@@ -68,21 +80,11 @@ export function TaskCard({ task, first = false, onToggle, onEdit }) {
             {/* The description: a written task's own text, or what the system noticed. */}
             {task.what && <ClampedText className="mt-2">{task.what}</ClampedText>}
 
-            {tagged && (
+            {tags.length > 0 && (
               <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Tagged">
-                {couples.map((c) => (
-                  <li key={c.id}>
-                    <Tag icon="heart">{c.name}</Tag>
-                  </li>
-                ))}
-                {contacts.map((c) => (
-                  <li key={c.id}>
-                    <Tag icon="user">{contactName(c)}</Tag>
-                  </li>
-                ))}
-                {vendors.map((v) => (
-                  <li key={v.id}>
-                    <Tag icon="truck">{v.name}</Tag>
+                {tags.map((t) => (
+                  <li key={t.id}>
+                    <Tag icon={t.icon}>{t.label}</Tag>
                   </li>
                 ))}
               </ul>

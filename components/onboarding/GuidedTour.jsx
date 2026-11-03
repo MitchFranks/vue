@@ -1,21 +1,21 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { Button, Icon } from '@/components/ui/primitives'
+import { useEffect, useEffectEvent, useRef } from 'react'
+import { Button, Icon } from '@/components/ui'
 
 const FOCUSABLE = 'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
 
 export function GuidedTour({ step, total, title, body, onBack, onNext, onExit }) {
   const ref = useRef(null)
-  const exitRef = useRef(onExit)
-  exitRef.current = onExit
+  // Always the latest onExit, without re-running the effect when it changes.
+  const exit = useEffectEvent(() => onExit())
 
   useEffect(() => {
     const previous = document.activeElement
     const onKey = (event) => {
       if (event.key === 'Escape') {
         event.preventDefault()
-        exitRef.current()
+        exit()
         return
       }
       if (event.key !== 'Tab' || !ref.current) return

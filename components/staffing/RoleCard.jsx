@@ -8,11 +8,11 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { cx } from '@/lib/cx'
-import { Avatar, Button, Card, Icon, StatusBadge } from '@/components/ui/primitives'
+import { Avatar, Button, Card, Icon, StatusBadge } from '@/components/ui'
+import { hourLabel } from '@/lib/format'
 import {
   blockById,
   coverage,
-  fmtH,
   dayLine,
   firstName,
   okdIssues,
@@ -252,7 +252,7 @@ export function BlockCard({ eventId, block, st, primaryRole, guideRole, highligh
         subtitle={
           <span>
             {rangeLabel(block.start, block.end)}
-            {block.guestStart != null && <span> (guests {fmtH(block.guestStart)})</span>}
+            {block.guestStart != null && <span> (guests {hourLabel(block.guestStart)})</span>}
           </span>
         }
         bodyClassName="px-0 py-0"

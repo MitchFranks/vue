@@ -13,19 +13,7 @@ import Link from 'next/link'
 import { useStore } from '@/lib/store'
 import { eventById } from '@/lib/mock/events'
 import { messageById } from '@/lib/mock/records'
-import {
-  Alert,
-  Avatar,
-  Breadcrumbs,
-  Button,
-  Card,
-  EmptyState,
-  Field,
-  Icon,
-  PageHeader,
-  StatusBadge,
-  Textarea
-} from '@/components/ui/primitives'
+import { Alert, Avatar, Breadcrumbs, Button, Card, EmptyState, Field, Icon, PageHeader, StatusBadge, Textarea } from '@/components/ui'
 
 export default function MessageDetailPage({ params }) {
   const { id } = use(params)

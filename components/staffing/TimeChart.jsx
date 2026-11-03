@@ -10,8 +10,9 @@
 
 import Link from 'next/link'
 import { cx } from '@/lib/cx'
-import { Icon } from '@/components/ui/primitives'
-import { coverage, firstName, fmtH, openSpotsText, rangeLabel, rolesOf } from '@/lib/staffing/derive'
+import { Icon } from '@/components/ui'
+import { hourLabel, openSpots } from '@/lib/format'
+import { coverage, firstName, rangeLabel, rolesOf } from '@/lib/staffing/derive'
 
 // The time axis is not a straight ruler. Each hour gets the height it needs:
 //   an hour with nothing in it folds up small
@@ -26,7 +27,7 @@ const MAX_HOUR_PX = 110
 /** What a bar says: the state first, the count under it. */
 function headline(c) {
   if (c.confirmed >= c.need) return c.extra > 0 ? `Fully staffed +${c.extra}` : 'Fully staffed'
-  if (c.toFind > 0) return openSpotsText(c.toFind)
+  if (c.toFind > 0) return openSpots(c.toFind)
   if (c.waiting > 0) return `${c.waiting} waiting`
   return `${c.notSent} not sent`
 }
@@ -106,7 +107,7 @@ export function TimeChart({ eventId, blocks, roles, st }) {
         <div className="relative" style={{ height }}>
           {hours.map((h) => (
             <span key={h} className="absolute right-2 -translate-y-1/2 whitespace-nowrap text-label text-ink-muted" style={{ top: Y(h) }}>
-              {fmtH(h)}
+              {hourLabel(h)}
             </span>
           ))}
         </div>
