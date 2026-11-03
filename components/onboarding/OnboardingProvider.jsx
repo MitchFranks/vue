@@ -11,7 +11,7 @@
 // ---------------------------------------------------------------------------
 
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { GUIDE_KEY } from '@/lib/onboarding'
 import { ensureDemoSession } from '@/lib/account/session'
 import { IntroModal } from './IntroModal'
@@ -61,6 +61,9 @@ function writeJson(key, value) {
 
 export function OnboardingProvider({ children }) {
   const router = useRouter()
+  // The client inquiry form is for the venue's clients, not testers of the
+  // manager's app: no intro there (it still shows on the next app screen).
+  const clientPage = usePathname()?.startsWith('/inquire')
   const [hydrated, setHydrated] = useState(false)
   const [introOpen, setIntroOpen] = useState(false)
   const [tourStep, setTourStep] = useState(null)
@@ -120,7 +123,7 @@ export function OnboardingProvider({ children }) {
   return (
     <OnboardingContext.Provider value={value}>
       {children}
-      {hydrated && introOpen && <IntroModal onClose={closeIntro} onStartTour={startTour} />}
+      {hydrated && introOpen && !clientPage && <IntroModal onClose={closeIntro} onStartTour={startTour} />}
       {hydrated && tourStep !== null && (
         <GuidedTour
           step={tourStep}

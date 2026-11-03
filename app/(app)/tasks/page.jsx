@@ -24,10 +24,17 @@ export default function TasksPage() {
       <PageHeader
         title="Tasks"
         actions={
-          <Button href="/tasks/types" variant="secondary" size="md">
-            <Icon name="settings" size={14} />
-            Manage task types
-          </Button>
+          <>
+            {/* Prototype only: the public form a client fills in. What they send lands here as an Inquiry task. */}
+            <Button href="/inquire" target="_blank" rel="noreferrer" variant="ghost" size="md">
+              Client inquiry form (prototype)
+              <Icon name="arrowRight" size={14} />
+            </Button>
+            <Button href="/tasks/types" variant="secondary" size="md">
+              <Icon name="settings" size={14} />
+              Manage task types
+            </Button>
+          </>
         }
       />
       <TaskBoard />

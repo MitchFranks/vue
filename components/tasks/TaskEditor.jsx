@@ -46,6 +46,7 @@ function draftFrom(task) {
 /** Render with `key={task.id}` (or a fixed key when adding) so each task starts a fresh draft. */
 export function TaskEditor({ task, onClose, onSave }) {
   const adding = !task
+  const fromInquiry = !!task?.inquiryId
   const { taskTypes } = useStore()
   const [draft, setDraft] = useState(() => draftFrom(task || BLANK))
   const [errors, setErrors] = useState({})
@@ -57,12 +58,13 @@ export function TaskEditor({ task, onClose, onSave }) {
     const next = {}
     if (!draft.title.trim()) next.title = 'Give the task a name.'
     if (!draft.dueDate) next.dueDate = 'Choose the date it is due.'
-    if (!draft.eventId) next.eventId = 'Choose the event this task is for.'
+    // A task booked from a client inquiry (a walkthrough, a call) has no event yet.
+    if (!draft.eventId && !fromInquiry) next.eventId = 'Choose the event this task is for.'
     setErrors(next)
     if (Object.keys(next).length) return
 
     onSave({
-      eventId: draft.eventId,
+      eventId: draft.eventId || null,
       title: draft.title.trim(),
       dueDate: draft.dueDate,
       dueTime: draft.dueTime || null,
@@ -144,7 +146,7 @@ export function TaskEditor({ task, onClose, onSave }) {
           id="task-event"
           error={errors.eventId}
           options={[
-            { value: '', label: 'Choose an event' },
+            { value: '', label: fromInquiry ? 'No event yet (from an inquiry)' : 'Choose an event' },
             ...events.map((e) => ({ value: e.id, label: `${e.name} · ${e.dateShort}` }))
           ]}
           value={draft.eventId}
