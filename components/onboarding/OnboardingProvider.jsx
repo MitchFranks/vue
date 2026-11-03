@@ -8,6 +8,9 @@
 // Shown once per browser (GUIDE_KEY in localStorage). `showIntro` reopens it
 // (the "Your goal" button in the top bar); `reset` ("Reset prototype data")
 // clears the saved flag and shows it again.
+//
+// The provider holds the state; screens that are for testers draw it with
+// <OnboardingOverlay />. Public pages (the client inquiry form) simply don't.
 // ---------------------------------------------------------------------------
 
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
@@ -113,15 +116,21 @@ export function OnboardingProvider({ children }) {
   }, [router])
 
   const value = useMemo(
-    () => ({ hydrated, showIntro, reset }),
-    [hydrated, showIntro, reset]
+    () => ({ hydrated, introOpen, tourStep, showIntro, closeIntro, startTour, endTour, advanceTour, backTour, reset }),
+    [hydrated, introOpen, tourStep, showIntro, closeIntro, startTour, endTour, advanceTour, backTour, reset]
   )
 
+  return <OnboardingContext.Provider value={value}>{children}</OnboardingContext.Provider>
+}
+
+/** The intro and the tour, on the screens that want them. */
+export function OnboardingOverlay() {
+  const { hydrated, introOpen, tourStep, closeIntro, startTour, endTour, advanceTour, backTour } = useOnboarding()
+  if (!hydrated) return null
   return (
-    <OnboardingContext.Provider value={value}>
-      {children}
-      {hydrated && introOpen && <IntroModal onClose={closeIntro} onStartTour={startTour} />}
-      {hydrated && tourStep !== null && (
+    <>
+      {introOpen && <IntroModal onClose={closeIntro} onStartTour={startTour} />}
+      {tourStep !== null && (
         <GuidedTour
           step={tourStep}
           total={TOUR_STEPS.length}
@@ -132,7 +141,7 @@ export function OnboardingProvider({ children }) {
           onExit={endTour}
         />
       )}
-    </OnboardingContext.Provider>
+    </>
   )
 }
 

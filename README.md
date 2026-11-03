@@ -172,6 +172,7 @@ Every route has a job; none are filler.
 | `/` | Welcome (entry): what Vue does, one way in ("Open Tasks") |
 | `/tasks` | Tasks: every task, sortable and filterable by due date, type, couple or contact and vendor |
 | `/tasks/types` | Task types: add, rename and delete the types a task can have |
+| `/inquiries/view?id=` | Inquiry: what a client asked for, and booking, answering or closing it |
 | `/dashboard` | Dashboard: Tasks first, then counts, events, staffing status, recent activity |
 | `/calendar` | Calendar, month by month |
 | `/events` | Events |
@@ -198,6 +199,15 @@ Every route has a job; none are filler.
 | `/staffing/phone` | Staff phone (prototype simulator) |
 | `/staff` | Staff directory: people and contact details |
 | `/staff/[id]` | Staff member: their requests and replies |
+
+### Client inquiries (public, no sign-in)
+| Route | Screen |
+|---|---|
+| `/inquire` | Client inquiry form: schedule a walkthrough, ask for a quote, ask about services, or schedule a call or virtual tour. `?type=walkthrough\|quote\|services\|call` skips the first step |
+
+Every inquiry becomes an **Inquiry** task in Tasks, due the day it arrives. Booking a walkthrough or
+call from it adds a dated task too. The Tasks header links to the form, labelled as a prototype tool.
+Spec: [`docs/INQUIRY-FLOW-SPEC.md`](docs/INQUIRY-FLOW-SPEC.md).
 
 ### Communication and people
 | Route | Screen |
@@ -409,6 +419,9 @@ Deployed from `main` to GitHub Pages by `.github/workflows/deploy.yml`:
 
 ## Known Prototype Limitations
 
+- **Inquiries stay in one browser.** The client form at `/inquire` saves to this browser's
+  localStorage, so the form and the manager's Tasks have to run in the same browser (another tab is
+  fine, it syncs). Signed out, the form sends to the sample venue.
 - **No backend.** All state is React context plus `localStorage`, scoped to one browser.
 - **Two sample events.** The data is trimmed to two events, two couples, two vendors and a small team
   (`lib/mock/scope.js`) so every tester sees the same scenario.

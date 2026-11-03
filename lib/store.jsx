@@ -16,6 +16,7 @@
 //   messages          ->  tasks
 //   documents         ->  tasks
 //   payments          ->  tasks
+//   client inquiries  ->  tasks   (the public form at /inquire)
 //
 // State persists to localStorage so a tester can move between screens (and
 // reload) without losing their progress. "Reset prototype data" clears it.
@@ -27,16 +28,20 @@ import { useToast } from '@/lib/toasts'
 import { hourLabel, openSpots } from '@/lib/format'
 import { useTimelineVersion } from '@/lib/timelineEdits'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { events, eventById, daysOutLabel, TODAY_KEY } from './mock/events.js'
-import { contacts, contactName, documents, messages, money, payments, manualTasks } from './mock/records.js'
+import { events, eventById, daysOutLabel, TODAY_KEY, venue } from './mock/events.js'
+import { contacts, contactName, documents, inquiries as seedInquiries, messages, money, payments, manualTasks } from './mock/records.js'
 import { pluralRole } from './mock/staff.js'
 import { allTaskTypes, DEFAULT_TASK_TYPES, dueInfo, eventTags, taskFromRecord, taskTypeError } from './tasks.js'
+import { cleanInquiry, currentOutcomeLabel, INQUIRY_WHY, inquiryDoneTitle, inquiryHref, inquiryTaskTitle, inquiryTaskWhat, kindOf } from './inquiries.js'
 import { useStaffing } from './staffing/store'
 import { changed, coverage, requestList, rolesOf, staffById as plannerStaffById } from './staffing/derive'
 
 const StoreContext = createContext(null)
 
 const STORAGE_KEY = scopedKey('vue-lowfi-prototype-v9')
+
+// A new task is owned by the signed-in manager, whose name RequireAccount puts on `venue`.
+const newTaskRecord = (fields, id) => ({ owner: venue.manager, done: false, ...fields, id })
 
 function initialState() {
   return {
@@ -51,7 +56,10 @@ function initialState() {
     readMessageIds: [],
     signedDocumentIds: [],
     // `${eventId}:${paymentId}` recorded as paid in the prototype
-    paidPaymentIds: []
+    paidPaymentIds: [],
+    // Client inquiries from the public form (/inquire), newest last. Each new
+    // one is a task until the manager deals with it (lib/inquiries.js).
+    inquiries: seedInquiries
   }
 }
 
@@ -82,6 +90,23 @@ export function StoreProvider({ children }) {
     }
   }, [state, hydrated])
 
+  // The client form and the manager's Tasks are often open in two tabs of the
+  // same browser. Take the other tab's saved state when it changes, so a new
+  // inquiry shows up without a reload, and so this tab's next save doesn't
+  // write over it. (Reset clears the key: go back to the seeded state.)
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key !== STORAGE_KEY) return
+      try {
+        setState(e.newValue ? { ...initialState(), ...JSON.parse(e.newValue) } : initialState())
+      } catch {
+        /* a half-written value: the next change will bring it */
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
   // ---- feedback -----------------------------------------------------------
 
   // Toasts live in their own provider (lib/toasts.jsx) so a toast never
@@ -103,14 +128,7 @@ export function StoreProvider({ children }) {
   /** Add a task from the Tasks page. `fields` is what TaskEditor collects. Returns the new record's id. */
   const addManualTask = useCallback((fields) => {
     const id = newId('t-new')
-    setState((s) => ({
-      ...s,
-      createdTasks: [
-        ...(s.createdTasks || []),
-        // Owned by the signed-in venue manager, as the sidebar shows.
-        { owner: 'Dana Whitcomb', done: false, ...fields, id }
-      ]
-    }))
+    setState((s) => ({ ...s, createdTasks: [...(s.createdTasks || []), newTaskRecord(fields, id)] }))
     return id
   }, [])
 
@@ -208,6 +226,68 @@ export function StoreProvider({ children }) {
     const key = `${eventId}:${paymentId}`
     setState((s) => ({ ...s, paidPaymentIds: s.paidPaymentIds.filter((k) => k !== key) }))
   }, [])
+
+  // ---- client inquiries -----------------------------------------------------
+
+  /** Save what the client sent from /inquire. Returns the new inquiry's id (their reference). */
+  const submitInquiry = useCallback((values) => {
+    const id = newId('inq')
+    const inquiry = {
+      ...cleanInquiry(values),
+      id,
+      // The prototype's frozen today, so it sorts against the seeded tasks.
+      submittedOn: TODAY_KEY,
+      submittedAt: new Date().toISOString(),
+      status: 'new',
+      outcome: null
+    }
+    setState((s) => ({ ...s, inquiries: [...(s.inquiries || []), inquiry] }))
+    return id
+  }, [])
+
+  /**
+   * The manager dealt with an inquiry. `outcome` is { label, amount?, note? }.
+   * `task` (a booked walkthrough or call) is added to Tasks at the same time,
+   * so Undo can take both back in one step. Only a new inquiry can be resolved:
+   * if another tab got there first, its outcome and task stand.
+   */
+  const resolveInquiry = useCallback((id, outcome, task = null) => {
+    const taskId = task ? newId('t-new') : null
+    setState((s) => {
+      if (!(s.inquiries || []).some((q) => q.id === id && q.status === 'new')) return s
+      return {
+        ...s,
+        inquiries: s.inquiries.map((q) => (q.id === id ? { ...q, status: 'done', outcome: { ...outcome, on: TODAY_KEY, taskId } } : q)),
+        createdTasks: task ? [...(s.createdTasks || []), newTaskRecord(task, taskId)] : s.createdTasks
+      }
+    })
+  }, [])
+
+  /** Close without follow-up (spam, not a fit, date taken). Only a new inquiry, as with resolveInquiry. */
+  const closeInquiry = useCallback((id, note = '') => {
+    setState((s) => ({
+      ...s,
+      inquiries: (s.inquiries || []).map((q) =>
+        q.id === id && q.status === 'new' ? { ...q, status: 'closed', outcome: { label: 'Closed without follow-up.', note, on: TODAY_KEY } } : q
+      )
+    }))
+  }, [])
+
+  /** Back to new (Undo, or Reopen). Removes the task a booking added, so nothing is left behind. */
+  const reopenInquiry = useCallback((id) => {
+    setState((s) => {
+      const taskId = (s.inquiries || []).find((q) => q.id === id)?.outcome?.taskId
+      return {
+        ...s,
+        inquiries: (s.inquiries || []).map((q) => (q.id === id ? { ...q, status: 'new', outcome: null } : q)),
+        createdTasks: taskId ? (s.createdTasks || []).filter((t) => t.id !== taskId) : s.createdTasks,
+        doneManualTaskIds: taskId ? s.doneManualTaskIds.filter((t) => t !== taskId) : s.doneManualTaskIds
+      }
+    })
+  }, [])
+
+  const inquiryList = useMemo(() => state.inquiries || [], [state.inquiries])
+  const inquiryById = useCallback((id) => inquiryList.find((q) => q.id === id) || null, [inquiryList])
 
   const reset = useCallback(() => {
     setState(initialState())
@@ -460,7 +540,31 @@ export function StoreProvider({ children }) {
       })
     }
 
-    // 5. Payments due
+    // 5. Client inquiries from the public form. Due the day they arrive: the
+    //    confirmation screen promised a reply within one business day.
+    for (const q of inquiryList) {
+      if (q.status !== 'new') continue
+      items.push({
+        id: `inquiry:${q.id}`,
+        source: 'inquiry',
+        type: 'Inquiry',
+        inquiryId: q.id,
+        dueDate: q.submittedOn,
+        coupleIds: [],
+        contactIds: [],
+        vendorIds: [],
+        tone: 'urgent',
+        title: inquiryTaskTitle(q),
+        what: inquiryTaskWhat(q),
+        why: INQUIRY_WHY,
+        eventId: null,
+        eventName: kindOf(q.kind)?.label,
+        meta: 'New inquiry',
+        href: inquiryHref(q.id)
+      })
+    }
+
+    // 6. Payments due
     for (const event of events) {
       const plan = paymentsForEvent(event.id)
       if (!plan) continue
@@ -488,7 +592,7 @@ export function StoreProvider({ children }) {
     const dated = items.map((i) => ({ ...dueInfo(i), ...i }))
     const order = { urgent: 0, warn: 1, pending: 2, info: 3 }
     return dated.sort((a, b) => (order[a.tone] ?? 9) - (order[b.tone] ?? 9))
-  }, [openPositions, planner, messageList, manualTaskList, documentList, paymentsForEvent])
+  }, [openPositions, planner, messageList, manualTaskList, documentList, paymentsForEvent, inquiryList])
 
   const openTasks = allOpenTasks
 
@@ -563,8 +667,28 @@ export function StoreProvider({ children }) {
       }
     }
 
+    for (const q of inquiryList) {
+      if (q.status === 'new') continue
+      done.push({
+        id: `inquiry:${q.id}`,
+        source: 'inquiry',
+        type: 'Inquiry',
+        inquiryId: q.id,
+        title: inquiryDoneTitle(q),
+        what: currentOutcomeLabel(q, manualTaskList.find((t) => t.id === q.outcome?.taskId)),
+        eventId: null,
+        eventName: kindOf(q.kind)?.label,
+        dueDate: q.submittedOn,
+        coupleIds: [],
+        contactIds: [],
+        vendorIds: [],
+        due: q.status === 'closed' ? 'Closed' : 'Done',
+        href: inquiryHref(q.id)
+      })
+    }
+
     return done.map((t) => ({ ...t, done: true, dueTone: 'done', tone: 'done' }))
-  }, [manualTaskList, messageList, documentList, paymentsForEvent, state.signedDocumentIds])
+  }, [manualTaskList, messageList, documentList, paymentsForEvent, state.signedDocumentIds, inquiryList])
 
   const tasksForEvent = useCallback((eventId) => openTasks.filter((a) => a.eventId === eventId), [openTasks])
 
@@ -578,6 +702,8 @@ export function StoreProvider({ children }) {
       messageList,
       documentList,
       paymentsForEvent,
+      inquiryList,
+      inquiryById,
       // staffing
       openPositions,
       coverageForEvent,
@@ -601,6 +727,10 @@ export function StoreProvider({ children }) {
       unsignDocument,
       recordPayment,
       undoPayment,
+      submitInquiry,
+      resolveInquiry,
+      closeInquiry,
+      reopenInquiry,
       reset,
       // feedback (see lib/toasts.jsx)
       toast
@@ -611,6 +741,8 @@ export function StoreProvider({ children }) {
       messageList,
       documentList,
       paymentsForEvent,
+      inquiryList,
+      inquiryById,
       openPositions,
       coverageForEvent,
       openTasks,
@@ -631,6 +763,10 @@ export function StoreProvider({ children }) {
       unsignDocument,
       recordPayment,
       undoPayment,
+      submitInquiry,
+      resolveInquiry,
+      closeInquiry,
+      reopenInquiry,
       reset,
       toast
     ]

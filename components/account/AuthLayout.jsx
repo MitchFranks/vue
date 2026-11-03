@@ -4,6 +4,7 @@
 // column of cards, and the same canvas and type as the app behind it.
 
 import Link from 'next/link'
+import { OnboardingOverlay } from '@/components/onboarding/OnboardingProvider'
 
 export function AuthLayout({ title, lead, children, footer }) {
   return (
@@ -21,6 +22,7 @@ export function AuthLayout({ title, lead, children, footer }) {
         <div className="mt-8 space-y-4">{children}</div>
         {footer && <div className="mt-6 text-small text-ink-muted">{footer}</div>}
       </main>
+      <OnboardingOverlay />
     </div>
   )
 }
