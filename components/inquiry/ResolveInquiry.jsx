@@ -13,6 +13,7 @@
 
 import { useState } from 'react'
 import { BOOKS_A_TIME, bookedTask, dateLabel, moneyInput, outcomeLabel, suggestedTime } from '@/lib/inquiries'
+import { TODAY_KEY } from '@/lib/mock/events'
 import { useStore } from '@/lib/store'
 import { Button, Modal, Textarea, TextInput } from '@/components/ui'
 
@@ -32,7 +33,7 @@ export function resolveLabel(inq) {
 
 /** Render with `key={inquiry.id}` so each opening starts from the client's request. */
 export function ResolveInquiry({ inquiry, onClose }) {
-  const { resolveInquiry, reopenInquiry, toast } = useStore()
+  const { editableTaskTypes, resolveInquiry, reopenInquiry, toast } = useStore()
   const books = BOOKS_A_TIME.includes(inquiry.kind)
   const [draft, setDraft] = useState({
     date: inquiry.preferredDate || '',
@@ -47,6 +48,7 @@ export function ResolveInquiry({ inquiry, onClose }) {
     e.preventDefault()
     const next = {}
     if (books && !draft.date) next.date = 'Choose the day.'
+    else if (books && draft.date < TODAY_KEY) next.date = 'Choose today or a later date.'
     if (books && !draft.time) next.time = 'Choose a time.'
     const amount = moneyInput(draft.amount)
     if (draft.amount.trim() && !amount) next.amount = 'Enter an amount like 12,500, or leave it blank.'
@@ -58,7 +60,7 @@ export function ResolveInquiry({ inquiry, onClose }) {
     }
 
     const outcome = { label: outcomeLabel(inquiry, { ...draft, amount }), amount, note: draft.note.trim() }
-    const task = books ? bookedTask(inquiry, draft) : null
+    const task = books ? bookedTask(inquiry, draft, editableTaskTypes) : null
     resolveInquiry(inquiry.id, outcome, task)
     toast(task ? `${outcome.label.replace(/\.$/, '')}. Added "${task.title}" to Tasks.` : outcome.label, 'done', {
       actions: [{ label: 'Undo', onClick: () => reopenInquiry(inquiry.id) }]
@@ -91,7 +93,7 @@ export function ResolveInquiry({ inquiry, onClose }) {
       <form id="resolve-inquiry-form" onSubmit={save} noValidate className="space-y-4">
         {books && (
           <div className="grid gap-4 sm:grid-cols-2">
-            <TextInput label="Date" id="resolve-date" type="date" value={draft.date} onChange={set('date')} error={errors.date} data-autofocus />
+            <TextInput label="Date" id="resolve-date" type="date" min={TODAY_KEY} value={draft.date} onChange={set('date')} error={errors.date} data-autofocus />
             <TextInput label="Time" id="resolve-time" type="time" value={draft.time} onChange={set('time')} error={errors.time} />
           </div>
         )}

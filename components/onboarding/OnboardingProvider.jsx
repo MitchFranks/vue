@@ -8,10 +8,13 @@
 // Shown once per browser (GUIDE_KEY in localStorage). `showIntro` reopens it
 // (the "Your goal" button in the top bar); `reset` ("Reset prototype data")
 // clears the saved flag and shows it again.
+//
+// The provider holds the state; screens that are for testers draw it with
+// <OnboardingOverlay />. Public pages (the client inquiry form) simply don't.
 // ---------------------------------------------------------------------------
 
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { GUIDE_KEY } from '@/lib/onboarding'
 import { ensureDemoSession } from '@/lib/account/session'
 import { IntroModal } from './IntroModal'
@@ -61,9 +64,6 @@ function writeJson(key, value) {
 
 export function OnboardingProvider({ children }) {
   const router = useRouter()
-  // The client inquiry form is for the venue's clients, not testers of the
-  // manager's app: no intro there (it still shows on the next app screen).
-  const clientPage = usePathname()?.startsWith('/inquire')
   const [hydrated, setHydrated] = useState(false)
   const [introOpen, setIntroOpen] = useState(false)
   const [tourStep, setTourStep] = useState(null)
@@ -116,15 +116,21 @@ export function OnboardingProvider({ children }) {
   }, [router])
 
   const value = useMemo(
-    () => ({ hydrated, showIntro, reset }),
-    [hydrated, showIntro, reset]
+    () => ({ hydrated, introOpen, tourStep, showIntro, closeIntro, startTour, endTour, advanceTour, backTour, reset }),
+    [hydrated, introOpen, tourStep, showIntro, closeIntro, startTour, endTour, advanceTour, backTour, reset]
   )
 
+  return <OnboardingContext.Provider value={value}>{children}</OnboardingContext.Provider>
+}
+
+/** The intro and the tour, on the screens that want them. */
+export function OnboardingOverlay() {
+  const { hydrated, introOpen, tourStep, closeIntro, startTour, endTour, advanceTour, backTour } = useOnboarding()
+  if (!hydrated) return null
   return (
-    <OnboardingContext.Provider value={value}>
-      {children}
-      {hydrated && introOpen && !clientPage && <IntroModal onClose={closeIntro} onStartTour={startTour} />}
-      {hydrated && tourStep !== null && (
+    <>
+      {introOpen && <IntroModal onClose={closeIntro} onStartTour={startTour} />}
+      {tourStep !== null && (
         <GuidedTour
           step={tourStep}
           total={TOUR_STEPS.length}
@@ -135,7 +141,7 @@ export function OnboardingProvider({ children }) {
           onExit={endTour}
         />
       )}
-    </OnboardingContext.Provider>
+    </>
   )
 }
 

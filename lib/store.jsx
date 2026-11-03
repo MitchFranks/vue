@@ -28,17 +28,20 @@ import { useToast } from '@/lib/toasts'
 import { hourLabel, openSpots } from '@/lib/format'
 import { useTimelineVersion } from '@/lib/timelineEdits'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { events, eventById, daysOutLabel, TODAY_KEY } from './mock/events.js'
+import { events, eventById, daysOutLabel, TODAY_KEY, venue } from './mock/events.js'
 import { contacts, contactName, documents, inquiries as seedInquiries, messages, money, payments, manualTasks } from './mock/records.js'
 import { pluralRole } from './mock/staff.js'
 import { allTaskTypes, DEFAULT_TASK_TYPES, dueInfo, eventTags, taskFromRecord, taskTypeError } from './tasks.js'
-import { cleanInquiry, INQUIRY_WHY, inquiryDoneTitle, inquiryHref, inquiryTaskTitle, inquiryTaskWhat, kindOf } from './inquiries.js'
+import { cleanInquiry, currentOutcomeLabel, INQUIRY_WHY, inquiryDoneTitle, inquiryHref, inquiryTaskTitle, inquiryTaskWhat, kindOf } from './inquiries.js'
 import { useStaffing } from './staffing/store'
 import { changed, coverage, requestList, rolesOf, staffById as plannerStaffById } from './staffing/derive'
 
 const StoreContext = createContext(null)
 
 const STORAGE_KEY = scopedKey('vue-lowfi-prototype-v9')
+
+// A new task is owned by the signed-in manager, whose name RequireAccount puts on `venue`.
+const newTaskRecord = (fields, id) => ({ owner: venue.manager, done: false, ...fields, id })
 
 function initialState() {
   return {
@@ -125,14 +128,7 @@ export function StoreProvider({ children }) {
   /** Add a task from the Tasks page. `fields` is what TaskEditor collects. Returns the new record's id. */
   const addManualTask = useCallback((fields) => {
     const id = newId('t-new')
-    setState((s) => ({
-      ...s,
-      createdTasks: [
-        ...(s.createdTasks || []),
-        // Owned by the signed-in venue manager, as the sidebar shows.
-        { owner: 'Dana Whitcomb', done: false, ...fields, id }
-      ]
-    }))
+    setState((s) => ({ ...s, createdTasks: [...(s.createdTasks || []), newTaskRecord(fields, id)] }))
     return id
   }, [])
 
@@ -252,28 +248,27 @@ export function StoreProvider({ children }) {
   /**
    * The manager dealt with an inquiry. `outcome` is { label, amount?, note? }.
    * `task` (a booked walkthrough or call) is added to Tasks at the same time,
-   * so Undo can take both back in one step. Returns the new task's id, if any.
+   * so Undo can take both back in one step. Only a new inquiry can be resolved:
+   * if another tab got there first, its outcome and task stand.
    */
   const resolveInquiry = useCallback((id, outcome, task = null) => {
     const taskId = task ? newId('t-new') : null
-    setState((s) => ({
-      ...s,
-      inquiries: (s.inquiries || []).map((q) =>
-        q.id === id ? { ...q, status: 'done', outcome: { ...outcome, on: TODAY_KEY, taskId } } : q
-      ),
-      createdTasks: task
-        ? [...(s.createdTasks || []), { owner: 'Dana Whitcomb', done: false, ...task, id: taskId }]
-        : s.createdTasks
-    }))
-    return taskId
+    setState((s) => {
+      if (!(s.inquiries || []).some((q) => q.id === id && q.status === 'new')) return s
+      return {
+        ...s,
+        inquiries: s.inquiries.map((q) => (q.id === id ? { ...q, status: 'done', outcome: { ...outcome, on: TODAY_KEY, taskId } } : q)),
+        createdTasks: task ? [...(s.createdTasks || []), newTaskRecord(task, taskId)] : s.createdTasks
+      }
+    })
   }, [])
 
-  /** Close without follow-up (spam, not a fit, date taken). */
+  /** Close without follow-up (spam, not a fit, date taken). Only a new inquiry, as with resolveInquiry. */
   const closeInquiry = useCallback((id, note = '') => {
     setState((s) => ({
       ...s,
       inquiries: (s.inquiries || []).map((q) =>
-        q.id === id ? { ...q, status: 'closed', outcome: { label: 'Closed without follow-up.', note, on: TODAY_KEY } } : q
+        q.id === id && q.status === 'new' ? { ...q, status: 'closed', outcome: { label: 'Closed without follow-up.', note, on: TODAY_KEY } } : q
       )
     }))
   }, [])
@@ -680,7 +675,7 @@ export function StoreProvider({ children }) {
         type: 'Inquiry',
         inquiryId: q.id,
         title: inquiryDoneTitle(q),
-        what: q.outcome?.label,
+        what: currentOutcomeLabel(q, manualTaskList.find((t) => t.id === q.outcome?.taskId)),
         eventId: null,
         eventName: kindOf(q.kind)?.label,
         dueDate: q.submittedOn,

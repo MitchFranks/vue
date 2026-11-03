@@ -26,7 +26,8 @@ dealt with it.
   says so in a prototype note, like `LocalAccountsNote`.
 - When nobody is signed in, the form submits to the sample venue (Willow Stone). When someone is
   signed in, it submits to their venue. This uses the same `scopedKey` rule every store already
-  follows.
+  follows. If another tab moves the browser to a different workspace, the form reloads so it never
+  saves to the old one (anything typed so far is lost).
 - If the manager has the app open in another tab, a new inquiry shows up there without a reload,
   through a `storage` event listener.
 - The prototype's "today" is fixed at `TODAY_KEY` (Sat, Oct 10, 2026). Submission and due dates use
@@ -81,7 +82,7 @@ Each kind then adds its own fields:
 |---|---|
 | Type of event | `EVENT_TYPES`, default Wedding |
 | Event date | required, unless "We're flexible" is ticked |
-| We're flexible | checkbox. When ticked, the date becomes an optional "Month you're thinking of" |
+| We're flexible | checkbox. When ticked, the date becomes an optional "Month you're thinking of", which if filled in must be `YYYY-MM` and this month or later |
 | Estimated guests | required, 1–500 |
 | Services you're interested in | checkboxes, using the services list below |
 | Anything else | optional |
@@ -184,15 +185,18 @@ name, a kind badge and a status badge, and two cards:
 
 There is one primary action for each kind:
 
-- **Walkthrough → Book walkthrough**: a modal with the date (prefilled with their preferred date) and
-  a time (prefilled from the time of day: 10:00 AM, 2:00 PM or 5:00 PM). Saving:
-  1. resolves the inquiry with `"Walkthrough booked for Sat, Oct 17 at 2:00 PM"`
+- **Walkthrough → Book walkthrough**: a modal with the date (prefilled with their preferred date,
+  today or later) and a time (prefilled from the time of day: 10:00 AM, 2:00 PM or 5:00 PM). Saving:
+  1. resolves the inquiry with `"Walkthrough booked for Sat, Oct 17 at 2:00 PM"`. While the booked
+     task exists, this line reads its current date and time, so rescheduling the task updates it.
   2. **creates a task** "Walkthrough with Alex Rivera", type **Venue prep**, due on that date and
      time and linked back to the inquiry, so the visit itself is tracked in Tasks and on its due
-     date
+     date. Its description says how many people are coming and how to reach the client.
   3. shows a toast with Undo, which reverses both steps.
 - **Call → Book call**: works the same way as Book walkthrough. It creates the task "Call with Alex
   Rivera" or "Video tour with Alex Rivera", type **Couple follow-up**.
+- A venue can rename or delete those two task types. If it no longer has the usual one, the booked
+  task takes the locked **Inquiry** type instead.
 - **Quote → Mark quote sent**: a modal with an optional amount and an optional note. It resolves the
   inquiry and shows a toast with Undo.
 - **Services → Mark answered**: a modal with an optional note. It resolves the inquiry and shows a

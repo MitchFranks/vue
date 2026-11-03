@@ -5,8 +5,8 @@
 // Inquiries are made in the browser, so this reads ?id= (QueryRecord) rather
 // than a pre-built route. There is no inquiry list: Tasks is the way in.
 
-import { useState } from 'react'
-import { clientNames, dateLabel, inquiryRows, inquiryStatus, kindOf } from '@/lib/inquiries'
+import { useEffect, useRef, useState } from 'react'
+import { clientNames, currentOutcomeLabel, dateLabel, inquiryRows, inquiryStatus, kindOf } from '@/lib/inquiries'
 import { useStore } from '@/lib/store'
 import { Breadcrumbs, Button, Card, Field, Icon, PageHeader, StatusBadge, useConfirm } from '@/components/ui'
 import { ContactInfo, DetailGrid, QueryRecord } from '@/components/records'
@@ -20,6 +20,12 @@ function InquiryDetail({ id }) {
   const [resolving, setResolving] = useState(false)
   const inquiry = inquiryById(id)
 
+  // For the Close dialog, which keeps the status from when it opened.
+  const latestStatus = useRef(null)
+  useEffect(() => {
+    latestStatus.current = inquiry?.status
+  })
+
   if (!hydrated) return null
   if (!inquiry) return <RecordNotFound noun="inquiry" backHref="/tasks" backLabel="Back to Tasks" />
 
@@ -28,6 +34,9 @@ function InquiryDetail({ id }) {
   const isNew = inquiry.status === 'new'
   const booked = inquiry.outcome?.taskId ? manualTaskList.find((t) => t.id === inquiry.outcome.taskId) : null
 
+  // Another tab dealt with this inquiry while the dialog was open: nothing is left to book.
+  if (resolving && !isNew) setResolving(false)
+
   const close = () =>
     confirm({
       title: `Close ${inquiry.name}'s inquiry?`,
@@ -35,6 +44,8 @@ function InquiryDetail({ id }) {
       confirmLabel: 'Close inquiry',
       danger: true,
       onConfirm: () => {
+        // Dealt with in another tab while this was open: no toast, or its Undo would reverse that.
+        if (latestStatus.current !== 'new') return
         closeInquiry(inquiry.id)
         toast(`Closed ${inquiry.name}'s inquiry.`, 'done', {
           actions: [{ label: 'Undo', onClick: () => reopenInquiry(inquiry.id) }]
@@ -94,7 +105,7 @@ function InquiryDetail({ id }) {
               ) : (
                 <>
                   <dl className="space-y-3">
-                    <Field label={inquiry.status === 'closed' ? 'Closed' : 'Done'}>{inquiry.outcome?.label}</Field>
+                    <Field label={inquiry.status === 'closed' ? 'Closed' : 'Done'}>{currentOutcomeLabel(inquiry, booked)}</Field>
                     {inquiry.outcome?.note && (
                       <Field label="Note">
                         <span className="whitespace-pre-line">{inquiry.outcome.note}</span>

@@ -60,7 +60,7 @@ export function InquiryFields({ form }) {
   return (
     <>
       <FormSection title="About you" icon="user">
-        <TextInput label="Your name" autoComplete="name" data-autofocus {...form.field('name')} />
+        <TextInput label="Your name" autoComplete="name" {...form.field('name')} />
         <TextInput label="Partner's name (optional)" {...form.field('partnerName')} />
         <TextInput label="Email" type="email" autoComplete="email" {...form.field('email')} />
         <TextInput label="Phone" type="tel" autoComplete="tel" hint={phoneHint} {...form.field('phone')} />
@@ -96,7 +96,7 @@ export function InquiryFields({ form }) {
           <Select label="Type of event" options={EVENT_TYPES} {...form.field('eventType')} />
           <TextInput label="Estimated guests" type="number" min="1" max="500" inputMode="numeric" {...form.field('guests')} />
           {flexible ? (
-            <TextInput label="Month you're thinking of (optional)" type="month" min={TODAY_KEY.slice(0, 7)} {...form.field('month')} />
+            <TextInput label="Month you're thinking of (optional)" type="month" min={TODAY_KEY.slice(0, 7)} placeholder="2027-06" {...form.field('month')} />
           ) : (
             <TextInput label="Event date" type="date" min={TODAY_KEY} {...form.field('eventDate')} />
           )}

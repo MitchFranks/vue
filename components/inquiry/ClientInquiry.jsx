@@ -12,15 +12,15 @@
 // Spec: docs/INQUIRY-FLOW-SPEC.md.
 // ---------------------------------------------------------------------------
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { aboutRows, blankInquiry, cleanInquiry, inquiryRows, kindOf, validateInquiry } from '@/lib/inquiries'
-import { ACTIVE_ACCOUNT } from '@/lib/account/session'
+import { ACTIVE_ACCOUNT, reloadOnWorkspaceChange } from '@/lib/account/session'
 import { venue } from '@/lib/mock/events'
 import { useStore } from '@/lib/store'
 import { Alert, Button, Card, Icon } from '@/components/ui'
 import { useRecordForm } from '@/components/records'
-import { InquiryFrame } from './InquiryFrame'
+import { INQUIRY_TITLE_ID, InquiryFrame } from './InquiryFrame'
 import { InquiryFields } from './InquiryFields'
 import { KindPicker } from './KindPicker'
 import { SummaryList } from './SummaryList'
@@ -38,6 +38,18 @@ export function ClientInquiry() {
   const [sent, setSent] = useState(null)
   const form = useRecordForm(blankInquiry(linked), { idPrefix: 'inq', validate: validateInquiry })
   const kind = kindOf(form.values.kind)
+
+  // This page sits outside RequireAccount, so it watches for a sign-in itself.
+  useEffect(() => reloadOnWorkspaceChange(), [])
+
+  // The button that was pressed goes with the old step, so move focus to the
+  // new step's heading, which also announces it. Not on first load.
+  const focusedStep = useRef(step)
+  useEffect(() => {
+    if (focusedStep.current === step) return
+    focusedStep.current = step
+    document.getElementById(INQUIRY_TITLE_ID)?.focus()
+  }, [step])
 
   const go = (next) => {
     setStep(next)
