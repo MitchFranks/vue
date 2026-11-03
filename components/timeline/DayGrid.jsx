@@ -7,7 +7,7 @@
 // Modelled on Google Calendar's day view:
 //   • click an empty slot to start a new block, or drag across the grid to
 //     make one of exactly the length you want            -> onNew(s, e)
-//   • click a block to open its editor                    -> onEdit(row)
+//   • click a block to open its editor                    -> onEdit(id)
 //   • drag a block to move it; drag its top or bottom edge to resize it
 //                                                         -> onMoved(id, s, e, kind)
 //   • overlapping blocks sit side by side
@@ -16,20 +16,15 @@
 // stays on the grid while the editor for it is open.
 // ---------------------------------------------------------------------------
 
-import { useEffect, useRef } from 'react'
-import { clockLabel } from '@/lib/format'
-import { DEFAULT_LEN, MIN_LEN, PX, SNAP, clamp, landing, packLanes, rangeLabel, span, topFor } from '@/lib/timeline/layout'
+import { useRef } from 'react'
+import { clockLabel, clockRange } from '@/lib/format'
+import { DEFAULT_LEN, MIN_LEN, PX, SNAP, clamp, landing, packLanes, span, topFor } from '@/lib/timeline/layout'
 import { TimelineBlock } from './TimelineBlock'
 
 export function DayGrid({ rows, win, preview, setPreview, activeId, draftTitle, onStartDrag, onNew, onEdit, onDelete, onMoved }) {
   const { lo, hi, height, hours } = win
   const gridRef = useRef(null)
   const dragRef = useRef(null)
-  // The pointer-up handler runs after a drag; it needs the rows as they are then.
-  const rowsRef = useRef(rows)
-  useEffect(() => {
-    rowsRef.current = rows
-  }, [rows])
 
   const minuteAt = (clientY) => lo + ((clientY - gridRef.current.getBoundingClientRect().top) / PX) * 60
 
@@ -75,8 +70,7 @@ export function DayGrid({ rows, win, preview, setPreview, activeId, draftTitle, 
           setPreview({ id: 'draft', s, e: s + DEFAULT_LEN })
           onNew(s, s + DEFAULT_LEN)
         } else {
-          const r = rowsRef.current.find((x) => x.id === d.id)
-          if (r) onEdit(r)
+          onEdit(d.id)
         }
         return
       }
@@ -148,7 +142,7 @@ export function DayGrid({ rows, win, preview, setPreview, activeId, draftTitle, 
             className="pointer-events-none absolute inset-x-1 z-20 overflow-hidden rounded-sm border-2 border-dashed border-accent bg-surface-sunken px-2 py-1 text-label font-medium text-accent"
             style={{ top: topFor(draft.s, lo) + 1, height: Math.max(((draft.e - draft.s) / 60) * PX, 20) - 2 }}
           >
-            {(draftTitle || '(No title)') + ' · ' + rangeLabel(draft.s, draft.e)}
+            {(draftTitle || '(No title)') + ' · ' + clockRange(draft.s, draft.e)}
           </div>
         )}
       </div>

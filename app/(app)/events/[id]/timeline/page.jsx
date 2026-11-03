@@ -68,7 +68,11 @@ export default function RunOfShowPage({ params }) {
   const openNew = (s, e) =>
     setEditor({ id: null, values: { id: newId(`${id}-r`), time: clockLabel(s), end: clockLabel(e), title: '', note: '', needsStaff: false } })
 
-  const openEdit = (r) => setEditor({ id: r.id, values: { ...r, end: r.end || clockLabel(span(r).e), note: r.note || '' } })
+  // By id, through rowsRef: a click that ends a drag arrives after the render that started it.
+  const openEdit = (rowId) => {
+    const r = rowsRef.current.find((x) => x.id === rowId)
+    if (r) setEditor({ id: r.id, values: { ...r, end: r.end || clockLabel(span(r).e), note: r.note || '' } })
+  }
 
   /** Keyboard and button route to a new block: the first free hour after the last one. */
   const addBlock = () => {

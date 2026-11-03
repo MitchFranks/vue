@@ -42,10 +42,14 @@ export function navCounts({ openTasks, openPositions, messageList }) {
 
 export function AppShell({ children }) {
   const pathname = usePathname()
-  // The mobile nav remembers the route it was opened on, so moving to another
-  // route closes it without an effect.
-  const [navOpenAt, setNavOpenAt] = useState(null)
-  const navOpen = navOpenAt === pathname
+  // The mobile nav closes whenever the route changes (a link, Back, Forward).
+  // Comparing with the last route seen during render does this without an effect.
+  const [navOpen, setNavOpen] = useState(false)
+  const [navPath, setNavPath] = useState(pathname)
+  if (navPath !== pathname) {
+    setNavPath(pathname)
+    setNavOpen(false)
+  }
   const store = useStore()
   const { venue } = useDirectory()
 
@@ -54,7 +58,7 @@ export function AppShell({ children }) {
       <TopBar
         venueName={venue.name}
         navOpen={navOpen}
-        onToggleNav={() => setNavOpenAt(navOpen ? null : pathname)}
+        onToggleNav={() => setNavOpen((v) => !v)}
         // The tester's goal is always one click away, and the prototype never
         // pretends to be real (VISIBILITY OF SYSTEM STATUS).
         actions={<PrototypeNotice />}
@@ -63,7 +67,7 @@ export function AppShell({ children }) {
       <div className="flex">
         <Sidebar activeHref={activeHrefFor(pathname)} counts={navCounts(store)} open={navOpen} account={<AccountMenu />} />
 
-        {navOpen && <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setNavOpenAt(null)} aria-hidden="true" />}
+        {navOpen && <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setNavOpen(false)} aria-hidden="true" />}
 
         <main className="min-w-0 flex-1 px-4 pt-8 pb-12 sm:px-8 sm:pt-12">
           <div className="mx-auto w-full max-w-[1120px]">{children}</div>

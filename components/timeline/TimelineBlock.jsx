@@ -6,7 +6,8 @@
 // reads to tell a move from a resize.
 
 import { cx } from '@/lib/cx'
-import { PX, rangeLabel, topFor } from '@/lib/timeline/layout'
+import { clockRange } from '@/lib/format'
+import { PX, topFor } from '@/lib/timeline/layout'
 import { Icon } from '@/components/ui'
 
 const TONES = {
@@ -30,17 +31,17 @@ export function TimelineBlock({ row, s, e, lo, pos = { lane: 0, lanes: 1 }, acti
       data-row={row.id}
       role="button"
       tabIndex={0}
-      aria-label={`${title}, ${rangeLabel(s, e)}${row.needsStaff ? ', needs staff' : ''}. Enter to edit, Delete to remove.`}
+      aria-label={`${title}, ${clockRange(s, e)}${row.needsStaff ? ', needs staff' : ''}. Enter to edit, Delete to remove.`}
       onKeyDown={(ev) => {
         if (ev.key === 'Enter' || ev.key === ' ') {
           ev.preventDefault()
-          onEdit(row)
+          onEdit(row.id)
         } else if (ev.key === 'Delete' || ev.key === 'Backspace') {
           ev.preventDefault()
           onDelete(row.id)
         }
       }}
-      title={`${title}, ${rangeLabel(s, e)}`}
+      title={`${title}, ${clockRange(s, e)}`}
       className={cx(
         'absolute cursor-grab select-none overflow-hidden rounded-md border px-2 py-1 text-left text-label leading-tight transition-shadow active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent',
         TONES[tone],
@@ -55,7 +56,7 @@ export function TimelineBlock({ row, s, e, lo, pos = { lane: 0, lanes: 1 }, acti
     >
       <span data-edge="top" className="absolute inset-x-0 top-0 h-2 cursor-ns-resize" />
       <span className="block truncate font-medium">{title}</span>
-      {h >= 38 && <span className="block truncate opacity-85">{rangeLabel(s, e)}</span>}
+      {h >= 38 && <span className="block truncate opacity-85">{clockRange(s, e)}</span>}
       {h >= 56 && row.needsStaff && (
         <span className="mt-0.5 flex items-center gap-1 text-label font-medium opacity-90">
           <Icon name="users" size={11} /> Needs staff

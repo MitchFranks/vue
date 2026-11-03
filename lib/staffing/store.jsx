@@ -217,6 +217,9 @@ function dropDeletedBlocks(st) {
 /* -------------------------------------------------------------- context --- */
 
 const Ctx = createContext(null)
+// The planner's one toast lives in its own context, so showing or dismissing
+// it re-renders only the toast stack, not every useStaffing() reader.
+const ToastCtx = createContext(null)
 
 export function StaffingProvider({ children }) {
   const [state, setState] = useState(freshState)
@@ -553,7 +556,6 @@ export function StaffingProvider({ children }) {
       hydrated,
       loadError,
       canUndo: !!undoSlot,
-      toast,
       dismissToast,
       showToast,
       phoneFor,
@@ -561,10 +563,14 @@ export function StaffingProvider({ children }) {
       closePhone: () => setPhoneFor(null),
       ...actions
     }),
-    [safeState, hydrated, loadError, undoSlot, toast, dismissToast, showToast, phoneFor, actions]
+    [safeState, hydrated, loadError, undoSlot, dismissToast, showToast, phoneFor, actions]
   )
 
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>
+  return (
+    <Ctx.Provider value={value}>
+      <ToastCtx.Provider value={toast}>{children}</ToastCtx.Provider>
+    </Ctx.Provider>
+  )
 }
 
 function replyToast(name, res) {
@@ -591,5 +597,8 @@ export function useStaffing() {
   if (!ctx) throw new Error('useStaffing must be used inside StaffingProvider')
   return ctx
 }
+
+/** The planner's current toast, or null. Only the toast stack needs this. */
+export const usePlannerToast = () => useContext(ToastCtx)
 
 export { overdue }

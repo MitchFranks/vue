@@ -23,24 +23,26 @@ const Ctx = createContext(null)
 
 
 export function DirectoryProvider({ children }) {
-  const [state, setState] = useState(seedDirectory)
+  const [state, setStateOnly] = useState(seedDirectory)
   const [hydrated, setHydrated] = useState(false)
-  // The latest state, for actions that must return an id straight away.
+  // The latest state, for actions that must return an id straight away. Every
+  // write goes through setState below, so the ref is never behind.
   const stateRef = useRef(state)
-  useEffect(() => {
-    stateRef.current = state
-  }, [state])
+  const setState = useCallback((next) => {
+    stateRef.current = typeof next === 'function' ? next(stateRef.current) : next
+    setStateOnly(stateRef.current)
+  }, [])
 
   useEffect(() => {
     try {
       const saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null')
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- reads browser-only state after the first render so the static HTML and first render match
       if (saved?.version === 1 && saved.staff && saved.vendors) setState(saved)
     } catch {
       /* unreadable: start from the sample data */
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads browser-only state after the first render so the static HTML and first render match
     setHydrated(true)
-  }, [])
+  }, [setState])
 
   useEffect(() => {
     if (!hydrated) return
@@ -57,7 +59,7 @@ export function DirectoryProvider({ children }) {
   // ...and the vendors Tasks tags, sorts and filters by.
   useMemo(() => setDirectoryVendors(state.vendors), [state.vendors])
 
-  const update = useCallback((fn) => setState((s) => ({ ...s, ...fn(s) })), [])
+  const update = useCallback((fn) => setState((s) => ({ ...s, ...fn(s) })), [setState])
 
   const actions = useMemo(() => {
     const now = () => new Date().toISOString()
@@ -101,8 +103,7 @@ export function DirectoryProvider({ children }) {
         const found = list.find((o) => sameName(o.name, name))
         if (found) return found.id
         const id = optionId(kind === 'roles' ? 'role' : 'cat', name, list.map((o) => o.id))
-        stateRef.current = { ...stateRef.current, [kind]: [...list, { id, name: name.trim() }] }
-        update((s) => (s[kind].some((o) => o.id === id) ? {} : { [kind]: [...s[kind], { id, name: name.trim() }] }))
+        update((s) => ({ [kind]: [...s[kind], { id, name: name.trim() }] }))
         return id
       },
       reset: () => {
@@ -114,7 +115,7 @@ export function DirectoryProvider({ children }) {
         setState(seedDirectory())
       }
     }
-  }, [update])
+  }, [update, setState])
 
   const value = useMemo(() => {
     const staffById = (id) => state.staff.find((p) => p.id === id) || null

@@ -22,7 +22,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { cx } from '@/lib/cx'
-import { Icon } from '@/components/ui'
+import { Icon } from './Icon'
 
 const MAX_SHOWN = 50
 

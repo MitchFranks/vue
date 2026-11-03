@@ -9,9 +9,8 @@
 // ---------------------------------------------------------------------------
 
 import { useState } from 'react'
-import { clockLabel } from '@/lib/format'
+import { clockLabel, fromInputValue, parseClock, toInputValue } from '@/lib/format'
 import { endMinutes } from '@/lib/timeline/layout'
-import { fromInputValue, parseClock, toInputValue } from '@/lib/timelineEdits'
 import { CHECKBOX } from '@/components/records'
 import { Button, Icon, Modal, Textarea, TextInput } from '@/components/ui'
 

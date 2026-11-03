@@ -16,10 +16,13 @@ import { useStaffing } from '@/lib/staffing/store'
 function PhoneScreen() {
   const params = useSearchParams()
   const { state, hydrated } = useStaffing()
-  // Whoever was picked, else ?who=, else the first person with a text.
-  const [picked, setWho] = useState(null)
-  const wanted = params.get('who')
-  const who = picked ?? (hydrated ? (WORLD.staffMap[wanted] ? wanted : state.messages[0]?.staffId || 'stf-4003') : null)
+  // Fixed once at hydration: ?who=, else the first person with a text. Later
+  // texts (or an Undo) must not switch the phone mid-reply.
+  const [who, setWho] = useState(null)
+  if (hydrated && !who) {
+    const wanted = params.get('who')
+    setWho(WORLD.staffMap[wanted] ? wanted : state.messages[0]?.staffId || 'stf-4003')
+  }
 
   const counts = Object.fromEntries(WORLD.staff.map((p) => [p.id, state.messages.filter((m) => m.staffId === p.id).length]))
 

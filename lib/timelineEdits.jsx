@@ -16,7 +16,7 @@
 // ---------------------------------------------------------------------------
 
 import { scopedKey } from '@/lib/account/session'
-import { clockLabel } from '@/lib/format'
+import { clockLabel, parseClock } from '@/lib/format'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { events } from '@/lib/mock/events'
 import { timelines } from '@/lib/mock/records'
@@ -40,28 +40,6 @@ function write(key, value) {
   } catch {
     /* blocked storage: the edit still applies for this visit */
   }
-}
-
-// ---- "9:00 AM" <-> minutes <-> "09:00" (for the time field) ----
-
-export function parseClock(text) {
-  const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(String(text || '').trim())
-  if (!m) return null
-  const hour = Number(m[1])
-  if (hour < 1 || hour > 12 || Number(m[2]) > 59) return null
-  let h = hour % 12
-  if (m[3].toUpperCase() === 'PM') h += 12
-  return h * 60 + Number(m[2])
-}
-
-export const toInputValue = (text) => {
-  const m = parseClock(text)
-  return m == null ? '' : `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
-}
-
-export const fromInputValue = (value) => {
-  const m = /^(\d{2}):(\d{2})$/.exec(value)
-  return m ? clockLabel(Number(m[1]) * 60 + Number(m[2])) : null
 }
 
 const hoursToClock = (h) => clockLabel(h * 60)
