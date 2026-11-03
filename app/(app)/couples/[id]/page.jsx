@@ -6,18 +6,8 @@ import { use } from 'react'
 import { useStore } from '@/lib/store'
 import { coupleById } from '@/lib/mock/records'
 import { events } from '@/lib/mock/events'
-import {
-  Avatar,
-  Breadcrumbs,
-  Button,
-  Card,
-  EmptyState,
-  Field,
-  ListRow,
-  PageHeader,
-  StatusBadge
-} from '@/components/ui/primitives'
-import { openSpots } from '@/components/ui/domain'
+import { Avatar, Breadcrumbs, Button, Card, EmptyState, Field, ListRow, PageHeader, StatusBadge } from '@/components/ui'
+import { openSpots } from '@/lib/format'
 
 export default function CoupleDetailPage({ params }) {
   const { id } = use(params)

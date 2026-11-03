@@ -11,6 +11,7 @@
 // ---------------------------------------------------------------------------
 
 import { scopedKey } from '@/lib/account/session'
+import { newId } from '@/lib/id'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { syncDirectoryStaff } from '@/lib/staffing/adapter'
 import { optionId, sameName, seedDirectory, toPlannerPerson } from './model'
@@ -20,18 +21,20 @@ const STORAGE_KEY = scopedKey('vue-directory-v1')
 
 const Ctx = createContext(null)
 
-const newId = (prefix) => `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`
 
 export function DirectoryProvider({ children }) {
   const [state, setState] = useState(seedDirectory)
   const [hydrated, setHydrated] = useState(false)
   // The latest state, for actions that must return an id straight away.
   const stateRef = useRef(state)
-  stateRef.current = state
+  useEffect(() => {
+    stateRef.current = state
+  }, [state])
 
   useEffect(() => {
     try {
       const saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null')
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reads browser-only state after the first render so the static HTML and first render match
       if (saved?.version === 1 && saved.staff && saved.vendors) setState(saved)
     } catch {
       /* unreadable: start from the sample data */

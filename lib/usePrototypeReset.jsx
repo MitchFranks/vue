@@ -2,8 +2,8 @@
 
 import { events } from '@/lib/mock/events'
 import { useOnboarding } from '@/components/onboarding/OnboardingProvider'
-import { useConfirm } from '@/components/ui/domain'
-import { useStaffing2 } from '@/lib/staffing/store'
+import { useConfirm } from '@/components/ui'
+import { useStaffing } from '@/lib/staffing/store'
 import { useStore } from '@/lib/store'
 import { useTimelineEdits } from '@/lib/timelineEdits'
 import { useDirectory } from '@/lib/directory/store'
@@ -11,7 +11,7 @@ import { IS_SAMPLE_WORKSPACE } from '@/lib/account/session'
 
 export function usePrototypeReset() {
   const { reset: resetStore } = useStore()
-  const planner = useStaffing2()
+  const planner = useStaffing()
   const { resetAll: resetTimelines } = useTimelineEdits()
   const { reset: resetDirectory } = useDirectory()
   const { reset: resetIntro } = useOnboarding()

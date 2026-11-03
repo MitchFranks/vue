@@ -27,29 +27,34 @@ import {
   filterTasks,
   taskFromRecord,
   sortTasks,
-    vendorOptions,
+  vendorOptions,
   STATUS_MODES,
   whoOptions
 } from '@/lib/tasks'
-import { Button, Card, EmptyState } from '@/components/ui/primitives'
+import { Button, Card, EmptyState } from '@/components/ui'
 import { TaskCard } from './TaskCard'
 import { TaskEditor } from './TaskEditor'
 import { TaskToolbar } from './TaskToolbar'
 
-
+/** The Tasks page, wired to the store. */
 export function TaskBoard() {
-  const store = useStore()
+  return <TaskBoardView {...useTaskBoard()} />
+}
+
+/**
+ * Everything the Tasks page knows and does: the task pool from the store, the
+ * sort/filter/row state, facet counts, and the handlers. TaskBoardView draws it.
+ */
+export function useTaskBoard() {
   const directoryVendors = useDirectoryVendors()
   const { openTasks, completedTasks, manualTaskList, taskTypes, toggleManualTask, addManualTask, updateManualTask, toast } =
-    store
+    useStore()
 
   const [sort, setSort] = useState('due')
   const [direction, setDirection] = useState('asc')
   const [filters, setFilters] = useState(EMPTY_TASK_FILTERS)
   const [rows, setRows] = useState([])
   const [editing, setEditing] = useState(null)
-
-  const set = (field, value) => setFilters((f) => ({ ...f, [field]: value }))
 
   // What needs the manager now, plus tasks that are not due yet.
   const items = useMemo(() => {
@@ -63,12 +68,11 @@ export function TaskBoard() {
   const pool = useMemo(() => [...items, ...completedTasks], [items, completedTasks])
 
   const matching = filterTasks(pool, filters)
-  const shown = sortTasks(matching.filter((t) => !t.done), sort, direction)
-  const shownDone = sortTasks(matching.filter((t) => t.done), sort, direction)
-  const narrowing = activeFilterCount(filters)
 
   // How many tasks each choice would show, given every OTHER filter. A choice
   // with none is disabled (unless already picked) so it cannot dead-end.
+  // whoOptions/vendorOptions read the directory registry, so the facets are
+  // worked out again whenever the directory's vendors change.
   const facets = useMemo(() => {
     // `field` is replaced by just this one value; the other filters stay as set.
     const count = (field, value, withOthers = true) =>
@@ -93,27 +97,76 @@ export function TaskBoard() {
         return { ...m, label: `${m.label} (${n})`, disabled: n === 0 && filters.due !== m.value }
       })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see the comment above: directoryVendors is read through the registry
   }, [pool, filters, taskTypes, directoryVendors])
 
-  // Ticking a manual task completes it; unticking a completed one reopens it.
-  function handleToggle(task) {
-    toggleManualTask(task.recordId)
-    toast(task.done ? `Reopened "${task.title}".` : `Completed "${task.title}".`, 'done', {
-      actions: [{ label: 'Undo', onClick: () => toggleManualTask(task.recordId) }]
-    })
-  }
-
-  // `editing` is a task record being edited, or 'new' while adding one.
-  function handleSave(patch) {
-    if (editing === 'new') {
-      addManualTask(patch)
-      toast(`Added "${patch.title}".`)
-    } else {
-      updateManualTask(editing.id, patch)
-      toast(`Saved "${patch.title}".`)
+  return {
+    shown: sortTasks(matching.filter((t) => !t.done), sort, direction),
+    shownDone: sortTasks(matching.filter((t) => t.done), sort, direction),
+    openTotal: pool.filter((t) => !t.done).length,
+    facets,
+    filters,
+    setFilters,
+    rows,
+    setRows,
+    sort,
+    direction,
+    onSort: (s, d) => {
+      setSort(s)
+      setDirection(d)
+    },
+    editing,
+    // Only manual tasks are edited; find the record behind the card.
+    onEdit: (task) => setEditing(manualTaskList.find((r) => r.id === task.recordId)),
+    onNew: () => setEditing('new'),
+    onCloseEditor: () => setEditing(null),
+    // Ticking a manual task completes it; unticking a completed one reopens it.
+    onToggle: (task) => {
+      toggleManualTask(task.recordId)
+      toast(task.done ? `Reopened "${task.title}".` : `Completed "${task.title}".`, 'done', {
+        actions: [{ label: 'Undo', onClick: () => toggleManualTask(task.recordId) }]
+      })
+    },
+    // `editing` is a task record being edited, or 'new' while adding one.
+    onSave: (patch) => {
+      if (editing === 'new') {
+        addManualTask(patch)
+        toast(`Added "${patch.title}".`)
+      } else {
+        updateManualTask(editing.id, patch)
+        toast(`Saved "${patch.title}".`)
+      }
+      setEditing(null)
     }
-    setEditing(null)
   }
+}
+
+/**
+ * The Tasks page, props only (see useTaskBoard for what each prop is).
+ *   shown / shownDone  sorted, filtered open and completed tasks
+ *   openTotal          every open task, before filters, for "3 of 12"
+ *   editing            null, 'new', or the manual task record being edited
+ */
+export function TaskBoardView({
+  shown,
+  shownDone,
+  openTotal,
+  facets,
+  filters,
+  setFilters,
+  rows,
+  setRows,
+  sort,
+  direction,
+  onSort,
+  editing = null,
+  onEdit,
+  onNew,
+  onCloseEditor,
+  onToggle,
+  onSave
+}) {
+  const narrowing = activeFilterCount(filters)
 
   const clearAll = () => {
     setFilters(EMPTY_TASK_FILTERS)
@@ -131,17 +184,14 @@ export function TaskBoard() {
         facets={facets}
         sort={sort}
         direction={direction}
-        onNew={() => setEditing('new')}
-        onSort={(s, d) => {
-          setSort(s)
-          setDirection(d)
-        }}
+        onNew={onNew}
+        onSort={onSort}
         summary={
           <>
             <span className="font-medium text-ink">
               {shown.length} {shown.length === 1 ? 'task' : 'tasks'}
             </span>
-            {narrowing > 0 && filters.status === 'open' && ` of ${pool.filter((t) => !t.done).length}`}
+            {narrowing > 0 && filters.status === 'open' && ` of ${openTotal}`}
             {filters.status !== 'open' && ` · ${shownDone.length} completed`}
           </>
         }
@@ -167,13 +217,7 @@ export function TaskBoard() {
         <Card bodyClassName="px-0 py-0">
           <div className="divide-y divide-line">
             {shown.map((task, i) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                first={i === 0}
-                onToggle={handleToggle}
-                onEdit={(t) => setEditing(manualTaskList.find((r) => r.id === t.recordId))}
-              />
+              <TaskCard key={task.id} task={task} first={i === 0} onToggle={onToggle} onEdit={onEdit} />
             ))}
           </div>
         </Card>
@@ -183,7 +227,7 @@ export function TaskBoard() {
         <Card title={`Completed (${shownDone.length})`} icon="check" bodyClassName="px-0 py-0">
           <div className="divide-y divide-line">
             {shownDone.map((task) => (
-              <TaskCard key={task.id} task={task} onToggle={handleToggle} onEdit={() => {}} />
+              <TaskCard key={task.id} task={task} onToggle={onToggle} onEdit={() => {}} />
             ))}
           </div>
         </Card>
@@ -193,8 +237,8 @@ export function TaskBoard() {
         <TaskEditor
           key={editing === 'new' ? 'new' : editing.id}
           task={editing === 'new' ? null : editing}
-          onClose={() => setEditing(null)}
-          onSave={handleSave}
+          onClose={onCloseEditor}
+          onSave={onSave}
         />
       )}
     </div>

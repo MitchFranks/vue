@@ -26,7 +26,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { cx } from '@/lib/cx'
-import { Button, Icon, Select, TextInput } from '@/components/ui/primitives'
+import { Button, Icon, Select, TextInput } from '@/components/ui'
 import { SearchPicker } from '@/components/ui/SearchPicker'
 import { directoryVendorById as vendorById } from '@/lib/directory/registry'
 import { DUE_MODES, shortDate, STATUS_MODES, TASK_SORTS, WEEK, whoLabel, whoSplit } from '@/lib/tasks'

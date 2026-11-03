@@ -6,8 +6,8 @@
 
 import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Alert, Breadcrumbs, Button, PageHeader, Select, TextInput, Textarea } from '@/components/ui/primitives'
-import { FormSection, RecordForm, useRecordForm, Wide } from '@/components/ui/records'
+import { Alert, Breadcrumbs, Button, PageHeader, Select, Textarea, TextInput } from '@/components/ui'
+import { FormSection, RecordForm, useRecordForm, Wide } from '@/components/records'
 import { fullName, trimStrings, validateVenue } from '@/lib/directory/model'
 import { VENUE_TYPES } from '@/lib/mock/directory'
 import { useDirectory } from '@/lib/directory/store'
@@ -93,7 +93,7 @@ function Welcome() {
           </div>
         }
       >
-        Finish your venue's details below, then add the people and vendors you work with. You're already listed as the first staff member.
+        Finish your venue&apos;s details below, then add the people and vendors you work with. You&apos;re already listed as the first staff member.
       </Alert>
     </div>
   )

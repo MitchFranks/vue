@@ -5,9 +5,8 @@
 // where the work and the other controls are (no dead end).
 
 import { ACTIVE_ACCOUNT, deleteAccount, endSession } from '@/lib/account/session'
-import { Alert, Avatar, Breadcrumbs, Button, Card, Field, Icon, ListRow, PageHeader, StatusBadge } from '@/components/ui/primitives'
-import { useConfirm } from '@/components/ui/domain'
-import { ContactInfo } from '@/components/ui/records'
+import { Alert, Avatar, Breadcrumbs, Button, Card, Field, Icon, ListRow, PageHeader, StatusBadge, useConfirm } from '@/components/ui'
+import { ContactInfo } from '@/components/records'
 import { useDirectory } from '@/lib/directory/store'
 import { venue } from '@/lib/mock/events'
 

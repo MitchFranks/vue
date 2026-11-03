@@ -8,16 +8,15 @@
 // ---------------------------------------------------------------------------
 
 import { useMemo, useState } from 'react'
-import { Modal } from '@/components/ui/domain'
-import { Button, Icon, Select, TextInput } from '@/components/ui/primitives'
+import { Button, Icon, Modal, Select, TextInput } from '@/components/ui'
 import { ROLES } from '@/lib/mock/staff'
 import { WORLD } from '@/lib/staffing/adapter'
 import { BAR_TYPES, NO_RULE_TEXT, RATIO_RULES, SERVICE_STYLES } from '@/lib/staffing/rules'
 import { coverage, eventOf, needOf, rangeLabel, rolesOf, suggestedFor } from '@/lib/staffing/derive'
-import { useStaffing2 } from '@/lib/staffing/store'
+import { useStaffing } from '@/lib/staffing/store'
 
 export function EditNeeds({ eventId, onClose }) {
-  const { state, saveNeeds } = useStaffing2()
+  const { state, saveNeeds } = useStaffing()
   const base = WORLD.eventMap[eventId]
   const ev0 = eventOf(state, eventId)
   const [fields, setFields] = useState({

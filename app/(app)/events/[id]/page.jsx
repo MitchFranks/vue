@@ -7,8 +7,9 @@
 
 import { use, useState } from 'react'
 import { useStore } from '@/lib/store'
-import { Button, EmptyState, FilterChip, FilterGroup, Icon } from '@/components/ui/primitives'
-import { TaskRow, openSpots } from '@/components/ui/domain'
+import { Button, EmptyState, FilterChip, FilterGroup, Icon } from '@/components/ui'
+import { TaskRow } from '@/components/tasks/TaskRow'
+import { openSpots } from '@/lib/format'
 
 const SOURCES = [
   { id: 'all', label: 'Everything' },

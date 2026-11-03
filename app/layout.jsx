@@ -1,11 +1,7 @@
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import './globals.css'
-import { StoreProvider } from '@/lib/store'
-import { Staffing2Provider } from '@/lib/staffing/store'
-import { TimelineEditsProvider } from '@/lib/timelineEdits'
-import { DirectoryProvider } from '@/lib/directory/store'
-import { OnboardingProvider } from '@/components/onboarding/OnboardingProvider'
+import { AppProviders } from '@/components/AppProviders'
 
 // One family: Geist for all UI text, Geist Mono for times, money and counts
 // that need to line up. The `geist` package self-hosts the files, so the
@@ -25,17 +21,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body>
-        <TimelineEditsProvider>
-          {/* The planner sits outside the store so tasks can be derived from it. */}
-          {/* The venue directory feeds the planner its staff, so it sits outside it. */}
-          <DirectoryProvider>
-            <Staffing2Provider>
-              <StoreProvider>
-                <OnboardingProvider>{children}</OnboardingProvider>
-              </StoreProvider>
-            </Staffing2Provider>
-          </DirectoryProvider>
-        </TimelineEditsProvider>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   )

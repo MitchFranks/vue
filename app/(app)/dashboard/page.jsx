@@ -11,18 +11,20 @@
 
 import Link from 'next/link'
 import { useStore } from '@/lib/store'
-import { useStaffing2 } from '@/lib/staffing/store'
+import { useStaffing } from '@/lib/staffing/store'
 import { agoLabel } from '@/lib/staffing/derive'
 import { events, eventById, venue } from '@/lib/mock/events'
 import { activityLog } from '@/lib/mock/records'
-import { Card, EmptyState, ListRow, MetricTile, PageHeader, StatusBadge } from '@/components/ui/primitives'
-import { TaskRow, EventCard, openSpots } from '@/components/ui/domain'
+import { Card, EmptyState, ListRow, MetricTile, PageHeader, StatusBadge } from '@/components/ui'
+import { TaskRow } from '@/components/tasks/TaskRow'
+import { EventCard } from '@/components/events/EventCard'
+import { openSpots } from '@/lib/format'
 
 const LINK = 'text-small text-accent underline-offset-4 hover:underline'
 
 export default function DashboardPage() {
   const { openTasks, openPositions, coverageForEvent, tasksForEvent, messageList } = useStore()
-  const { state: planner } = useStaffing2()
+  const { state: planner } = useStaffing()
 
   const urgent = openTasks.filter((a) => a.tone === 'urgent')
   const soon = openTasks.filter((a) => a.tone !== 'urgent')

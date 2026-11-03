@@ -6,14 +6,14 @@
 // edited on each profile, away dates in Staffing Planner > Team.
 
 import { TODAY_KEY } from '@/lib/mock/events'
-import { Avatar, Breadcrumbs, Button, Icon, ListRow, PageHeader, StatusBadge } from '@/components/ui/primitives'
-import { EntityList, ListToolbar, RecordStatusBadge, useListFilters } from '@/components/ui/records'
+import { Avatar, Breadcrumbs, Button, Icon, ListRow, PageHeader, StatusBadge } from '@/components/ui'
+import { EntityList, ListToolbar, RecordStatusBadge, useListFilters } from '@/components/records'
 import { ManageOptionsButton } from '@/components/directory/ManageOptions'
 import { availabilitySummary, fullName, initialsOf, matchesQuery, optionName, staffHref, STATUS_FILTERS } from '@/lib/directory/model'
 import { useDirectory } from '@/lib/directory/store'
 import { WORLD } from '@/lib/staffing/adapter'
 import { requestList } from '@/lib/staffing/derive'
-import { useStaffing2 } from '@/lib/staffing/store'
+import { useStaffing } from '@/lib/staffing/store'
 
 /** Planner requests for upcoming events, counted by status. */
 function countsFor(staffId, st) {
@@ -26,7 +26,7 @@ function countsFor(staffId, st) {
 }
 
 export default function StaffDirectoryPage() {
-  const { state, hydrated } = useStaffing2()
+  const { state, hydrated } = useStaffing()
   const { staff, roles } = useDirectory()
   const filters = useListFilters({ query: '', role: 'all', status: 'active' })
   const { query, role, status } = filters.values

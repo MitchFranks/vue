@@ -16,6 +16,7 @@
 // ---------------------------------------------------------------------------
 
 import { scopedKey } from '@/lib/account/session'
+import { clockLabel } from '@/lib/format'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { events } from '@/lib/mock/events'
 import { timelines } from '@/lib/mock/records'
@@ -51,15 +52,6 @@ export function parseClock(text) {
   let h = hour % 12
   if (m[3].toUpperCase() === 'PM') h += 12
   return h * 60 + Number(m[2])
-}
-
-export function clockLabel(mins) {
-  const total = ((Math.round(mins) % 1440) + 1440) % 1440
-  const h24 = Math.floor(total / 60)
-  const mm = String(total % 60).padStart(2, '0')
-  const suffix = h24 >= 12 ? 'PM' : 'AM'
-  const h12 = h24 % 12 === 0 ? 12 : h24 % 12
-  return `${h12}:${mm} ${suffix}`
 }
 
 export const toInputValue = (text) => {
@@ -197,6 +189,7 @@ export function TimelineEditsProvider({ children }) {
         any = true
       }
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads browser-only state after the first render so the static HTML and first render match
     if (any) setVersion((v) => v + 1)
   }, [])
 

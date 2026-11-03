@@ -9,9 +9,9 @@
 // ---------------------------------------------------------------------------
 
 import { useMemo, useState } from 'react'
-import { Modal } from '@/components/ui/domain'
-import { Alert, Avatar, Button, FilterChip, Icon, Select, StatusBadge, TextInput } from '@/components/ui/primitives'
+import { Alert, Avatar, Button, FilterChip, Icon, Modal, Select, StatusBadge, TextInput } from '@/components/ui'
 import { SETTINGS } from '@/lib/staffing/rules'
+import { hourLabel } from '@/lib/format'
 import {
   blockById,
   blocksOfRequest,
@@ -19,12 +19,11 @@ import {
   coverage,
   eventOf,
   firstName,
-  fmtH,
   goodReasons,
   rank,
   roleBlocks
 } from '@/lib/staffing/derive'
-import { useStaffing2 } from '@/lib/staffing/store'
+import { useStaffing } from '@/lib/staffing/store'
 import { BlockToggles, CallTimeSelect, PickChips } from './controls'
 
 const GROUPS = [
@@ -40,7 +39,7 @@ const GROUPS = [
  * onAsk(spec, opts) opens Send review; the panel closes itself.
  */
 export function AskPanel({ config, onClose, onAsk, hidden = false }) {
-  const { state, saveForLater, promote, addPerson } = useStaffing2()
+  const { state, saveForLater, promote, addPerson } = useStaffing()
   const { eventId, role, mode } = config
   const ev = eventOf(state, eventId)
   const blocks = roleBlocks(eventId, role, state)
@@ -52,6 +51,8 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
     return gaps.length ? gaps : blocks.slice(0, 1).map((b) => b.id)
   })
   // Blocks deleted from the run of show while this panel is open drop out.
+  // blockById reads the live run of show; `state` changes whenever a block does.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- state is the signal that blocks changed
   const selBlocks = useMemo(() => pickedBlocks.filter((id) => blockById(id)), [pickedBlocks, state])
   const [offset, setOffset] = useState(SETTINGS.callOffsetByRole[role] ?? 0)
   const [allRoles, setAllRoles] = useState(false)
@@ -123,7 +124,7 @@ export function AskPanel({ config, onClose, onAsk, hidden = false }) {
   const describe = (x) => {
     if (x.existing && x.existing.status !== 'backup' && x.group !== 'cant') {
       const newNames = selBlocks.filter((b) => !x.existing.blockIds.includes(b)).map((b) => blockById(b).name).join(' + ')
-      return `Add ${newNames} to ${firstName(x.person.id)}'s day (on ${blocksOfRequest(x.existing).map((b) => b.name).join(' + ')} from ${fmtH(callTimeH(x.existing))})`
+      return `Add ${newNames} to ${firstName(x.person.id)}'s day (on ${blocksOfRequest(x.existing).map((b) => b.name).join(' + ')} from ${hourLabel(callTimeH(x.existing))})`
     }
     const real = x.issues.filter((i) => i.severity !== 'info')
     if (real.length) return real.map((i) => i.message).join(' · ')

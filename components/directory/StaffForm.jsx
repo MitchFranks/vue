@@ -1,14 +1,14 @@
 'use client'
 
 // Create or edit a staff member. One form for both, built from the shared
-// record patterns (components/ui/records.jsx) and the availability editor.
+// record patterns (components/records/) and the availability editor.
 
 import { useRouter } from 'next/navigation'
 import { useDirectory } from '@/lib/directory/store'
 import { useStore } from '@/lib/store'
 import { blankStaff, formToStaff, fullName, staffHref, STATUS_OPTIONS, staffToForm, validateStaff } from '@/lib/directory/model'
-import { Select, TextInput, Textarea } from '@/components/ui/primitives'
-import { CheckboxGroup, FormSection, RecordForm, useRecordForm, Wide } from '@/components/ui/records'
+import { Select, Textarea, TextInput } from '@/components/ui'
+import { CheckboxGroup, FormSection, RecordForm, useRecordForm, Wide } from '@/components/records'
 import { AvailabilityEditor, availabilityIsValid } from './Availability'
 import { OptionSelect, useResolveOption } from './OptionSelect'
 

@@ -7,8 +7,7 @@
 
 import { use } from 'react'
 import { useStore } from '@/lib/store'
-import { Button, Card, EmptyState, ListRow, StatusBadge } from '@/components/ui/primitives'
-import { useConfirm } from '@/components/ui/domain'
+import { Button, Card, EmptyState, ListRow, StatusBadge, useConfirm } from '@/components/ui'
 
 export default function DocumentsPage({ params }) {
   const { id } = use(params)

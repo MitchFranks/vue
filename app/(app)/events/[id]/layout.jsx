@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { eventById, events } from '@/lib/mock/events'
-import { EventHeader } from '@/components/EventHeader'
+import { EventHeader } from '@/components/events/EventHeader'
 
 export function generateStaticParams() {
   return events.map((e) => ({ id: e.id }))

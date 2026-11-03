@@ -14,34 +14,54 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { taskSummaryLabel, useStore } from '@/lib/store'
-import { useStaffing2 } from '@/lib/staffing/store'
+import { useStaffing } from '@/lib/staffing/store'
 import { eventOf } from '@/lib/staffing/derive'
-import { openSpots } from './ui/domain'
-import { Breadcrumbs, Field, Icon, PageHeader, StatusBadge, Tabs } from './ui/primitives'
+import { openSpots } from '@/lib/format'
+import { Breadcrumbs, Field, Icon, PageHeader, StatusBadge, Tabs } from '@/components/ui'
 
+/** Works out the event's counts from the stores and the route, then draws EventHeaderView. */
 export function EventHeader({ event }) {
   const pathname = usePathname()
   const { coverageForEvent, tasksForEvent, manualTaskList, messageList, documentList, paymentsForEvent } = useStore()
-  const { state: planner } = useStaffing2()
+  const { state: planner } = useStaffing()
 
-  const coverage = coverageForEvent(event.id)
   const eventTasks = tasksForEvent(event.id)
-  const anyUrgent = eventTasks.some((a) => a.tone === 'urgent')
   const openTasks = manualTaskList.filter((t) => t.eventId === event.id && !t.done)
-  const urgentTask = openTasks.some((t) => t.dueTone === 'urgent')
-  const unreplied = messageList.filter((m) => m.eventId === event.id && m.needsReply && !m.replied).length
-  const toSign = documentList.filter((d) => d.eventId === event.id && d.tone === 'urgent').length
-  const dueNow = (paymentsForEvent(event.id)?.schedule || []).filter((p) => p.state === 'due').length
   // Guest numbers live in the planner: the Tasks tab and Edit needs both change them there.
   const plannerEvent = eventOf(planner, event.id)
-  const guests = plannerEvent?.expectedGuests ?? event.guests
-  const guarantee = plannerEvent?.guaranteedCount
+
+  const summary = {
+    coverage: coverageForEvent(event.id),
+    taskCount: eventTasks.length,
+    taskLabel: taskSummaryLabel(eventTasks),
+    anyUrgent: eventTasks.some((a) => a.tone === 'urgent'),
+    openTaskCount: openTasks.length,
+    urgentTask: openTasks.some((t) => t.dueTone === 'urgent'),
+    unreplied: messageList.filter((m) => m.eventId === event.id && m.needsReply && !m.replied).length,
+    toSign: documentList.filter((d) => d.eventId === event.id && d.tone === 'urgent').length,
+    dueNow: (paymentsForEvent(event.id)?.schedule || []).filter((p) => p.state === 'due').length,
+    guests: plannerEvent?.expectedGuests ?? event.guests,
+    guarantee: plannerEvent?.guaranteedCount
+  }
+
+  return <EventHeaderView event={event} summary={summary} pathname={pathname} />
+}
+
+/**
+ * The header itself, props only.
+ *   summary   { coverage: { complete, short }, taskCount, taskLabel, anyUrgent,
+ *               openTaskCount, urgentTask, unreplied, toSign, dueNow, guests,
+ *               guarantee }
+ *   pathname  picks the active tab
+ */
+export function EventHeaderView({ event, summary, pathname = '' }) {
+  const { coverage, taskCount, taskLabel, anyUrgent, openTaskCount, urgentTask, unreplied, toSign, dueNow, guests, guarantee } = summary
 
   // Counts only where there is something to act on; urgent only when it is.
   const base = `/events/${event.id}`
   const plannerHref = `/staffing/${event.id}`
   const tabs = [
-    { id: 'overview', label: 'Overview', href: base, count: eventTasks.length || null, tone: anyUrgent ? 'urgent' : null },
+    { id: 'overview', label: 'Overview', href: base, count: taskCount || null, tone: anyUrgent ? 'urgent' : null },
     {
       id: 'staffing',
       label: (
@@ -55,7 +75,7 @@ export function EventHeader({ event }) {
       tone: coverage.complete ? null : 'urgent'
     },
     { id: 'timeline', label: 'Run of show', href: `${base}/timeline`, guide: 'tab-timeline' },
-    { id: 'tasks', label: 'Tasks', href: `${base}/tasks`, count: openTasks.length || null, tone: urgentTask ? 'urgent' : null },
+    { id: 'tasks', label: 'Tasks', href: `${base}/tasks`, count: openTaskCount || null, tone: urgentTask ? 'urgent' : null },
     { id: 'vendors', label: 'Vendors', href: `${base}/vendors` },
     { id: 'payments', label: 'Payments', href: `${base}/payments`, count: dueNow || null },
     { id: 'messages', label: 'Messages', href: `${base}/messages`, count: unreplied || null, tone: unreplied ? 'urgent' : null },
@@ -80,8 +100,8 @@ export function EventHeader({ event }) {
         lead={`${event.couple} · ${event.type}`}
         actions={
           <div className="flex flex-wrap gap-2">
-            {eventTasks.length > 0 ? (
-              <StatusBadge tone={anyUrgent ? 'urgent' : 'warn'}>{taskSummaryLabel(eventTasks)}</StatusBadge>
+            {taskCount > 0 ? (
+              <StatusBadge tone={anyUrgent ? 'urgent' : 'warn'}>{taskLabel}</StatusBadge>
             ) : (
               <StatusBadge tone="done">All set</StatusBadge>
             )}
@@ -111,7 +131,7 @@ export function EventHeader({ event }) {
         </dl>
       </PageHeader>
 
-      <Tabs tabs={tabs} active={active} />
+      <Tabs label="Event sections" tabs={tabs} active={active} />
     </>
   )
 }

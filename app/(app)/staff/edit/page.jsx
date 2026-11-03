@@ -2,8 +2,8 @@
 
 // Edit a staff member (?id=).
 
-import { Breadcrumbs, PageHeader } from '@/components/ui/primitives'
-import { QueryRecord } from '@/components/ui/records'
+import { Breadcrumbs, PageHeader } from '@/components/ui'
+import { QueryRecord } from '@/components/records'
 import { StaffForm } from '@/components/directory/StaffForm'
 import { RecordNotFound } from '@/components/directory/RecordNotFound'
 import { fullName, staffHref } from '@/lib/directory/model'

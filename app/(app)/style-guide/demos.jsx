@@ -4,8 +4,7 @@
 // so anything with state lives here).
 
 import { useState } from 'react'
-import { Button, FilterChip, FilterGroup } from '@/components/ui/primitives'
-import { Modal } from '@/components/ui/domain'
+import { Button, FilterChip, FilterGroup, Modal } from '@/components/ui'
 
 export function FilterDemo() {
   const [kind, setKind] = useState('all')

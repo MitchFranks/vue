@@ -14,7 +14,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import Link from 'next/link'
 import { cx } from '@/lib/cx'
 import { venue } from '@/lib/mock/events'
-import { Avatar, Icon } from './ui/primitives'
+import { Avatar, Icon } from '@/components/ui'
 import { usePrototypeReset } from '@/lib/usePrototypeReset'
 import { endSession, IS_SAMPLE_WORKSPACE } from '@/lib/account/session'
 

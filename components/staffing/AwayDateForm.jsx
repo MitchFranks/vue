@@ -5,14 +5,14 @@
 
 import { useState } from 'react'
 import { TODAY_KEY } from '@/lib/mock/events'
-import { Button, FilterChip, Select, TextInput } from '@/components/ui/primitives'
-import { fmtH } from '@/lib/staffing/derive'
-import { useStaffing2 } from '@/lib/staffing/store'
+import { Button, FilterChip, Select, TextInput } from '@/components/ui'
+import { hourLabel } from '@/lib/format'
+import { useStaffing } from '@/lib/staffing/store'
 
 const HALF_HOURS = Array.from({ length: 49 }, (_, i) => i / 2)
 
 export function AwayDateForm({ staffId, addedBy = 'manager', idPrefix = 'away' }) {
-  const { addAway } = useStaffing2()
+  const { addAway } = useStaffing()
   const [dateKey, setDateKey] = useState(TODAY_KEY)
   const [allDay, setAllDay] = useState(true)
   const [start, setStart] = useState(0)
@@ -52,7 +52,7 @@ export function AwayDateForm({ staffId, addedBy = 'manager', idPrefix = 'away' }
             id={`${idPrefix}-from`}
             value={start}
             onChange={(e) => setStart(Number(e.target.value))}
-            options={HALF_HOURS.slice(0, -1).map((h) => ({ value: h, label: h === 0 ? 'Start of day' : fmtH(h) }))}
+            options={HALF_HOURS.slice(0, -1).map((h) => ({ value: h, label: h === 0 ? 'Start of day' : hourLabel(h) }))}
           />
           <Select
             label="To"
@@ -60,7 +60,7 @@ export function AwayDateForm({ staffId, addedBy = 'manager', idPrefix = 'away' }
             value={end}
             onChange={(e) => setEnd(Number(e.target.value))}
             error={end > start ? null : '"To" must be after "From".'}
-            options={HALF_HOURS.slice(1).map((h) => ({ value: h, label: h === 24 ? 'End of day' : fmtH(h) }))}
+            options={HALF_HOURS.slice(1).map((h) => ({ value: h, label: h === 24 ? 'End of day' : hourLabel(h) }))}
           />
         </div>
       )}

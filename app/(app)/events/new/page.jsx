@@ -13,8 +13,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { EVENT_TYPES } from '@/lib/mock/events'
 import { useStore } from '@/lib/store'
-import { Alert, Breadcrumbs, Button, Card, Field, PageHeader, Select, TextInput, Textarea } from '@/components/ui/primitives'
-import { Modal } from '@/components/ui/domain'
+import { Alert, Breadcrumbs, Button, Card, Field, Modal, PageHeader, Select, Textarea, TextInput } from '@/components/ui'
 
 // Different event types expose slightly different optional fields, but they
 // all share the same underlying structure.

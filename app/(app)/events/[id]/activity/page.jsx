@@ -5,7 +5,7 @@
 
 import { use } from 'react'
 import { activityLog } from '@/lib/mock/records'
-import { Card, EmptyState, ListRow, StatusBadge } from '@/components/ui/primitives'
+import { Card, EmptyState, ListRow, StatusBadge } from '@/components/ui'
 
 const STATUS_WORDS = {
   urgent: 'Needs you',

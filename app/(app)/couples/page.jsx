@@ -5,7 +5,7 @@
 import { couples } from '@/lib/mock/records'
 import { events } from '@/lib/mock/events'
 import { useStore } from '@/lib/store'
-import { Avatar, Breadcrumbs, Card, ListRow, PageHeader, StatusBadge } from '@/components/ui/primitives'
+import { Avatar, Breadcrumbs, Card, ListRow, PageHeader, StatusBadge } from '@/components/ui'
 
 export default function CouplesPage() {
   const { tasksForEvent } = useStore()

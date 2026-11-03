@@ -2,23 +2,8 @@
 // tokens and components so it can never drift from the product. The written
 // rules are in docs/STYLE-GUIDE.md.
 
-import {
-  Alert,
-  Avatar,
-  Breadcrumbs,
-  Button,
-  Card,
-  Count,
-  EmptyState,
-  FilterChip,
-  Icon,
-  ListRow,
-  MetricTile,
-  PageHeader,
-  StatusBadge,
-  TextInput
-} from '@/components/ui/primitives'
-import { TaskRow } from '@/components/ui/domain'
+import { Alert, Avatar, Breadcrumbs, Button, Card, Count, EmptyState, FilterChip, Icon, ListRow, MetricTile, PageHeader, StatusBadge, TextInput } from '@/components/ui'
+import { TaskRow } from '@/components/tasks/TaskRow'
 import { FilterDemo, ModalDemo } from './demos'
 
 // Swatch classes are spelled out in full so Tailwind generates them.

@@ -4,15 +4,14 @@
 // why a conflict is acceptable. Both undoable.
 
 import { useState } from 'react'
-import { Modal } from '@/components/ui/domain'
-import { Button, TextInput } from '@/components/ui/primitives'
+import { Button, Modal, TextInput } from '@/components/ui'
 import { WORLD } from '@/lib/staffing/adapter'
 import { openIssues, roleBlocks, staffById } from '@/lib/staffing/derive'
-import { useStaffing2 } from '@/lib/staffing/store'
+import { useStaffing } from '@/lib/staffing/store'
 import { BlockToggles, CallTimeSelect, PickChips } from './controls'
 
 export function ChangeTimes({ requestId, onClose }) {
-  const { state, changeTimes } = useStaffing2()
+  const { state, changeTimes } = useStaffing()
   const r = state.requests[requestId]
   const [blocks, setBlocks] = useState(r ? r.blockIds : [])
   const [offset, setOffset] = useState(r ? r.callOffsetMin : 0)
@@ -58,7 +57,7 @@ export function ChangeTimes({ requestId, onClose }) {
 }
 
 export function MarkOkDialog({ requestId, onClose }) {
-  const { state, markOk } = useStaffing2()
+  const { state, markOk } = useStaffing()
   const [reason, setReason] = useState('')
   const r = state.requests[requestId]
   if (!r) return null

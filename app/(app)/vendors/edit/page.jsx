@@ -2,8 +2,8 @@
 
 // Edit a vendor (?id=).
 
-import { Breadcrumbs, PageHeader } from '@/components/ui/primitives'
-import { QueryRecord } from '@/components/ui/records'
+import { Breadcrumbs, PageHeader } from '@/components/ui'
+import { QueryRecord } from '@/components/records'
 import { VendorForm } from '@/components/directory/VendorForm'
 import { RecordNotFound } from '@/components/directory/RecordNotFound'
 import { vendorHref } from '@/lib/directory/model'

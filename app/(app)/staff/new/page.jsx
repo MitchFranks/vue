@@ -2,7 +2,7 @@
 
 // Add a staff member.
 
-import { Breadcrumbs, PageHeader } from '@/components/ui/primitives'
+import { Breadcrumbs, PageHeader } from '@/components/ui'
 import { StaffForm } from '@/components/directory/StaffForm'
 
 export default function NewStaffPage() {

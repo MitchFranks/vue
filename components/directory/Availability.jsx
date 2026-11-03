@@ -10,7 +10,7 @@
 // ---------------------------------------------------------------------------
 
 import { DAYS, DAY_NAMES, describeWindows, hoursToTime, timeToHours } from '@/lib/directory/model'
-import { Alert, Select, TextInput } from '@/components/ui/primitives'
+import { Alert, Select, TextInput } from '@/components/ui'
 
 const MODES = [
   { value: 'off', label: 'Unavailable' },

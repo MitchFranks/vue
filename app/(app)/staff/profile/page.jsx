@@ -8,9 +8,8 @@
 
 import { useState } from 'react'
 import { TODAY_KEY } from '@/lib/mock/events'
-import { Avatar, Breadcrumbs, Button, Card, EmptyState, Field, Icon, PageHeader } from '@/components/ui/primitives'
-import { Modal, useConfirm } from '@/components/ui/domain'
-import { ContactInfo, DetailGrid, QueryRecord, RecordStatusBadge, RecordStatusCard } from '@/components/ui/records'
+import { Avatar, Breadcrumbs, Button, Card, EmptyState, Field, Icon, Modal, PageHeader, useConfirm } from '@/components/ui'
+import { ContactInfo, DetailGrid, QueryRecord, RecordStatusBadge, RecordStatusCard } from '@/components/records'
 import { AvailabilityEditor, AvailabilitySummary, availabilityIsValid } from '@/components/directory/Availability'
 import { RecordNotFound } from '@/components/directory/RecordNotFound'
 import { RequestStatus } from '@/components/staffing/StatusChip'
@@ -19,7 +18,7 @@ import { useDirectory } from '@/lib/directory/store'
 import { useStore } from '@/lib/store'
 import { WORLD } from '@/lib/staffing/adapter'
 import { awayDateText, dayLine, requestList } from '@/lib/staffing/derive'
-import { useStaffing2 } from '@/lib/staffing/store'
+import { useStaffing } from '@/lib/staffing/store'
 import { useRouter } from 'next/navigation'
 
 const STATUS_ORDER = { pending: 0, draft: 1, accepted: 2, backup: 3, declined: 4, cancelled: 5 }
@@ -28,7 +27,7 @@ function StaffProfile({ id }) {
   const router = useRouter()
   const dir = useDirectory()
   const { toast, manualTaskList } = useStore()
-  const { state, hydrated, recordReply, openPhone } = useStaffing2()
+  const { state, hydrated, recordReply, openPhone } = useStaffing()
   const { confirm, dialog } = useConfirm()
   const [editingHours, setEditingHours] = useState(false)
   const person = dir.staffById(id)

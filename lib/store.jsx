@@ -22,13 +22,16 @@
 // ---------------------------------------------------------------------------
 
 import { scopedKey } from '@/lib/account/session'
+import { newId } from '@/lib/id'
+import { useToast } from '@/lib/toasts'
+import { hourLabel, openSpots } from '@/lib/format'
 import { useTimelineVersion } from '@/lib/timelineEdits'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { events, eventById, daysOutLabel, TODAY_KEY } from './mock/events.js'
 import { contacts, contactName, documents, messages, money, payments, manualTasks } from './mock/records.js'
 import { pluralRole } from './mock/staff.js'
 import { allTaskTypes, DEFAULT_TASK_TYPES, dueInfo, eventTags, taskFromRecord, taskTypeError } from './tasks.js'
-import { useStaffing2 } from './staffing/store'
+import { useStaffing } from './staffing/store'
 import { changed, coverage, requestList, rolesOf, staffById as plannerStaffById } from './staffing/derive'
 
 const StoreContext = createContext(null)
@@ -52,22 +55,17 @@ function initialState() {
   }
 }
 
-/** "1 open spot", "3 open spots". The one phrasing for unfilled roles. */
-function openSpotsText(n) {
-  return `${n} open spot${n === 1 ? '' : 's'}`
-}
-
 export function StoreProvider({ children }) {
   const [state, setState] = useState(initialState)
-  const [toasts, setToasts] = useState([])
   const [hydrated, setHydrated] = useState(false)
-  const { state: planner, setGuarantee } = useStaffing2()
+  const { state: planner, setGuarantee } = useStaffing()
 
   // Rehydrate after mount so the server-rendered HTML and the first couple
   // render match (static export would otherwise warn about a mismatch).
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY)
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reads browser-only state after the first render so the static HTML and first render match
       if (saved) setState((s) => ({ ...s, ...JSON.parse(saved) }))
     } catch {
       /* private mode or blocked storage — the prototype still works in memory */
@@ -86,17 +84,10 @@ export function StoreProvider({ children }) {
 
   // ---- feedback -----------------------------------------------------------
 
-  /**
-   * toast(message, tone?, { actions?, small? }). Toasts with actions (Undo)
-   * stay up longer so there is time to use them.
-   */
-  const toast = useCallback((message, tone = 'done', opts = {}) => {
-    const id = Math.random().toString(36).slice(2)
-    setToasts((t) => [...t, { id, message, tone, actions: opts.actions, small: opts.small }])
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), opts.actions?.length ? 8000 : 4000)
-  }, [])
-
-  const dismissToast = useCallback((id) => setToasts((t) => t.filter((x) => x.id !== id)), [])
+  // Toasts live in their own provider (lib/toasts.jsx) so a toast never
+  // re-renders every screen that reads the store. `toast` is passed through
+  // here so screens can keep calling useStore().toast.
+  const { toast } = useToast()
 
   // ---- actions ------------------------------------------------------------
 
@@ -111,7 +102,7 @@ export function StoreProvider({ children }) {
 
   /** Add a task from the Tasks page. `fields` is what TaskEditor collects. Returns the new record's id. */
   const addManualTask = useCallback((fields) => {
-    const id = `t-new-${Date.now()}`
+    const id = newId('t-new')
     setState((s) => ({
       ...s,
       createdTasks: [
@@ -265,6 +256,8 @@ export function StoreProvider({ children }) {
       }
     }
     return out
+    // Blocks come from the live run of show, so open spots are worked out again after an edit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- timelineVersion is the signal that the run of show changed
   }, [planner, timelineVersion])
 
   /** Coverage summary for a whole event — drives the staffing badge everywhere. */
@@ -367,7 +360,7 @@ export function StoreProvider({ children }) {
           ...base,
           id: `openPosition:${spot.id}`,
           tone: spot.urgency,
-          title: `${spot.block.name}: ${openSpotsText(spot.short)} for ${pluralRole(spot.role, spot.short)}`,
+          title: `${spot.block.name}: ${openSpots(spot.short)} for ${pluralRole(spot.role, spot.short)}`,
           what: who
             ? `${who.name} can't make the ${spot.block.name.toLowerCase()} shift.`
             : `${spot.accepted} of ${spot.required} ${pluralRole(spot.role, spot.required)} confirmed.`,
@@ -575,42 +568,73 @@ export function StoreProvider({ children }) {
 
   const tasksForEvent = useCallback((eventId) => openTasks.filter((a) => a.eventId === eventId), [openTasks])
 
-  const value = {
-    hydrated,
-    // collections
-    manualTaskList,
-    messageList,
-    documentList,
-    paymentsForEvent,
-    // staffing
-    openPositions,
-    coverageForEvent,
-    // Tasks
-    openTasks,
-    tasksForEvent,
-    completedTasks,
-    taskTypes: allTaskTypes(state.taskTypes),
-    editableTaskTypes: state.taskTypes,
-    // actions
-    toggleManualTask,
-    addManualTask,
-    updateManualTask,
-    addTaskType,
-    renameTaskType,
-    deleteTaskType,
-    submitGuestCount,
-    markReplied,
-    markRead,
-    signDocument,
-    unsignDocument,
-    recordPayment,
-    undoPayment,
-    reset,
-    // feedback
-    toasts,
-    toast,
-    dismissToast
-  }
+  const taskTypes = useMemo(() => allTaskTypes(state.taskTypes), [state.taskTypes])
+
+  const value = useMemo(
+    () => ({
+      hydrated,
+      // collections
+      manualTaskList,
+      messageList,
+      documentList,
+      paymentsForEvent,
+      // staffing
+      openPositions,
+      coverageForEvent,
+      // Tasks
+      openTasks,
+      tasksForEvent,
+      completedTasks,
+      taskTypes,
+      editableTaskTypes: state.taskTypes,
+      // actions
+      toggleManualTask,
+      addManualTask,
+      updateManualTask,
+      addTaskType,
+      renameTaskType,
+      deleteTaskType,
+      submitGuestCount,
+      markReplied,
+      markRead,
+      signDocument,
+      unsignDocument,
+      recordPayment,
+      undoPayment,
+      reset,
+      // feedback (see lib/toasts.jsx)
+      toast
+    }),
+    [
+      hydrated,
+      manualTaskList,
+      messageList,
+      documentList,
+      paymentsForEvent,
+      openPositions,
+      coverageForEvent,
+      openTasks,
+      tasksForEvent,
+      completedTasks,
+      taskTypes,
+      state.taskTypes,
+      toggleManualTask,
+      addManualTask,
+      updateManualTask,
+      addTaskType,
+      renameTaskType,
+      deleteTaskType,
+      submitGuestCount,
+      markReplied,
+      markRead,
+      signDocument,
+      unsignDocument,
+      recordPayment,
+      undoPayment,
+      reset,
+      toast
+    ]
+  )
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }
@@ -620,15 +644,6 @@ export function useStore() {
   useTimelineVersion() // draw again after a timeline edit
   if (!ctx) throw new Error('useStore must be used inside <StoreProvider>')
   return ctx
-}
-
-export function hourLabel(h) {
-  const wrapped = ((h % 24) + 24) % 24 // blocks that cross midnight run past 24
-  const hour24 = Math.floor(wrapped)
-  const mins = Math.round((wrapped - hour24) * 60)
-  const suffix = hour24 >= 12 ? 'PM' : 'AM'
-  const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12
-  return mins ? `${hour12}:${String(mins).padStart(2, '0')} ${suffix}` : `${hour12}:00 ${suffix}`
 }
 
 /**

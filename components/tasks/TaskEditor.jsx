@@ -20,10 +20,9 @@ import Link from 'next/link'
 import { useStore } from '@/lib/store'
 import { events } from '@/lib/mock/events'
 import { splitWho, vendorOptions, whoKey, whoOptions } from '@/lib/tasks'
-import { Modal } from '@/components/ui/domain'
+import { Button, Modal, Select, Textarea, TextInput } from '@/components/ui'
 import { SearchPicker } from '@/components/ui/SearchPicker'
 import { WhoPicker } from './WhoPicker'
-import { Button, Select, TextInput, Textarea } from '@/components/ui/primitives'
 
 // A new task starts empty, so the required fields are the user's to fill.
 const BLANK = { title: '', dueDate: '', type: 'Other' }

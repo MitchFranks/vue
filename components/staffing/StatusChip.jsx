@@ -4,8 +4,8 @@
 // the status itself (Not sent · Waiting · Confirmed · Can't make it, plus
 // Removed and Backup), a warning about the person's day, and "You said it's fine".
 
-import { Icon, StatusBadge } from '@/components/ui/primitives'
-import { openSpots } from '@/components/ui/domain'
+import { Icon, StatusBadge } from '@/components/ui'
+import { openSpots } from '@/lib/format'
 import { displayStatus } from '@/lib/staffing/derive'
 
 export function RequestStatus({ request, st, size = 'sm', showNote = true }) {

@@ -23,7 +23,7 @@
 import Link from 'next/link'
 import { useStore } from '@/lib/store'
 import { cx } from '@/lib/cx'
-import { Button, Icon } from './ui/primitives'
+import { Button, Icon } from '@/components/ui'
 import { PrototypeNotice } from './onboarding/PrototypeNotice'
 
 const CTA = { href: '/tasks', label: 'Open Tasks' }

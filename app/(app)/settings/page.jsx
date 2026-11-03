@@ -8,7 +8,7 @@
 // These live here, not in the main menu, so the menu stays about the work.
 
 import { useOnboarding } from '@/components/onboarding/OnboardingProvider'
-import { Breadcrumbs, Button, Card, Icon, PageHeader } from '@/components/ui/primitives'
+import { Breadcrumbs, Button, Card, Icon, PageHeader } from '@/components/ui'
 import { usePrototypeReset } from '@/lib/usePrototypeReset'
 import { useDirectory } from '@/lib/directory/store'
 import { IS_SAMPLE_WORKSPACE } from '@/lib/account/session'

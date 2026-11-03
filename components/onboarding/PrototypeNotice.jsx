@@ -9,7 +9,7 @@
 // still fit beside the menu button and wordmark at 320px.
 // ---------------------------------------------------------------------------
 
-import { Button, Icon } from '@/components/ui/primitives'
+import { Button, Icon } from '@/components/ui'
 import { useOnboarding } from './OnboardingProvider'
 
 export function PrototypeNotice() {

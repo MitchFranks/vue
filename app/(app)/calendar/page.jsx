@@ -14,7 +14,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useStore } from '@/lib/store'
 import { TODAY_KEY, events } from '@/lib/mock/events'
-import { Breadcrumbs, Button, Card, Icon, ListRow, PageHeader, StatusBadge } from '@/components/ui/primitives'
+import { Breadcrumbs, Button, Card, Icon, ListRow, PageHeader, StatusBadge } from '@/components/ui'
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const pad = (n) => String(n).padStart(2, '0')

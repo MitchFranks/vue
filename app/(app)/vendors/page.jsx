@@ -4,8 +4,8 @@
 // directory (lib/directory). A vendor's place on an event is a booking, so
 // the badge shows how their bookings stand.
 
-import { Breadcrumbs, Button, Icon, ListRow, PageHeader, StatusBadge } from '@/components/ui/primitives'
-import { EntityList, ListToolbar, RecordStatusBadge, useListFilters } from '@/components/ui/records'
+import { Breadcrumbs, Button, Icon, ListRow, PageHeader, StatusBadge } from '@/components/ui'
+import { EntityList, ListToolbar, RecordStatusBadge, useListFilters } from '@/components/records'
 import { ManageOptionsButton } from '@/components/directory/ManageOptions'
 import { matchesQuery, optionName, STATUS_FILTERS, vendorHref } from '@/lib/directory/model'
 import { useDirectory } from '@/lib/directory/store'

@@ -5,13 +5,14 @@
 // by breadcrumb, so no tab ever changes meaning (spec §B).
 
 import { usePathname } from 'next/navigation'
-import { Tabs } from '@/components/ui/primitives'
+import { Tabs } from '@/components/ui'
 
-export function Staffing2Nav() {
+export function StaffingNav() {
   const pathname = (usePathname() || '').replace(/\/$/, '')
   const active = pathname.endsWith('/team') ? 'team' : pathname.endsWith('/phone') ? 'phone' : 'events'
   return (
     <Tabs
+      label="Staffing Planner sections"
       active={active}
       tabs={[
         { id: 'events', label: 'Events', href: '/staffing' },

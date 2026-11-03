@@ -4,18 +4,7 @@
 
 import { useState } from 'react'
 import { useStore } from '@/lib/store'
-import {
-  Avatar,
-  Breadcrumbs,
-  Button,
-  Card,
-  EmptyState,
-  FilterChip,
-  FilterGroup,
-  ListRow,
-  PageHeader,
-  StatusBadge
-} from '@/components/ui/primitives'
+import { Avatar, Breadcrumbs, Button, Card, EmptyState, FilterChip, FilterGroup, ListRow, PageHeader, StatusBadge } from '@/components/ui'
 
 const FILTERS = [
   { id: 'needs-reply', label: 'Needs reply' },

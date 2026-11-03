@@ -8,11 +8,11 @@
 
 import { use, useState } from 'react'
 import { useStore } from '@/lib/store'
-import { useStaffing2 } from '@/lib/staffing/store'
+import { useStaffing } from '@/lib/staffing/store'
 import { eventOf } from '@/lib/staffing/derive'
 import { eventById } from '@/lib/mock/events'
-import { Button, Card, EmptyState, StatusBadge, TextInput } from '@/components/ui/primitives'
-import { ManualTaskRow } from '@/components/ui/domain'
+import { Button, Card, EmptyState, StatusBadge, TextInput } from '@/components/ui'
+import { ManualTaskRow } from '@/components/tasks/ManualTaskRow'
 
 /** The guarantee task: an inline form instead of a checkbox. */
 function GuestCountTask({ task, expected, onSubmit }) {
@@ -72,7 +72,7 @@ function GuestCountTask({ task, expected, onSubmit }) {
 export default function TasksPage({ params }) {
   const { id } = use(params)
   const { manualTaskList, toggleManualTask, submitGuestCount, toast } = useStore()
-  const { state: planner } = useStaffing2()
+  const { state: planner } = useStaffing()
   const plannerEvent = eventOf(planner, id)
   const tasks = manualTaskList.filter((t) => t.eventId === id)
   const open = tasks.filter((t) => !t.done)

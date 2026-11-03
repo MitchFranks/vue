@@ -68,6 +68,7 @@ export function OnboardingProvider({ children }) {
   // Read before paint so the modal never flashes in and out on a reload.
   useLayoutEffect(() => {
     const saved = readJson(GUIDE_KEY)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads browser-only state after the first render so the static HTML and first render match
     setIntroOpen(!saved?.seenIntro)
     setHydrated(true)
   }, [])

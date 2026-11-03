@@ -6,8 +6,8 @@
 import { useState } from 'react'
 import { useStore } from '@/lib/store'
 import { EVENT_TYPES, events } from '@/lib/mock/events'
-import { Breadcrumbs, Button, EmptyState, Icon, PageHeader, Select, TextInput } from '@/components/ui/primitives'
-import { EventCard } from '@/components/ui/domain'
+import { Breadcrumbs, Button, EmptyState, Icon, PageHeader, Select, TextInput } from '@/components/ui'
+import { EventCard } from '@/components/events/EventCard'
 
 export default function EventsPage() {
   const { coverageForEvent, tasksForEvent } = useStore()

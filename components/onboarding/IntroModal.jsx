@@ -9,15 +9,15 @@
 // it was afterwards. The header's "Your goal" button brings it back.
 // ---------------------------------------------------------------------------
 
-import { useEffect, useRef } from 'react'
-import { Button, Icon } from '@/components/ui/primitives'
+import { useEffect, useEffectEvent, useRef } from 'react'
+import { Button, Icon } from '@/components/ui'
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 export function IntroModal({ onClose, onStartTour }) {
   const ref = useRef(null)
-  const closeRef = useRef(onClose)
-  closeRef.current = onClose
+  // Always the latest onClose, without re-running the effect when it changes.
+  const close = useEffectEvent(() => onClose?.())
 
   useEffect(() => {
     const previous = document.activeElement
@@ -25,7 +25,7 @@ export function IntroModal({ onClose, onStartTour }) {
     const onKey = (e) => {
       if (e.key === 'Escape') {
         e.preventDefault()
-        closeRef.current()
+        close()
         return
       }
       if (e.key !== 'Tab' || !ref.current) return

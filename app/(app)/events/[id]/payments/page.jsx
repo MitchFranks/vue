@@ -7,8 +7,7 @@
 import { use } from 'react'
 import { useStore } from '@/lib/store'
 import { money } from '@/lib/mock/records'
-import { Button, Card, EmptyState, Field, StatusBadge } from '@/components/ui/primitives'
-import { useConfirm } from '@/components/ui/domain'
+import { Button, Card, EmptyState, Field, StatusBadge, useConfirm } from '@/components/ui'
 
 const STATE = {
   paid: { tone: 'done', label: 'Paid' },
