@@ -85,8 +85,10 @@ export function IntroModal({ onClose, onStartTour }) {
           <div className="rounded-sm border border-line-strong bg-surface-sunken px-4 py-3">
             <p className="text-label font-medium text-ink-muted">Your goal</p>
             <p className="mt-1">
-              You are Dana, the venue manager. <strong className="font-semibold">The Johnson Wedding is today</strong>{' '}
-              and it is short on staff. Find out what needs attention and make sure the wedding is fully staffed.
+              You are Dana, the manager of the Willow Stone venue.{' '}
+              <strong className="font-semibold">Today is Saturday, October 10, 2026.</strong> Follow the scenario you
+              were given for this session. If you are just exploring, look for what needs your attention before the
+              next events.
             </p>
           </div>
 

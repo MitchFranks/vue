@@ -15,7 +15,9 @@ import { Alert, Select, TextInput } from '@/components/ui'
 const MODES = [
   { value: 'off', label: 'Unavailable' },
   { value: 'all', label: 'All day' },
-  { value: 'hours', label: 'Set hours' }
+  { value: 'hours', label: 'Set hours' },
+  // A shortcut, not a stored mode: it fills in 5-11 PM, then the day shows as "Set hours".
+  { value: 'evening', label: 'Evenings (5–11 PM)' }
 ]
 
 const AVAILABILITY_STATUS = [
@@ -56,6 +58,7 @@ export function AvailabilityEditor({ idPrefix, value, onChange, status, onStatus
   const setMode = (day, mode) => {
     if (mode === 'off') setDay(day, [])
     else if (mode === 'all') setDay(day, [{ start: 0, end: 24 }])
+    else if (mode === 'evening') setDay(day, [{ start: 17, end: 23 }])
     else setDay(day, [{ start: 9, end: 17 }])
   }
 
