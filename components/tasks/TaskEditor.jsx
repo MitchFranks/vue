@@ -114,6 +114,7 @@ export function TaskEditor({ task, onClose, onSave }) {
             value={draft.dueDate}
             onChange={set('dueDate')}
             error={errors.dueDate}
+            hint="In this demo, today is Saturday, October 10, 2026."
           />
           <TextInput
             label="Due time (optional)"
