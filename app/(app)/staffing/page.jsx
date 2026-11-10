@@ -14,9 +14,11 @@ import { WORLD } from '@/lib/staffing/adapter'
 import { daysOutOf, daysOutText, eventCardModel, eventOf, guestsText, summaryLine } from '@/lib/staffing/derive'
 import { useStaffing } from '@/lib/staffing/store'
 
+// "Fill spots" opens the event's board, not the Ask panel: in user tests,
+// landing straight in Ask made people send texts when that wasn't their task.
+// Each open spot on the board has its own Ask button.
 const hrefFor = (ev, action) => {
   if (action.kind === 'send' || action.kind === 'remind') return `/staffing/${ev.id}?send=1`
-  if (action.kind === 'find') return `/staffing/${ev.id}?ask=1`
   return `/staffing/${ev.id}`
 }
 

@@ -13,7 +13,7 @@ import { ContactInfo, DetailGrid, QueryRecord, RecordStatusBadge, RecordStatusCa
 import { AvailabilityEditor, AvailabilitySummary, availabilityIsValid } from '@/components/directory/Availability'
 import { RecordNotFound } from '@/components/directory/RecordNotFound'
 import { RequestStatus } from '@/components/staffing/StatusChip'
-import { fullName, initialsOf, optionName, staffEditHref, tasksNaming } from '@/lib/directory/model'
+import { availabilityStatusOf, fullName, initialsOf, optionName, staffEditHref, tasksNaming } from '@/lib/directory/model'
 import { useDirectory } from '@/lib/directory/store'
 import { useStore } from '@/lib/store'
 import { WORLD } from '@/lib/staffing/adapter'
@@ -89,6 +89,19 @@ function StaffProfile({ id }) {
             <Button href={staffEditHref(id)} variant="secondary">
               Edit details
             </Button>
+            {/* User tests: people looked here for how to contact someone and found no way. */}
+            {person.status !== 'inactive' && (
+              <>
+                <Button href={`/messages?to=${encodeURIComponent(`staff:${id}`)}`} variant="secondary">
+                  <Icon name="mail" size={14} />
+                  Message {first}
+                </Button>
+                <Button href="/staffing" variant="primary">
+                  <Icon name="users" size={14} />
+                  Ask {first} to work an event
+                </Button>
+              </>
+            )}
           </>
         }
       />
@@ -256,11 +269,10 @@ function HoursModal({ person, onClose }) {
   const { saveStaff } = useDirectory()
   const { toast } = useStore()
   const [availability, setAvailability] = useState(person.availability)
-  const [status, setStatus] = useState(person.availabilityStatus)
   const valid = availabilityIsValid(availability)
 
   const save = () => {
-    saveStaff(person.id, { availability, availabilityStatus: status })
+    saveStaff(person.id, { availability, availabilityStatus: availabilityStatusOf(availability) })
     toast(`Saved ${person.firstName}'s weekly hours.`)
     onClose()
   }
@@ -284,7 +296,7 @@ function HoursModal({ person, onClose }) {
         </>
       }
     >
-      <AvailabilityEditor idPrefix="hours" value={availability} onChange={setAvailability} status={status} onStatusChange={setStatus} />
+      <AvailabilityEditor idPrefix="hours" value={availability} onChange={setAvailability} />
     </Modal>
   )
 }
