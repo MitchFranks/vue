@@ -110,7 +110,7 @@ export default function DashboardPage() {
         <MetricTile label="Tasks due" value={tasksDue} sub="In Tasks, across all events" href="/tasks" />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 *:min-w-0 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         {/* ---- Upcoming events ---- */}
         <section>
           <div className="mb-3 flex items-end justify-between gap-2">

@@ -70,7 +70,7 @@ export default function PaymentsPage({ params }) {
       </Card>
 
       <Card title="Payment schedule" icon="list" bodyClassName="px-0 py-0">
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full min-w-[560px] text-body">
             <caption className="sr-only">Payment schedule</caption>
             <thead>

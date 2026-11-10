@@ -30,7 +30,7 @@ export default function CoupleDetailPage({ params }) {
       />
       <PageHeader title={couple.name} lead={couple.note} />
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
+      <div className="grid grid-cols-1 gap-4 *:min-w-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
         <Card title="Contact" icon="user">
           <div className="mb-3 flex items-center gap-3">
             <Avatar initials={couple.initials} />
