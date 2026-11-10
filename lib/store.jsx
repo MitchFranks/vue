@@ -54,6 +54,9 @@ function initialState() {
     taskTypes: DEFAULT_TASK_TYPES,
     repliedMessageIds: [],
     readMessageIds: [],
+    // Messages the manager wrote from the Messages tab (newest first):
+    // { id, to: { type: 'staff' | 'vendor' | 'couple', id, name }, subject, body, sentAt }
+    sentMessages: [],
     signedDocumentIds: [],
     // `${eventId}:${paymentId}` recorded as paid in the prototype
     paidPaymentIds: [],
@@ -196,6 +199,16 @@ export function StoreProvider({ children }) {
         : [...s.repliedMessageIds, messageId],
       readMessageIds: s.readMessageIds.includes(messageId) ? s.readMessageIds : [...s.readMessageIds, messageId]
     }))
+  }, [])
+
+  /** A new message to a staff member, vendor or couple. Returns its id. */
+  const sendMessage = useCallback((message) => {
+    const id = `sent-${Date.now().toString(36)}`
+    setState((s) => ({
+      ...s,
+      sentMessages: [{ id, ...message, sentAt: new Date().toISOString() }, ...(s.sentMessages || [])]
+    }))
+    return id
   }, [])
 
   const markRead = useCallback((messageId) => {
@@ -700,6 +713,7 @@ export function StoreProvider({ children }) {
       // collections
       manualTaskList,
       messageList,
+      sentMessageList: state.sentMessages || [],
       documentList,
       paymentsForEvent,
       inquiryList,
@@ -723,6 +737,7 @@ export function StoreProvider({ children }) {
       submitGuestCount,
       markReplied,
       markRead,
+      sendMessage,
       signDocument,
       unsignDocument,
       recordPayment,
@@ -739,6 +754,7 @@ export function StoreProvider({ children }) {
       hydrated,
       manualTaskList,
       messageList,
+      state.sentMessages,
       documentList,
       paymentsForEvent,
       inquiryList,
@@ -759,6 +775,7 @@ export function StoreProvider({ children }) {
       submitGuestCount,
       markReplied,
       markRead,
+      sendMessage,
       signDocument,
       unsignDocument,
       recordPayment,

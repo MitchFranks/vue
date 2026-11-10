@@ -20,11 +20,6 @@ const MODES = [
   { value: 'evening', label: 'Evenings (5–11 PM)' }
 ]
 
-const AVAILABILITY_STATUS = [
-  { value: 'confirmed', label: 'Known: these are their usual hours' },
-  { value: 'pending', label: 'Pending: still waiting to hear from them' }
-]
-
 const modeOf = (windows = []) => (!windows.length ? 'off' : windows[0].start <= 0 && windows[0].end >= 24 ? 'all' : 'hours')
 
 /** Read-only: one row per day. */
@@ -51,8 +46,13 @@ export function AvailabilitySummary({ availability, status }) {
   )
 }
 
-/** Controlled editor. value = availability, status = availabilityStatus. */
-export function AvailabilityEditor({ idPrefix, value, onChange, status, onStatusChange }) {
+/**
+ * Controlled editor. value = availability. The hours are always shown: user
+ * tests found a "are their hours known?" switch that hid them only added a
+ * step. Whether hours are still pending is worked out on save instead
+ * (availabilityStatusOf in lib/directory/model.js).
+ */
+export function AvailabilityEditor({ idPrefix, value, onChange }) {
   const setDay = (day, windows) => onChange({ ...value, [day]: windows })
 
   const setMode = (day, mode) => {
@@ -71,15 +71,7 @@ export function AvailabilityEditor({ idPrefix, value, onChange, status, onStatus
 
   return (
     <div className="space-y-4">
-      <Select
-        id={`${idPrefix}-status`}
-        label="Are their hours known?"
-        options={AVAILABILITY_STATUS}
-        value={status}
-        onChange={(e) => onStatusChange(e.target.value)}
-      />
-
-      <fieldset disabled={status === 'pending'} className="disabled:opacity-50">
+      <fieldset>
         <legend className="mb-1.5 block text-small text-ink-muted">Usual weekly hours</legend>
         <ul className="divide-y divide-line rounded-sm border border-line">
           {DAYS.map((d) => {

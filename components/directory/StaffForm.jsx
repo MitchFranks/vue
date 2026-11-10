@@ -67,8 +67,6 @@ export function StaffForm({ person }) {
             idPrefix="staff-availability"
             value={values.availability}
             onChange={(a) => setValue('availability', a)}
-            status={values.availabilityStatus}
-            onStatusChange={(s) => setValue('availabilityStatus', s)}
           />
           {errors.availability && <p className="mt-2 text-small text-status-now">{errors.availability}</p>}
         </Wide>
