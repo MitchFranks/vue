@@ -29,7 +29,8 @@ import { hourLabel, openSpots } from '@/lib/format'
 import { useTimelineVersion } from '@/lib/timelineEdits'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { events, eventById, daysOutLabel, TODAY_KEY, venue } from './mock/events.js'
-import { contacts, contactName, documents, inquiries as seedInquiries, messages, money, payments, manualTasks } from './mock/records.js'
+import { contacts, contactName, coupleById, documents, inquiries as seedInquiries, messages, money, payments, portalSeed, manualTasks } from './mock/records.js'
+import { addDaysKey, changeLine, cleanDetails, diffDetails, meetingKind, meetingWhen, portalNow, portalSignature, stamp } from './portal.js'
 import { pluralRole } from './mock/staff.js'
 import { allTaskTypes, DEFAULT_TASK_TYPES, dueInfo, eventTags, taskFromRecord, taskTypeError } from './tasks.js'
 import { cleanInquiry, currentOutcomeLabel, INQUIRY_WHY, inquiryDoneTitle, inquiryHref, inquiryTaskTitle, inquiryTaskWhat, kindOf } from './inquiries.js'
@@ -62,7 +63,13 @@ function initialState() {
     paidPaymentIds: [],
     // Client inquiries from the public form (/inquire), newest last. Each new
     // one is a task until the manager deals with it (lib/inquiries.js).
-    inquiries: seedInquiries
+    inquiries: seedInquiries,
+    // The client portal, per couple (lib/portal.js):
+    // { details, detailsAt, history: [{ at, by, kind, changes }], seen, signatures: { docId: { name, at } }, meeting }
+    // `seen` is how many history entries the manager has read; the rest are a task.
+    portal: structuredClone(portalSeed),
+    // `${eventId}:${paymentId}` -> { at, by, method } for payments the couple made in the portal
+    portalPayments: {}
   }
 }
 
@@ -240,6 +247,53 @@ export function StoreProvider({ children }) {
     setState((s) => ({ ...s, paidPaymentIds: s.paidPaymentIds.filter((k) => k !== key) }))
   }, [])
 
+  // ---- client portal --------------------------------------------------------
+  // What the couple does in their portal (/portal). Each action stamps who did
+  // it and when, so the couple record can say so (lib/portal.js).
+
+  const updatePortal = useCallback((coupleId, fn) => {
+    setState((s) => {
+      const record = { history: [], seen: 0, signatures: {}, meeting: null, details: null, ...(s.portal || {})[coupleId] }
+      return { ...s, portal: { ...(s.portal || {}), [coupleId]: { ...record, ...fn(record) } } }
+    })
+  }, [])
+
+  const portalSign = useCallback(
+    (coupleId, docId, name) => updatePortal(coupleId, (r) => ({ signatures: { ...r.signatures, [docId]: { name, at: portalNow() } } })),
+    [updatePortal]
+  )
+
+  const portalPay = useCallback((eventId, paymentId, { by, method }) => {
+    setState((s) => ({ ...s, portalPayments: { ...(s.portalPayments || {}), [`${eventId}:${paymentId}`]: { at: portalNow(), by, method } } }))
+  }, [])
+
+  /** Save the couple's details. The first save is "sent"; later ones log what changed. */
+  const portalSaveDetails = useCallback(
+    (coupleId, values, by) =>
+      updatePortal(coupleId, (r) => {
+        const next = cleanDetails(values)
+        const changes = r.details ? diffDetails(r.details, next) : []
+        if (r.details && !changes.length) return {}
+        const entry = { at: portalNow(), by, kind: r.details ? 'changed' : 'sent', changes }
+        return { details: next, detailsAt: entry.at, history: [...r.history, entry] }
+      }),
+    [updatePortal]
+  )
+
+  const portalBookMeeting = useCallback(
+    (coupleId, meeting, by) => updatePortal(coupleId, () => ({ meeting: { ...meeting, by, at: portalNow() } })),
+    [updatePortal]
+  )
+  const portalCancelMeeting = useCallback((coupleId) => updatePortal(coupleId, () => ({ meeting: null })), [updatePortal])
+
+  /** The manager has read the couple's latest details and changes. */
+  const markPortalSeen = useCallback((coupleId) => updatePortal(coupleId, (r) => ({ seen: r.history.length })), [updatePortal])
+
+  const portalFor = useCallback(
+    (coupleId) => ({ history: [], seen: 0, signatures: {}, meeting: null, details: null, ...(state.portal || {})[coupleId] }),
+    [state.portal]
+  )
+
   // ---- client inquiries -----------------------------------------------------
 
   /** Save what the client sent from /inquire. Returns the new inquiry's id (their reference). */
@@ -402,9 +456,12 @@ export function StoreProvider({ children }) {
   const documentList = useMemo(
     () =>
       documents.map((d) =>
-        state.signedDocumentIds.includes(d.id) ? { ...d, status: 'Signed', tone: 'done' } : d
-      ),
-    [state.signedDocumentIds]
+      {
+        if (state.signedDocumentIds.includes(d.id)) return { ...d, status: 'Signed', tone: 'done' }
+        const sig = portalSignature(state.portal, d.id)
+        return sig ? { ...d, status: 'Signed', tone: 'done', signedBy: sig.name, signedOn: stamp(sig.at), signedOnline: true } : d
+      }),
+    [state.signedDocumentIds, state.portal]
   )
 
   /** Payment schedule for an event, with prototype-recorded payments applied. */
@@ -414,6 +471,11 @@ export function StoreProvider({ children }) {
       if (!plan) return null
       let paid = plan.paid
       const schedule = plan.schedule.map((p) => {
+        const online = state.portalPayments?.[`${eventId}:${p.id}`]
+        if (p.state !== 'paid' && online) {
+          paid += p.amount
+          return { ...p, state: 'paid', when: `Paid online ${stamp(online.at)} by ${online.by}`, paidOnline: online }
+        }
         if (p.state !== 'paid' && state.paidPaymentIds.includes(`${eventId}:${p.id}`)) {
           paid += p.amount
           return { ...p, state: 'paid', when: 'Recorded today', recordedHere: true }
@@ -422,7 +484,7 @@ export function StoreProvider({ children }) {
       })
       return { ...plan, paid, schedule }
     },
-    [state.paidPaymentIds]
+    [state.paidPaymentIds, state.portalPayments]
   )
 
   // ---- derived: ATTENTION -------------------------------------------------
@@ -577,6 +639,55 @@ export function StoreProvider({ children }) {
       })
     }
 
+    // 5b. The client portal: details the couple sent or changed that the
+    //     manager hasn't read (so a moved cake cutting reaches the staff), and
+    //     meetings the couple booked.
+    for (const [coupleId, r] of Object.entries(state.portal || {})) {
+      const couple = coupleById(coupleId)
+      if (!couple) continue
+      const event = eventById(couple.eventIds[0])
+      const base = {
+        source: 'portal',
+        type: 'Client portal',
+        ...eventTags(event),
+        eventId: event?.id || null,
+        eventName: event ? event.name : couple.name,
+        href: `/couples/${coupleId}`
+      }
+      const unseen = (r.history || []).slice(r.seen || 0)
+      if (unseen.length) {
+        // Not read even the first version yet: it is all new, so there is nothing to compare against.
+        const sentNow = unseen.some((h) => h.kind === 'sent')
+        const changes = sentNow ? [] : unseen.flatMap((h) => h.changes)
+        const by = unseen[unseen.length - 1].by
+        const n = changes.length
+        items.push({
+          ...base,
+          id: `portal-details:${coupleId}:${r.history.length}`,
+          dueDate: TODAY_KEY,
+          tone: event && event.dateKey <= addDaysKey(TODAY_KEY, 7) ? 'urgent' : 'warn',
+          title: sentNow ? `${by} sent their event details` : `${by} changed ${n} ${n === 1 ? 'detail' : 'details'}`,
+          what: n
+            ? `${changes.slice(0, 3).map(changeLine).join('. ')}.${n > 3 ? ` And ${n - 3} more.` : ''}`
+            : 'Guest count, key moments, day-of contact and guest needs.',
+          why: 'Pass it on to the staff and vendors, so nobody works from old information on the day.',
+          meta: 'From the client portal'
+        })
+      }
+      if (r.meeting && r.meeting.dateKey >= TODAY_KEY) {
+        items.push({
+          ...base,
+          id: `portal-meeting:${coupleId}`,
+          dueDate: r.meeting.dateKey,
+          tone: 'info',
+          title: `${meetingKind(r.meeting.kind)?.label} with ${r.meeting.by}`,
+          what: `${meetingWhen(r.meeting)}. Booked by the couple in their portal.`,
+          why: 'It is on your schedule. Nothing to do until then.',
+          meta: 'Meeting'
+        })
+      }
+    }
+
     // 6. Payments due
     for (const event of events) {
       const plan = paymentsForEvent(event.id)
@@ -605,7 +716,7 @@ export function StoreProvider({ children }) {
     const dated = items.map((i) => ({ ...dueInfo(i), ...i }))
     const order = { urgent: 0, warn: 1, pending: 2, info: 3 }
     return dated.sort((a, b) => (order[a.tone] ?? 9) - (order[b.tone] ?? 9))
-  }, [openPositions, planner, messageList, manualTaskList, documentList, paymentsForEvent, inquiryList])
+  }, [openPositions, planner, messageList, manualTaskList, documentList, paymentsForEvent, inquiryList, state.portal])
 
   const openTasks = allOpenTasks
 
@@ -645,7 +756,7 @@ export function StoreProvider({ children }) {
     }
 
     for (const d of documentList) {
-      if (!state.signedDocumentIds.includes(d.id)) continue
+      if (!state.signedDocumentIds.includes(d.id) && !d.signedOnline) continue
       const event = eventById(d.eventId)
       done.push({
         id: `document:${d.id}`,
@@ -664,12 +775,14 @@ export function StoreProvider({ children }) {
     for (const event of events) {
       const plan = paymentsForEvent(event.id)
       for (const p of plan?.schedule || []) {
-        if (!p.recordedHere) continue
+        if (!p.recordedHere && !p.paidOnline) continue
         done.push({
           id: `payment:${event.id}:${p.id}`,
           source: 'payment',
           type: 'Payment',
-          title: `Collected the ${p.label.toLowerCase()} of ${money(p.amount)}`,
+          title: p.paidOnline
+            ? `${p.paidOnline.by} paid the ${p.label.toLowerCase()} of ${money(p.amount)} online`
+            : `Collected the ${p.label.toLowerCase()} of ${money(p.amount)}`,
           eventId: event.id,
           eventName: event.name,
           dueDate: p.dueDate || event.dateKey,
@@ -738,6 +851,13 @@ export function StoreProvider({ children }) {
       markReplied,
       markRead,
       sendMessage,
+      portalFor,
+      portalSign,
+      portalPay,
+      portalSaveDetails,
+      portalBookMeeting,
+      portalCancelMeeting,
+      markPortalSeen,
       signDocument,
       unsignDocument,
       recordPayment,
@@ -776,6 +896,13 @@ export function StoreProvider({ children }) {
       markReplied,
       markRead,
       sendMessage,
+      portalFor,
+      portalSign,
+      portalPay,
+      portalSaveDetails,
+      portalBookMeeting,
+      portalCancelMeeting,
+      markPortalSeen,
       signDocument,
       unsignDocument,
       recordPayment,

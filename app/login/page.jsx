@@ -11,6 +11,7 @@ import { useRecordForm } from '@/components/records'
 import { AuthLayout, LocalAccountsNote } from '@/components/account/AuthLayout'
 import { checkPassword, currentAccount, DEMO_ACCOUNT, endSession, startSession } from '@/lib/account/session'
 import { validate } from '@/lib/directory/model'
+import { portalHref } from '@/lib/portal'
 import { useIsClient } from '@/lib/useIsClient'
 
 /** Only same-site paths, so ?next= can't send anyone elsewhere. */
@@ -101,6 +102,19 @@ function SignIn() {
         <div className="mt-4">
           <Button onClick={() => startSession(DEMO_ACCOUNT.id, next)}>
             Open the demo
+            <Icon name="arrowRight" size={13} />
+          </Button>
+        </div>
+      </Card>
+
+      <Card title="See the couple's side" icon="heart" subtitle="The client portal a couple gets from the venue. No sign-in needed.">
+        <p className="text-small text-ink-muted">
+          Sign an agreement, pay the balance, send event details and book a meeting as Priya Shah and Dev Patel. Then open the demo to
+          see it all arrive on the venue&apos;s side.
+        </p>
+        <div className="mt-4">
+          <Button href={portalHref('cpl-2002')}>
+            Open the client portal
             <Icon name="arrowRight" size={13} />
           </Button>
         </div>
