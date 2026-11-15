@@ -18,6 +18,19 @@ Step 2 of the post-survey plan: one place where the couple signs, pays, fills in
 
 For demos, the sign-in page has an "Open the client portal" button that opens the Shah–Patel couple's portal.
 
+## How it is laid out
+
+The guiding rule: anyone using it should know what each button does and what to do next.
+
+- **Home:** "Hi, Priya", how far along they are ("2 of 4 done" with a bar), **one "Up next" card with the only filled button on the page**, then the four steps as a checklist. Done steps open to view or change.
+- **One job per screen** (`?step=sign|pay|details|meeting`): a back link to the checklist, "Step n of 4", one sentence on what happens, and one button that names exactly what it does: "Sign agreement", "Pay $4,600", "Send to Willow Stone", "Book final walkthrough".
+- **Confirmation after each step** (`?done=<step>`): what just happened, progress, and the next step as the only button ("Next: Make a payment →").
+- **Choices are visible, not hidden in dropdowns.** Meeting types are large cards (`ChoiceCards`) and times are pills (`ChoicePills`), both in `components/ui/Choice.jsx`.
+- **Real URLs**, so the browser's Back button works.
+- **Copy for every step** lives in one place: `STEP_COPY` in `lib/portal.js`.
+
+On the venue's side, unread changes come first as one banner: what changed (old value struck through, new value bold) and one **Mark as read** button. Below that are the portal's progress, with "Copy link to send" and "Preview portal", and the event details with the change history folded away.
+
 ## The four steps
 
 1. **Sign.** Every document for the event with `signer: 'couple'` shows up here.

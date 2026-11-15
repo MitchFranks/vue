@@ -10,7 +10,6 @@ import { coupleById } from '@/lib/mock/records'
 import { events } from '@/lib/mock/events'
 import { Avatar, Breadcrumbs, Button, Card, EmptyState, Field, ListRow, PageHeader, StatusBadge } from '@/components/ui'
 import { openSpots } from '@/lib/format'
-import { portalHref } from '@/lib/portal'
 import { PortalRecord } from '@/components/portal/PortalRecord'
 
 export default function CoupleDetailPage({ params }) {
@@ -32,15 +31,7 @@ export default function CoupleDetailPage({ params }) {
           { label: couple.name }
         ]}
       />
-      <PageHeader
-        title={couple.name}
-        lead={couple.note}
-        actions={
-          <Button href={portalHref(couple.id)} target="_blank" rel="noreferrer" variant="secondary">
-            Open their client portal
-          </Button>
-        }
-      />
+      <PageHeader title={couple.name} lead={couple.note} />
 
       <div className="grid grid-cols-1 items-start gap-4 *:min-w-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
         <Card title="Contact" icon="user">

@@ -11,8 +11,12 @@ export const INQUIRY_TITLE_ID = 'inquiry-title'
 const INQUIRY_NOTE =
   "Prototype: what you send is saved in this browser only, where the venue's Tasks can pick it up. Nothing is emailed."
 
-/** `section` names the page in the header; `note` is the prototype footnote; `after` sits outside the column (toasts). */
-export function InquiryFrame({ venueName, title, lead, children, section = 'Inquiries', note = INQUIRY_NOTE, after }) {
+/**
+ * `section` names the page in the header; `above` sits over the title (a back
+ * link, "Step 2 of 4"); `note` is the prototype footnote; `after` sits outside
+ * the column (toasts).
+ */
+export function InquiryFrame({ venueName, title, lead, children, section = 'Inquiries', note = INQUIRY_NOTE, above, after }) {
   return (
     <div className="flex min-h-dvh flex-col bg-canvas text-ink">
       <header className="border-b border-line bg-surface">
@@ -22,6 +26,7 @@ export function InquiryFrame({ venueName, title, lead, children, section = 'Inqu
         </div>
       </header>
       <main className="mx-auto w-full max-w-form flex-1 px-4 pt-10 pb-12 sm:pt-16">
+        {above}
         <h1 id={INQUIRY_TITLE_ID} tabIndex={-1} className="text-title font-light text-balance text-ink outline-none sm:text-display">
           {title}
         </h1>

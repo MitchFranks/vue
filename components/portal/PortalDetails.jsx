@@ -1,19 +1,20 @@
 'use client'
 
-// Your details: guest count, key moment times, the day-of contact, guests'
-// needs and outside vendors. The first save sends them; every later save is
-// logged as "what changed", which the venue sees as a task until it has read
-// it (lib/store.jsx). DetailsSummary is shared with the couple record.
+// Step: details. One form, already filled in with anything sent before:
+// guest count, key times, the day-of contact, guests' needs and outside
+// vendors. The first save sends them; every later save is logged as what
+// changed, which the venue sees until it has read it. DetailsSummary is the
+// read-only version, shared with the couple record.
 
-import { Button, Card, EmptyState, Field, TextInput, Textarea } from '@/components/ui'
+import { Field, TextInput, Textarea } from '@/components/ui'
 import { FormSection, RecordForm, useRecordForm, Wide } from '@/components/records'
-import { blankDetails, DETAIL_GROUPS, detailText, stamp, validateDetails } from '@/lib/portal'
+import { blankDetails, cleanDetails, DETAIL_GROUPS, detailText, diffDetails, STEP_COPY, validateDetails } from '@/lib/portal'
 import { useStore } from '@/lib/store'
 
 /** The details, read-only, grouped as the form groups them. */
 export function DetailsSummary({ details }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {DETAIL_GROUPS.map((g) => (
         <div key={g.id}>
           <h3 className="mb-2 text-small font-medium text-ink">{g.title}</h3>
@@ -33,41 +34,7 @@ export function DetailsSummary({ details }) {
   )
 }
 
-export function PortalDetails({ record, onEdit }) {
-  return (
-    <section id="portal-details" className="scroll-mt-6">
-      <Card
-        title="Your details"
-        icon="list"
-        subtitle={record.details ? `Last updated ${stamp(record.detailsAt)}. Change anything until the week of your event.` : 'The guest count, key moments and who to call on the day.'}
-        action={
-          record.details && (
-            <Button size="sm" onClick={onEdit}>
-              Update details
-            </Button>
-          )
-        }
-      >
-        {record.details ? (
-          <DetailsSummary details={record.details} />
-        ) : (
-          <EmptyState
-            icon="list"
-            title="Tell us about your day"
-            body="It takes about five minutes, and you can change it later."
-            action={
-              <Button variant="primary" onClick={onEdit}>
-                Fill in your details
-              </Button>
-            }
-          />
-        )}
-      </Card>
-    </section>
-  )
-}
-
-export function PortalDetailsForm({ couple, event, record, by, onDone }) {
+export function DetailsStep({ couple, event, record, by, venue, screen, complete, back }) {
   const { portalSaveDetails, toast } = useStore()
   const first = !record.details
   const form = useRecordForm(record.details || { ...blankDetails(), guestCount: event ? String(event.guests) : '' }, {
@@ -77,38 +44,49 @@ export function PortalDetailsForm({ couple, event, record, by, onDone }) {
   const { field } = form
 
   const save = form.submit((values) => {
+    if (first) {
+      portalSaveDetails(couple.id, values, by)
+      complete('details', `${venue.name} has your guest count, key times and day-of contact.`)
+      return
+    }
+    const changes = diffDetails(record.details, cleanDetails(values))
+    if (!changes.length) {
+      toast('Nothing changed, so there was nothing to save.', 'info')
+      back()
+      return
+    }
     portalSaveDetails(couple.id, values, by)
-    toast(first ? 'Thank you! The venue has your details.' : 'Saved. The venue can see exactly what you changed.')
-    onDone()
-    window.scrollTo({ top: 0 })
+    complete('details', `${changes.length} ${changes.length === 1 ? 'change' : 'changes'} saved. ${venue.name} sees exactly what you changed.`, 'Changes saved')
   })
 
-  return (
-    <RecordForm onSubmit={save} submitLabel={first ? 'Send to the venue' : 'Save changes'} onCancel={onDone}>
-      {DETAIL_GROUPS.map((g) => (
-        <FormSection key={g.id} title={g.title} subtitle={g.subtitle} icon={g.icon}>
-          {g.fields.map((f) => {
-            if (f.kind === 'long') {
-              return (
+  return screen('details', {
+    title: first ? STEP_COPY.details.title : 'Your details',
+    lead: first
+      ? 'Skip anything you do not know yet. You can change it all until the week of your event.'
+      : 'Change anything, then save. The venue sees exactly what you changed.',
+    children: (
+      <RecordForm onSubmit={save} submitLabel={first ? `Send to ${venue.name}` : 'Save changes'}>
+        {DETAIL_GROUPS.map((g) => (
+          <FormSection key={g.id} title={g.title} subtitle={g.subtitle} icon={g.icon}>
+            {g.fields.map((f) =>
+              f.kind === 'long' ? (
                 <Wide key={f.id}>
                   <Textarea label={f.label} hint={f.hint} rows={3} {...field(f.id)} />
                 </Wide>
+              ) : (
+                <TextInput
+                  key={f.id}
+                  label={f.label}
+                  hint={f.hint}
+                  type={f.kind === 'number' ? 'text' : f.kind}
+                  inputMode={f.kind === 'number' ? 'numeric' : undefined}
+                  {...field(f.id)}
+                />
               )
-            }
-            const type = f.kind === 'number' ? 'text' : f.kind
-            return (
-              <TextInput
-                key={f.id}
-                label={f.label}
-                hint={f.hint}
-                type={type}
-                inputMode={f.kind === 'number' ? 'numeric' : undefined}
-                {...field(f.id)}
-              />
-            )
-          })}
-        </FormSection>
-      ))}
-    </RecordForm>
-  )
+            )}
+          </FormSection>
+        ))}
+      </RecordForm>
+    )
+  })
 }
