@@ -1,6 +1,8 @@
 'use client'
 
-// SCREEN 28 — Couple Detail.
+// SCREEN 28 — Couple Detail: the couple record. Contact, their client-portal
+// progress and the details they sent (components/portal/PortalRecord.jsx),
+// their events and messages.
 
 import { use } from 'react'
 import { useStore } from '@/lib/store'
@@ -8,6 +10,8 @@ import { coupleById } from '@/lib/mock/records'
 import { events } from '@/lib/mock/events'
 import { Avatar, Breadcrumbs, Button, Card, EmptyState, Field, ListRow, PageHeader, StatusBadge } from '@/components/ui'
 import { openSpots } from '@/lib/format'
+import { portalHref } from '@/lib/portal'
+import { PortalRecord } from '@/components/portal/PortalRecord'
 
 export default function CoupleDetailPage({ params }) {
   const { id } = use(params)
@@ -28,9 +32,17 @@ export default function CoupleDetailPage({ params }) {
           { label: couple.name }
         ]}
       />
-      <PageHeader title={couple.name} lead={couple.note} />
+      <PageHeader
+        title={couple.name}
+        lead={couple.note}
+        actions={
+          <Button href={portalHref(couple.id)} target="_blank" rel="noreferrer" variant="secondary">
+            Open their client portal
+          </Button>
+        }
+      />
 
-      <div className="grid grid-cols-1 gap-4 *:min-w-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+      <div className="grid grid-cols-1 items-start gap-4 *:min-w-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
         <Card title="Contact" icon="user">
           <div className="mb-3 flex items-center gap-3">
             <Avatar initials={couple.initials} />
@@ -47,6 +59,8 @@ export default function CoupleDetailPage({ params }) {
         </Card>
 
         <div className="space-y-4">
+          <PortalRecord couple={couple} event={theirEvents[0]} />
+
           <Card title="Their events" icon="calendar" bodyClassName="px-0 py-0">
             {theirEvents.length === 0 && (
               <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
