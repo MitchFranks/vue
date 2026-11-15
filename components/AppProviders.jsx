@@ -10,6 +10,8 @@
 //   DirectoryProvider      the venue directory feeds the planner its staff
 //   StaffingProvider       the planner sits outside the store so tasks can
 //                          be derived from it
+//   EventSheetProvider     each event's detail sheet and change log; sends
+//                          changes to the planner's staff, feeds tasks
 //   StoreProvider          tasks, messages, documents, payments
 //   OnboardingProvider     intro and guided tour, reads all of the above
 // ---------------------------------------------------------------------------
@@ -18,6 +20,7 @@ import { ToastProvider } from '@/lib/toasts'
 import { TimelineEditsProvider } from '@/lib/timelineEdits'
 import { DirectoryProvider } from '@/lib/directory/store'
 import { StaffingProvider } from '@/lib/staffing/store'
+import { EventSheetProvider } from '@/lib/eventSheetStore'
 import { StoreProvider } from '@/lib/store'
 import { OnboardingProvider } from '@/components/onboarding/OnboardingProvider'
 
@@ -27,9 +30,11 @@ export function AppProviders({ children }) {
       <TimelineEditsProvider>
         <DirectoryProvider>
           <StaffingProvider>
-            <StoreProvider>
-              <OnboardingProvider>{children}</OnboardingProvider>
-            </StoreProvider>
+            <EventSheetProvider>
+              <StoreProvider>
+                <OnboardingProvider>{children}</OnboardingProvider>
+              </StoreProvider>
+            </EventSheetProvider>
           </StaffingProvider>
         </DirectoryProvider>
       </TimelineEditsProvider>

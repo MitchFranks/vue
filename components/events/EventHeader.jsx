@@ -15,6 +15,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { taskSummaryLabel, useStore } from '@/lib/store'
 import { useStaffing } from '@/lib/staffing/store'
+import { useEventSheet } from '@/lib/eventSheetStore'
+import { notSeenBy } from '@/lib/eventSheet'
 import { eventOf } from '@/lib/staffing/derive'
 import { openSpots } from '@/lib/format'
 import { Breadcrumbs, Field, Icon, PageHeader, StatusBadge, Tabs } from '@/components/ui'
@@ -24,6 +26,7 @@ export function EventHeader({ event }) {
   const pathname = usePathname()
   const { coverageForEvent, tasksForEvent, manualTaskList, messageList, documentList, paymentsForEvent } = useStore()
   const { state: planner } = useStaffing()
+  const { entriesFor } = useEventSheet()
 
   const eventTasks = tasksForEvent(event.id)
   const openTasks = manualTaskList.filter((t) => t.eventId === event.id && !t.done)
@@ -41,7 +44,9 @@ export function EventHeader({ event }) {
     toSign: documentList.filter((d) => d.eventId === event.id && d.tone === 'urgent').length,
     dueNow: (paymentsForEvent(event.id)?.schedule || []).filter((p) => p.state === 'due').length,
     guests: plannerEvent?.expectedGuests ?? event.guests,
-    guarantee: plannerEvent?.guaranteedCount
+    guarantee: plannerEvent?.guaranteedCount,
+    // Sheet changes some of the staff haven't opened yet.
+    unseenChanges: entriesFor(event.id).filter((e) => notSeenBy(e).length > 0).length
   }
 
   return <EventHeaderView event={event} summary={summary} pathname={pathname} />
@@ -51,17 +56,19 @@ export function EventHeader({ event }) {
  * The header itself, props only.
  *   summary   { coverage: { complete, short }, taskCount, taskLabel, anyUrgent,
  *               openTaskCount, urgentTask, unreplied, toSign, dueNow, guests,
- *               guarantee }
+ *               guarantee, unseenChanges }
  *   pathname  picks the active tab
  */
 export function EventHeaderView({ event, summary, pathname = '' }) {
-  const { coverage, taskCount, taskLabel, anyUrgent, openTaskCount, urgentTask, unreplied, toSign, dueNow, guests, guarantee } = summary
+  const { coverage, taskCount, taskLabel, anyUrgent, openTaskCount, urgentTask, unreplied, toSign, dueNow, guests, guarantee, unseenChanges } = summary
 
   // Counts only where there is something to act on; urgent only when it is.
   const base = `/events/${event.id}`
   const plannerHref = `/staffing/${event.id}`
   const tabs = [
     { id: 'overview', label: 'Overview', href: base, count: taskCount || null, tone: anyUrgent ? 'urgent' : null },
+    // The live detail sheet; the count is changes not every staff member has seen.
+    { id: 'sheet', label: 'Detail sheet', href: `${base}/sheet`, count: unseenChanges || null },
     {
       id: 'staffing',
       label: (

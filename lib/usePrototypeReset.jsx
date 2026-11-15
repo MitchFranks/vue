@@ -6,6 +6,7 @@ import { useConfirm } from '@/components/ui'
 import { useStaffing } from '@/lib/staffing/store'
 import { useStore } from '@/lib/store'
 import { useTimelineEdits } from '@/lib/timelineEdits'
+import { useEventSheet } from '@/lib/eventSheetStore'
 import { useDirectory } from '@/lib/directory/store'
 import { IS_SAMPLE_WORKSPACE } from '@/lib/account/session'
 
@@ -13,6 +14,7 @@ export function usePrototypeReset() {
   const { reset: resetStore } = useStore()
   const planner = useStaffing()
   const { resetAll: resetTimelines } = useTimelineEdits()
+  const { reset: resetSheets } = useEventSheet()
   const { reset: resetDirectory } = useDirectory()
   const { reset: resetIntro } = useOnboarding()
   const { confirm, dialog } = useConfirm()
@@ -22,12 +24,13 @@ export function usePrototypeReset() {
       title: 'Reset everything?',
       // In an account's own workspace "the start" is empty: say so plainly.
       body: IS_SAMPLE_WORKSPACE
-        ? 'Replies, tasks, messages, staffing changes, timeline edits, staff, vendors, the venue profile, and display preferences will return to the sample state. This cannot be undone.'
+        ? 'Replies, tasks, messages, staffing changes, timeline edits, detail sheets, staff, vendors, the venue profile, and display preferences will return to the sample state. This cannot be undone.'
         : 'Every staff member, vendor, role, category and change in this workspace will be erased, and the venue profile will go back to what you entered when you signed up. Your account stays. This cannot be undone.',
       confirmLabel: 'Reset everything',
       danger: true,
       onConfirm: () => {
         resetTimelines()
+        resetSheets()
         resetDirectory()
         planner.reset({ undoable: false, notify: false })
         resetStore()

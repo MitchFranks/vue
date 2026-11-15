@@ -181,7 +181,8 @@ Every route has a job; none are filler.
 | Route | Screen |
 |---|---|
 | `/events/[id]` | Event Overview: this event's tasks |
-| `/events/[id]/timeline` | Run of show (day view editor) |
+| `/events/[id]/sheet` | Detail sheet: the live event record; every change is logged, sent to the staff and tracked until they have seen it (docs/EVENT-DETAIL-SHEET.md) |
+| `/events/[id]/timeline` | Run of show (day view editor); edits are logged on the Detail sheet |
 | `/events/[id]/tasks` | Tasks, including the guest-count guarantee |
 | `/events/[id]/vendors` | Vendors |
 | `/events/[id]/payments` | Payments (record a payment) |
@@ -204,6 +205,7 @@ Every route has a job; none are filler.
 | Route | Screen |
 |---|---|
 | `/inquire` | Client inquiry form: schedule a walkthrough, ask for a quote, ask about services, or schedule a call or virtual tour. `?type=walkthrough\|quote\|services\|call` skips the first step |
+| `/day-of?e=&s=` | A staff member's day-of sheet (public, phone first): what changed since they last looked, "Got it", then the whole sheet |
 
 Every inquiry becomes an **Inquiry** task in Tasks, due the day it arrives. Booking a walkthrough or
 call from it adds a dated task too. The Tasks header links to the form, labelled as a prototype tool.

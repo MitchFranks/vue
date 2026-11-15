@@ -28,12 +28,14 @@ import { useToast } from '@/lib/toasts'
 import { hourLabel, openSpots } from '@/lib/format'
 import { useTimelineVersion } from '@/lib/timelineEdits'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { events, eventById, daysOutLabel, TODAY_KEY, venue } from './mock/events.js'
+import { events, eventById, daysOut, daysOutLabel, TODAY_KEY, venue } from './mock/events.js'
 import { contacts, contactName, documents, inquiries as seedInquiries, messages, money, payments, manualTasks } from './mock/records.js'
 import { pluralRole } from './mock/staff.js'
 import { allTaskTypes, DEFAULT_TASK_TYPES, dueInfo, eventTags, taskFromRecord, taskTypeError } from './tasks.js'
 import { cleanInquiry, currentOutcomeLabel, INQUIRY_WHY, inquiryDoneTitle, inquiryHref, inquiryTaskTitle, inquiryTaskWhat, kindOf } from './inquiries.js'
 import { useStaffing } from './staffing/store'
+import { useEventSheet } from './eventSheetStore'
+import { entryTitle, notSeenBy } from './eventSheet.js'
 import { changed, coverage, requestList, rolesOf, staffById as plannerStaffById } from './staffing/derive'
 
 const StoreContext = createContext(null)
@@ -66,10 +68,36 @@ function initialState() {
   }
 }
 
+/**
+ * A detail-sheet change as a task: make sure it reached the staff. Urgent
+ * when the event is today or tomorrow; due today either way, because a
+ * change nobody has read is worth chasing now.
+ */
+function sheetTask(e, event, missing) {
+  const n = missing.length
+  const names = missing.map((id) => (plannerStaffById(id)?.name || 'Someone').split(' ')[0])
+  return {
+    id: `sheet:${e.id}`,
+    source: 'sheet',
+    type: 'Event change',
+    dueDate: TODAY_KEY,
+    ...eventTags(event),
+    tone: daysOut(event) <= 1 ? 'urgent' : 'warn',
+    title: `${n} of ${e.team.length} staff haven't seen: ${entryTitle(e)}`,
+    what: `Not yet: ${names.join(', ')}.${e.reason ? ` Why it changed: ${e.reason}` : ''}`,
+    why: 'Staff work from the detail sheet; a change they have not read is a change that did not happen.',
+    eventId: event.id,
+    eventName: event.name,
+    meta: e.area,
+    href: `/events/${event.id}/sheet`
+  }
+}
+
 export function StoreProvider({ children }) {
   const [state, setState] = useState(initialState)
   const [hydrated, setHydrated] = useState(false)
   const { state: planner, setGuarantee } = useStaffing()
+  const { entries: sheetEntries } = useEventSheet()
 
   // Rehydrate after mount so the server-rendered HTML and the first couple
   // render match (static export would otherwise warn about a mismatch).
@@ -601,11 +629,21 @@ export function StoreProvider({ children }) {
       }
     }
 
+    // 7. Detail sheet changes that some of the staff working the event haven't
+    //    opened. The manager's job is to be sure the change reached them; it
+    //    is done when everyone has tapped "Got it" (lib/eventSheet.js).
+    for (const e of sheetEntries) {
+      const missing = notSeenBy(e)
+      const event = eventById(e.eventId)
+      if (!missing.length || !event || daysOut(event) < 0) continue
+      items.push(sheetTask(e, event, missing))
+    }
+
     // Every item answers "when is it due", so they can all be sorted and filtered together.
     const dated = items.map((i) => ({ ...dueInfo(i), ...i }))
     const order = { urgent: 0, warn: 1, pending: 2, info: 3 }
     return dated.sort((a, b) => (order[a.tone] ?? 9) - (order[b.tone] ?? 9))
-  }, [openPositions, planner, messageList, manualTaskList, documentList, paymentsForEvent, inquiryList])
+  }, [openPositions, planner, messageList, manualTaskList, documentList, paymentsForEvent, inquiryList, sheetEntries])
 
   const openTasks = allOpenTasks
 
@@ -700,8 +738,15 @@ export function StoreProvider({ children }) {
       })
     }
 
+    // A sheet change everyone has seen.
+    for (const e of sheetEntries) {
+      const event = eventById(e.eventId)
+      if (!event || !e.notify || !e.team.length || notSeenBy(e).length) continue
+      done.push({ ...sheetTask(e, event, []), title: `Everyone saw: ${entryTitle(e)}`, due: 'Seen by all' })
+    }
+
     return done.map((t) => ({ ...t, done: true, dueTone: 'done', tone: 'done' }))
-  }, [manualTaskList, messageList, documentList, paymentsForEvent, state.signedDocumentIds, inquiryList])
+  }, [manualTaskList, messageList, documentList, paymentsForEvent, state.signedDocumentIds, inquiryList, sheetEntries])
 
   const tasksForEvent = useCallback((eventId) => openTasks.filter((a) => a.eventId === eventId), [openTasks])
 
