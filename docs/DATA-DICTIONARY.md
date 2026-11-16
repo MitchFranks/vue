@@ -156,7 +156,7 @@ A **task** is anything on the Tasks page: a message to answer, an open spot, a d
 | `due` | string, **calculated** | `dueInfo()`: "Due today · 5:00 PM", "Due tomorrow", "Due Wed, Oct 14", "Overdue · was due …", "Completed Sep 12" |
 | `dueTone` | tone, **calculated** | Overdue or today → `urgent`; within 7 days → `warn`; later → `info`; done → `done`. **Still decides whether the task is open or only upcoming** |
 | `completedOn` | string | Display text for seed tasks that start done |
-| `owner` | string | Person's name as text (not an id) |
+| `assigneeId` | string \| null | Staff id of the person responsible (`lib/assignees.js`); null is unassigned. A new task goes to the manager, and so does every task the product raises until it's reassigned (`taskEdits` in state, keyed by task id) |
 | `done` | boolean | Seed value only. Live value = `doneManualTaskIds` in state |
 
 Edits made on the Tasks page are kept in `manualTaskEdits` in state and laid over the seed record.

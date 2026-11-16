@@ -31,6 +31,7 @@ import { SearchPicker } from '@/components/ui/SearchPicker'
 import { directoryVendorById as vendorById } from '@/lib/directory/registry'
 import { DUE_MODES, shortDate, STATUS_MODES, TASK_SORTS, WEEK, whoLabel, whoSplit } from '@/lib/tasks'
 import { WhoPicker } from './WhoPicker'
+import { personName, UNASSIGNED } from '@/lib/assignees'
 
 // What clears each filter property back to "not filtering".
 const CLEARED = {
@@ -38,10 +39,12 @@ const CLEARED = {
   due: { due: 'any', dueDate: '' },
   who: { who: [] },
   vendor: { vendorIds: [] },
+  assignee: { assigneeIds: [] },
   status: { status: 'open' }
 }
 
 const PROPERTIES = [
+  { key: 'assignee', label: 'Assigned to', operator: 'is any of' },
   { key: 'type', label: 'Task type', operator: 'is any of' },
   { key: 'due', label: 'Due', operator: 'is' },
   { key: 'who', label: 'Couple', operator: 'is any of' },
@@ -56,6 +59,7 @@ export function rowsFor(f) {
     f.due !== 'any' && 'due',
     f.who.length && 'who',
     f.vendorIds.length && 'vendor',
+    f.assigneeIds?.length && 'assignee',
     f.status !== 'open' && 'status'
   ].filter(Boolean)
 }
@@ -162,6 +166,7 @@ export function TaskToolbar({
     if (k === 'due') return filters.due !== 'any' && (filters.due !== 'date' || filters.dueDate)
     if (k === 'who') return filters.who.length
     if (k === 'vendor') return filters.vendorIds.length
+    if (k === 'assignee') return filters.assigneeIds.length
     return filters.status !== 'open'
   }).length
 
@@ -229,6 +234,18 @@ export function TaskToolbar({
             options={facets.who}
             value={filters.who}
             onChange={(who) => set({ who })}
+          />
+        )
+      case 'assignee':
+        return (
+          <SearchPicker
+            id="filter-assignees"
+            ariaLabel="Assigned to"
+            options={facets.assignees}
+            value={filters.assigneeIds}
+            onChange={(assigneeIds) => set({ assigneeIds })}
+            placeholder="Choose people"
+            noun="people"
           />
         )
       case 'vendor':
@@ -299,6 +316,13 @@ export function TaskToolbar({
       panel: 'filter',
       remove: () => removeRow('vendor'),
       what: 'vendor filter'
+    },
+    filters.assigneeIds.length > 0 && {
+      key: 'assignee',
+      label: `Assigned to: ${list(filters.assigneeIds.map((id) => (id === UNASSIGNED ? 'Unassigned' : personName(id))))}`,
+      panel: 'filter',
+      remove: () => removeRow('assignee'),
+      what: 'assigned-to filter'
     },
     filters.status !== 'open' && {
       key: 'status',

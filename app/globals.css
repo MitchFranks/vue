@@ -164,6 +164,15 @@
     cursor: pointer;
   }
 
+  /* A dropdown's option list takes its colours from the select. A select with
+     a transparent background (the assignee picker on a task card) gets a
+     white list with the dark theme's light text, so the options always use
+     the surface and ink tokens, in light and dark. */
+  select option {
+    background-color: var(--surface);
+    color: var(--ink);
+  }
+
   button {
     font: inherit;
     color: inherit;

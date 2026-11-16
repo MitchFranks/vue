@@ -9,8 +9,10 @@
 // works, what is inside, and who it is for, each kept to a line or two.
 //
 // ONE WAY IN: the product is entered through "Open Tasks" everywhere on the
-// page (header, hero, closing). The only other button, "Fill open spots",
-// goes somewhere different on purpose: straight to the Staffing Planner.
+// page (header, hero, closing). The only other buttons go somewhere
+// different on purpose: "Fill open spots" straight to the Staffing Planner,
+// and "Use as client" (hero only) to the client portal a couple gets, for
+// testers playing the couple (the Shah–Patel portal, like the sign-in page's).
 //
 // PHOTO STUBS: this is a prototype, so where a photo will go there is a
 // labelled placeholder (PhotoStub) saying what the photo should show.
@@ -25,6 +27,7 @@ import { useStore } from '@/lib/store'
 import { cx } from '@/lib/cx'
 import { Button, Icon } from '@/components/ui'
 import { PrototypeNotice } from './onboarding/PrototypeNotice'
+import { portalHref } from '@/lib/portal'
 
 const CTA = { href: '/tasks', label: 'Open Tasks' }
 
@@ -292,6 +295,10 @@ export function Landing() {
             </Button>
             <Button href="/staffing" variant="onDark" size="lg">
               Fill open spots
+            </Button>
+            <Button href={portalHref('cpl-2002')} variant="onDark" size="lg">
+              <Icon name="heart" size={16} />
+              Use as client
             </Button>
           </div>
 

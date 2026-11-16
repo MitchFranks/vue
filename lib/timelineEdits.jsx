@@ -22,7 +22,7 @@ import { events } from '@/lib/mock/events'
 import { timelines } from '@/lib/mock/records'
 import { WORLD } from '@/lib/staffing/adapter'
 
-const RUN_KEY = scopedKey('vue-run-of-show-v2')
+const RUN_KEY = scopedKey('vue-run-of-show-v4')
 
 const Ctx = createContext({ version: 0, rowsFor: () => [], setRows: () => {}, resetEvent: () => {}, resetAll: () => {} })
 

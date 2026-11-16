@@ -5,7 +5,7 @@
 // to add.
 //
 // Required: Task name, Due date, Event. Optional: Due time, Type,
-// Description, who it is for, Vendor tags.
+// Assigned to (the manager by default), Description, who it is for, Vendor tags.
 //
 // COUPLE and VENDORS are searchable pickers (components/ui/SearchPicker.jsx),
 // so they work the same with 2 couples or 200 vendors. The couple picker
@@ -23,13 +23,16 @@ import { splitWho, vendorOptions, whoKey, whoOptions } from '@/lib/tasks'
 import { Button, Modal, Select, Textarea, TextInput } from '@/components/ui'
 import { SearchPicker } from '@/components/ui/SearchPicker'
 import { WhoPicker } from './WhoPicker'
+import { assigneeOptions, managerId } from '@/lib/assignees'
 
 // A new task starts empty, so the required fields are the user's to fill.
-const BLANK = { title: '', dueDate: '', type: 'Other' }
+const BLANK = { title: '', dueDate: '', type: 'Other', assigneeId: undefined }
 
 function draftFrom(task) {
   return {
     eventId: task.eventId || '',
+    // A new task goes to the manager unless they hand it to someone.
+    assigneeId: task.assigneeId === undefined ? managerId() || '' : task.assigneeId || '',
     title: task.title,
     dueDate: task.dueDate,
     dueTime: task.dueTime || '',
@@ -65,6 +68,7 @@ export function TaskEditor({ task, onClose, onSave }) {
 
     onSave({
       eventId: draft.eventId || null,
+      assigneeId: draft.assigneeId || null,
       title: draft.title.trim(),
       dueDate: draft.dueDate,
       dueTime: draft.dueTime || null,
@@ -97,6 +101,12 @@ export function TaskEditor({ task, onClose, onSave }) {
       }
     >
       <form id="task-editor-form" onSubmit={save} noValidate className="space-y-4">
+        {task?.raised && (
+          <p className="rounded-sm bg-surface-sunken px-3 py-2 text-small text-ink-muted">
+            Vue raised this task. Your changes are kept with it; it is still finished where it lives (its Action button).
+          </p>
+        )}
+
         <TextInput
           label="Task name"
           id="task-title"
@@ -152,6 +162,15 @@ export function TaskEditor({ task, onClose, onSave }) {
           ]}
           value={draft.eventId}
           onChange={set('eventId')}
+        />
+
+        <Select
+          label="Assigned to"
+          id="task-assignee"
+          hint="They see it on their own task list."
+          options={[{ value: '', label: 'Unassigned' }, ...assigneeOptions(draft.assigneeId ? [draft.assigneeId] : [])]}
+          value={draft.assigneeId}
+          onChange={set('assigneeId')}
         />
 
         <Textarea

@@ -6,6 +6,7 @@
 // number (the catering guarantee) is completed by sending the number, not by
 // ticking a box, so the event never looks done without the count.
 
+import { personName } from '@/lib/assignees'
 import { use, useState } from 'react'
 import { useStore } from '@/lib/store'
 import { useStaffing } from '@/lib/staffing/store'
@@ -40,7 +41,7 @@ function GuestCountTask({ task, expected, onSubmit }) {
       <div className="min-w-0 flex-1">
         <p className="text-ink">{task.title}</p>
         <p className="text-small text-ink-muted">{task.detail}</p>
-        <p className="text-small text-ink-muted">Owner: {task.owner}</p>
+        <p className="text-small text-ink-muted">Assigned to {personName(task.assigneeId)}</p>
         <form onSubmit={submit} noValidate className="mt-3 flex flex-wrap items-start gap-2">
           <TextInput
             label="Guaranteed guest count"

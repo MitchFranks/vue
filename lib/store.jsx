@@ -28,31 +28,47 @@ import { useToast } from '@/lib/toasts'
 import { hourLabel, openSpots } from '@/lib/format'
 import { useTimelineVersion } from '@/lib/timelineEdits'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { events, eventById, daysOutLabel, TODAY_KEY, venue } from './mock/events.js'
+import { events, eventById, daysOut, daysOutLabel, TODAY_KEY, venue } from './mock/events.js'
 import { contacts, contactName, coupleById, documents, inquiries as seedInquiries, messages, money, payments, portalSeed, manualTasks } from './mock/records.js'
 import { addDaysKey, changeLine, cleanDetails, diffDetails, meetingKind, meetingWhen, portalNow, portalSignature, stamp } from './portal.js'
 import { pluralRole } from './mock/staff.js'
 import { allTaskTypes, DEFAULT_TASK_TYPES, dueInfo, eventTags, taskFromRecord, taskTypeError } from './tasks.js'
 import { cleanInquiry, currentOutcomeLabel, INQUIRY_WHY, inquiryDoneTitle, inquiryHref, inquiryTaskTitle, inquiryTaskWhat, kindOf } from './inquiries.js'
 import { useStaffing } from './staffing/store'
+import { useEventSheet } from './eventSheetStore'
+import { managerId } from './assignees.js'
+import { DEFAULT_TEMPLATES, seedDoneTemplateIds, templateTasks } from './templates.js'
+import { useDirectory } from './directory/store'
+import { simNowIso } from './staffing/derive'
+import { entryTitle, notSeenBy, requestLine } from './eventSheet.js'
 import { changed, coverage, requestList, rolesOf, staffById as plannerStaffById } from './staffing/derive'
 
 const StoreContext = createContext(null)
 
-const STORAGE_KEY = scopedKey('vue-lowfi-prototype-v9')
+const STORAGE_KEY = scopedKey('vue-lowfi-prototype-v11')
 
-// A new task is owned by the signed-in manager, whose name RequireAccount puts on `venue`.
-const newTaskRecord = (fields, id) => ({ owner: venue.manager, done: false, ...fields, id })
+// A new task goes to the signed-in manager unless it says otherwise (lib/assignees.js).
+const newTaskRecord = (fields, id) => ({ assigneeId: managerId(), done: false, ...fields, id })
 
 function initialState() {
   return {
-    doneManualTaskIds: manualTasks.filter((t) => t.done).map((t) => t.id),
+    // Written tasks done, including template steps (lib/templates.js) already behind the sample events.
+    doneManualTaskIds: [...manualTasks.filter((t) => t.done).map((t) => t.id), ...seedDoneTemplateIds(DEFAULT_TEMPLATES, events)],
     // recordId -> fields changed from Tasks (name, due date/time, type, description, tags)
     manualTaskEdits: {},
+    // recordId -> { by: staffId, at } for manual tasks marked done: who finished it, and when.
+    completedBy: {},
+    // task id -> fields changed on a task the product raised (a message to
+    // answer, a spot to fill...): name, due date, type, description, tags,
+    // who it's assigned to. Laid over the derived task (withEdits), so the
+    // message or spot itself is untouched.
+    taskEdits: {},
     // tasks added from the Tasks page ("New"), in the same shape as lib/mock/records.js manualTasks
     createdTasks: [],
     // The venue's own task types (the system ones are fixed, see lib/tasks.js)
     taskTypes: DEFAULT_TASK_TYPES,
+    // The planning templates every event's checklist comes from (/tasks/templates).
+    templates: structuredClone(DEFAULT_TEMPLATES),
     repliedMessageIds: [],
     readMessageIds: [],
     // Messages the manager wrote from the Messages tab (newest first):
@@ -73,10 +89,76 @@ function initialState() {
   }
 }
 
+/**
+ * A detail-sheet change as a task: make sure it reached the staff. Urgent
+ * when the event is today or tomorrow; due today either way, because a
+ * change nobody has read is worth chasing now.
+ */
+function sheetTask(e, event, missing) {
+  const n = missing.length
+  const names = missing.map((id) => (plannerStaffById(id)?.name || 'Someone').split(' ')[0])
+  return {
+    id: `sheet:${e.id}`,
+    source: 'sheet',
+    type: 'Event change',
+    dueDate: TODAY_KEY,
+    ...eventTags(event),
+    tone: daysOut(event) <= 1 ? 'urgent' : 'warn',
+    title: `${n} of ${e.team.length} staff haven't seen: ${entryTitle(e)}`,
+    what: `Not yet: ${names.join(', ')}.${e.reason ? ` Why it changed: ${e.reason}` : ''}`,
+    why: 'Staff work from the detail sheet; a change they have not read is a change that did not happen.',
+    eventId: event.id,
+    eventName: event.name,
+    meta: e.area,
+    href: `/events/${event.id}/sheet`
+  }
+}
+
+/**
+ * A raised task with the manager's edits laid over it, in the task's own
+ * shape: the editor's `detail` is the card's `what`, and a new event brings
+ * its name. A changed due date drops the derived due text so it is worked out
+ * again.
+ */
+function withEdits(task, edit) {
+  if (!edit) return task
+  const { detail, ...rest } = edit
+  const next = { ...task, ...rest }
+  if (detail !== undefined) next.what = detail
+  if (edit.eventId !== undefined && edit.eventId !== task.eventId) next.eventName = eventById(edit.eventId)?.name || task.eventName
+  if (edit.dueDate !== undefined || edit.dueTime !== undefined) {
+    delete next.due
+    delete next.dueTone
+  }
+  return next
+}
+
+/** A couple's run-of-show request as a task: answer it on the Detail sheet. */
+function requestTask(r, event) {
+  return {
+    id: `request:${r.id}`,
+    source: 'request',
+    type: 'Client portal',
+    dueDate: TODAY_KEY,
+    ...eventTags(event),
+    tone: daysOut(event) <= 7 ? 'urgent' : 'warn',
+    title: `${r.by.split(' ')[0]} asks: ${requestLine(r)}`,
+    what: r.note ? `“${r.note}”` : '',
+    why: 'The couple is waiting to hear whether the venue can do it.',
+    eventId: event.id,
+    eventName: event.name,
+    meta: 'Run of show request',
+    href: `/events/${event.id}/sheet`
+  }
+}
+
 export function StoreProvider({ children }) {
   const [state, setState] = useState(initialState)
   const [hydrated, setHydrated] = useState(false)
   const { state: planner, setGuarantee } = useStaffing()
+  // Template steps go to whoever holds a role, so they follow the directory.
+  const { staff: directoryStaff } = useDirectory()
+  const { entries: sheetEntries, requests: sheetRequests } = useEventSheet()
 
   // Rehydrate after mount so the server-rendered HTML and the first couple
   // render match (static export would otherwise warn about a mismatch).
@@ -126,14 +208,27 @@ export function StoreProvider({ children }) {
 
   // ---- actions ------------------------------------------------------------
 
-  const toggleManualTask = useCallback((recordId) => {
-    setState((s) => ({
-      ...s,
-      doneManualTaskIds: s.doneManualTaskIds.includes(recordId)
-        ? s.doneManualTaskIds.filter((t) => t !== recordId)
-        : [...s.doneManualTaskIds, recordId]
-    }))
-  }, [])
+  /**
+   * Mark a manual task done, or reopen it. `byId` is the staff member doing it
+   * (a staff member on their own task list); the manager when left out.
+   */
+  const toggleManualTask = useCallback(
+    (recordId, byId = managerId()) => {
+      const at = simNowIso(planner)
+      setState((s) => {
+        const reopening = s.doneManualTaskIds.includes(recordId)
+        const completedBy = { ...(s.completedBy || {}) }
+        if (reopening) delete completedBy[recordId]
+        else completedBy[recordId] = { by: byId, at }
+        return {
+          ...s,
+          completedBy,
+          doneManualTaskIds: reopening ? s.doneManualTaskIds.filter((t) => t !== recordId) : [...s.doneManualTaskIds, recordId]
+        }
+      })
+    },
+    [planner]
+  )
 
   /** Add a task from the Tasks page. `fields` is what TaskEditor collects. Returns the new record's id. */
   const addManualTask = useCallback((fields) => {
@@ -146,6 +241,19 @@ export function StoreProvider({ children }) {
   const updateManualTask = useCallback((recordId, patch) => {
     setState((s) => ({ ...s, manualTaskEdits: { ...s.manualTaskEdits, [recordId]: { ...s.manualTaskEdits?.[recordId], ...patch } } }))
   }, [])
+
+  /**
+   * Change any task, written or raised by the product, with the fields
+   * TaskEditor collects. A written task's record is edited; a raised task's
+   * changes are kept by its id and laid over it.
+   */
+  const updateTask = useCallback(
+    (task, patch) => {
+      if (task.source === 'manual') return updateManualTask(task.recordId, patch)
+      setState((s) => ({ ...s, taskEdits: { ...(s.taskEdits || {}), [task.id]: { ...s.taskEdits?.[task.id], ...patch } } }))
+    },
+    [updateManualTask]
+  )
 
   // ---- task types (the Task types screen) ----------------------------------
   //
@@ -160,6 +268,37 @@ export function StoreProvider({ children }) {
     [state.taskTypes]
   )
 
+  // ---- planning templates (the Planning templates screen) -----------------
+
+  /**
+   * Add a step to a template, or change one. A new step only creates tasks
+   * due from today on (`since`), so events already under way don't get a
+   * pile of overdue work.
+   */
+  const saveTemplateStep = useCallback((templateId, step) => {
+    setState((s) => {
+      const templates = (s.templates || DEFAULT_TEMPLATES).map((tpl) => {
+        if (tpl.id !== templateId) return tpl
+        const exists = step.id && tpl.steps.some((st) => st.id === step.id)
+        const steps = exists
+          ? tpl.steps.map((st) => (st.id === step.id ? { ...st, ...step } : st))
+          : [...tpl.steps, { ...step, id: newId('step'), since: TODAY_KEY }]
+        return { ...tpl, steps: steps.sort((a, b) => a.offset - b.offset) }
+      })
+      return { ...s, templates }
+    })
+  }, [])
+
+  /** Remove a step; the tasks it created for every event go with it. */
+  const deleteTemplateStep = useCallback((templateId, stepId) => {
+    setState((s) => ({
+      ...s,
+      templates: (s.templates || DEFAULT_TEMPLATES).map((tpl) =>
+        tpl.id === templateId ? { ...tpl, steps: tpl.steps.filter((st) => st.id !== stepId) } : tpl
+      )
+    }))
+  }, [])
+
   /** Rename a type. Tasks that use it move to the new name. */
   const renameTaskType = useCallback(
     (from, to) => {
@@ -168,10 +307,19 @@ export function StoreProvider({ children }) {
       const next = to.trim()
       setState((s) => {
         const edits = { ...s.manualTaskEdits }
-        for (const t of [...manualTasks, ...(s.createdTasks || [])]) {
+        for (const t of [...manualTasks, ...(s.createdTasks || []), ...templateTasks(s.templates || DEFAULT_TEMPLATES, events)]) {
           if ((edits[t.id]?.type ?? t.type) === from) edits[t.id] = { ...edits[t.id], type: next }
         }
-        return { ...s, manualTaskEdits: edits, taskTypes: s.taskTypes.map((t) => (t === from ? next : t)) }
+        // Raised tasks given this type in the editor move with it too.
+        const raised = Object.fromEntries(
+          Object.entries(s.taskEdits || {}).map(([id, e]) => [id, e.type === from ? { ...e, type: next } : e])
+        )
+        // ...and so do template steps of this type, so new events get the new name.
+        const templates = (s.templates || DEFAULT_TEMPLATES).map((tpl) => ({
+          ...tpl,
+          steps: tpl.steps.map((st) => (st.type === from ? { ...st, type: next } : st))
+        }))
+        return { ...s, manualTaskEdits: edits, taskEdits: raised, templates, taskTypes: s.taskTypes.map((t) => (t === from ? next : t)) }
       })
       return null
     },
@@ -182,10 +330,24 @@ export function StoreProvider({ children }) {
   const deleteTaskType = useCallback((name, moveTo) => {
     setState((s) => {
       const edits = { ...s.manualTaskEdits }
-      for (const t of [...manualTasks, ...(s.createdTasks || [])]) {
+      for (const t of [...manualTasks, ...(s.createdTasks || []), ...templateTasks(s.templates || DEFAULT_TEMPLATES, events)]) {
         if ((edits[t.id]?.type ?? t.type) === name && moveTo) edits[t.id] = { ...edits[t.id], type: moveTo }
       }
-      return { ...s, manualTaskEdits: edits, taskTypes: s.taskTypes.filter((t) => t !== name) }
+      // A raised task given this type goes to `moveTo`, or back to its own type.
+      const raised = Object.fromEntries(
+        Object.entries(s.taskEdits || {}).map(([id, e]) => {
+          if (e.type !== name) return [id, e]
+          if (moveTo) return [id, { ...e, type: moveTo }]
+          const { type: _gone, ...rest } = e
+          return [id, rest]
+        })
+      )
+      // Template steps of this type move to `moveTo`, or to Other.
+      const templates = (s.templates || DEFAULT_TEMPLATES).map((tpl) => ({
+        ...tpl,
+        steps: tpl.steps.map((st) => (st.type === name ? { ...st, type: moveTo || 'Other' } : st))
+      }))
+      return { ...s, manualTaskEdits: edits, taskEdits: raised, templates, taskTypes: s.taskTypes.filter((t) => t !== name) }
     })
   }, [])
 
@@ -436,11 +598,15 @@ export function StoreProvider({ children }) {
   // edited date moves the task in and out of Tasks.
   const manualTaskList = useMemo(
     () =>
-      [...manualTasks, ...(state.createdTasks || [])].map((t) => {
-        const task = { ...t, ...state.manualTaskEdits?.[t.id], done: state.doneManualTaskIds.includes(t.id) }
+      // Written tasks: the sample ones, ones added here, and every event's
+      // planning-template steps (lib/templates.js), all handled the same way.
+      [...manualTasks, ...(state.createdTasks || []), ...templateTasks(state.templates || DEFAULT_TEMPLATES, events)].map((t) => {
+        const done = state.doneManualTaskIds.includes(t.id)
+        const task = { ...t, ...state.manualTaskEdits?.[t.id], done, completedBy: done ? state.completedBy?.[t.id] || null : null }
         return { ...task, ...dueInfo(task) }
       }),
-    [state.doneManualTaskIds, state.manualTaskEdits, state.createdTasks]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- directoryStaff is read through the registry (template steps' assignees)
+    [state.doneManualTaskIds, state.manualTaskEdits, state.createdTasks, state.completedBy, state.templates, directoryStaff]
   )
 
   const messageList = useMemo(
@@ -712,11 +878,35 @@ export function StoreProvider({ children }) {
       }
     }
 
+    // 7. Detail sheet changes that some of the staff working the event haven't
+    //    opened. The manager's job is to be sure the change reached them; it
+    //    is done when everyone has tapped "Got it" (lib/eventSheet.js).
+    for (const e of sheetEntries) {
+      const missing = notSeenBy(e)
+      const event = eventById(e.eventId)
+      if (!missing.length || !event || daysOut(event) < 0) continue
+      items.push(sheetTask(e, event, missing))
+    }
+
+    // 8. Run-of-show changes the couple asked for in the client portal,
+    //    waiting for the venue to accept or decline (on the Detail sheet).
+    for (const r of sheetRequests) {
+      const event = eventById(r.eventId)
+      if (r.status !== 'waiting' || !event) continue
+      items.push(requestTask(r, event))
+    }
+
     // Every item answers "when is it due", so they can all be sorted and filtered together.
-    const dated = items.map((i) => ({ ...dueInfo(i), ...i }))
+    // What the product raises goes to the manager unless it's been reassigned
+    // (lib/assignees.js), and any edits to it are laid over it.
+    const me = managerId()
+    const dated = items.map((i) => {
+      const t = withEdits({ assigneeId: me, ...i }, i.source === 'manual' ? null : state.taskEdits?.[i.id])
+      return { ...dueInfo(t), ...t }
+    })
     const order = { urgent: 0, warn: 1, pending: 2, info: 3 }
     return dated.sort((a, b) => (order[a.tone] ?? 9) - (order[b.tone] ?? 9))
-  }, [openPositions, planner, messageList, manualTaskList, documentList, paymentsForEvent, inquiryList, state.portal])
+  }, [openPositions, planner, messageList, manualTaskList, documentList, paymentsForEvent, inquiryList, state.portal, sheetEntries, sheetRequests, state.taskEdits])
 
   const openTasks = allOpenTasks
 
@@ -813,8 +1003,38 @@ export function StoreProvider({ children }) {
       })
     }
 
-    return done.map((t) => ({ ...t, done: true, dueTone: 'done', tone: 'done' }))
-  }, [manualTaskList, messageList, documentList, paymentsForEvent, state.signedDocumentIds, inquiryList])
+    // A run-of-show request the venue has answered.
+    for (const r of sheetRequests) {
+      const event = eventById(r.eventId)
+      if (r.status === 'waiting' || !event) continue
+      done.push({ ...requestTask(r, event), title: `${r.status === 'accepted' ? 'Accepted' : 'Declined'}: ${requestLine(r)}`, due: r.status === 'accepted' ? 'Accepted' : 'Declined' })
+    }
+
+    // A sheet change everyone has seen.
+    for (const e of sheetEntries) {
+      const event = eventById(e.eventId)
+      if (!event || !e.notify || !e.team.length || notSeenBy(e).length) continue
+      done.push({ ...sheetTask(e, event, []), title: `Everyone saw: ${entryTitle(e)}`, due: 'Seen by all' })
+    }
+
+    const me = managerId()
+    return done.map((t) => {
+      const edited = withEdits({ assigneeId: me, ...t }, t.source === 'manual' ? null : state.taskEdits?.[t.id])
+      return { ...edited, due: t.due, done: true, dueTone: 'done', tone: 'done' }
+    })
+  }, [manualTaskList, messageList, documentList, paymentsForEvent, state.signedDocumentIds, inquiryList, sheetEntries, sheetRequests, state.taskEdits])
+
+  /** Everything assigned to one person, open and done (their own task list, their profile). */
+  const tasksAssignedTo = useCallback(
+    (staffId) => {
+      const upcoming = manualTaskList.filter((t) => !t.done && t.dueTone === 'info').map((t) => taskFromRecord(t))
+      return {
+        open: [...openTasks, ...upcoming].filter((t) => t.assigneeId === staffId),
+        done: completedTasks.filter((t) => t.assigneeId === staffId)
+      }
+    },
+    [manualTaskList, openTasks, completedTasks]
+  )
 
   const tasksForEvent = useCallback((eventId) => openTasks.filter((a) => a.eventId === eventId), [openTasks])
 
@@ -844,9 +1064,14 @@ export function StoreProvider({ children }) {
       toggleManualTask,
       addManualTask,
       updateManualTask,
+      updateTask,
+      tasksAssignedTo,
       addTaskType,
       renameTaskType,
       deleteTaskType,
+      templates: state.templates || DEFAULT_TEMPLATES,
+      saveTemplateStep,
+      deleteTemplateStep,
       submitGuestCount,
       markReplied,
       markRead,
@@ -889,9 +1114,14 @@ export function StoreProvider({ children }) {
       toggleManualTask,
       addManualTask,
       updateManualTask,
+      updateTask,
+      tasksAssignedTo,
       addTaskType,
       renameTaskType,
       deleteTaskType,
+      state.templates,
+      saveTemplateStep,
+      deleteTemplateStep,
       submitGuestCount,
       markReplied,
       markRead,

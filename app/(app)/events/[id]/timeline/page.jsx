@@ -13,6 +13,7 @@
 // KEYBOARD: "Add block" opens the editor, and every block is focusable: Enter
 // edits it, Delete removes it (with Undo).
 // A block with Needs staff ticked is also a block in the Staffing Planner.
+// Every change is logged on the Detail sheet and sent to the staff working it.
 // Everything snaps to 15 minutes and saves as you go.
 
 import { use, useCallback, useEffect, useRef, useState } from 'react'
@@ -22,6 +23,7 @@ import { events } from '@/lib/mock/events'
 import { useStore } from '@/lib/store'
 import { clockLabel } from '@/lib/format'
 import { useTimelineEdits } from '@/lib/timelineEdits'
+import { useEventSheet } from '@/lib/eventSheetStore'
 import { DEFAULT_LEN, DEFAULT_VIEW, clamp, sortRows, span, visibleWindow } from '@/lib/timeline/layout'
 import { Button, Card, EmptyState, Icon, useConfirm } from '@/components/ui'
 import { BlockEditor } from '@/components/timeline/BlockEditor'
@@ -37,6 +39,7 @@ export default function RunOfShowPage({ params }) {
   const { id } = use(params)
   const { version, rowsFor, setRows, resetEvent } = useTimelineEdits()
   const { toast } = useStore()
+  const { logRun, undo: undoLogged } = useEventSheet()
   const { confirm, dialog } = useConfirm()
   const event = events.find((e) => e.id === id)
   const rows = rowsFor(id)
@@ -56,13 +59,30 @@ export default function RunOfShowPage({ params }) {
   }, [rows])
 
   /** Save the rows; with a message, say so in a toast that can undo it. */
+  // Every edit is also logged on the event's Detail sheet and sent to the
+  // staff working it (lib/eventSheetStore.jsx); Undo takes both back.
   const commit = useCallback(
     (next, message) => {
       const before = rowsRef.current
-      setRows(id, sortRows(next))
-      if (message) toast(message, 'done', { actions: [{ label: 'Undo', onClick: () => setRows(id, before) }] })
+      const sorted = sortRows(next)
+      setRows(id, sorted)
+      const logged = logRun(id, before, sorted)
+      if (message) {
+        toast(message, 'done', {
+          small: logged ? 'Logged on the Detail sheet and sent to the staff working this event.' : undefined,
+          actions: [
+            {
+              label: 'Undo',
+              onClick: () => {
+                setRows(id, before)
+                undoLogged(logged)
+              }
+            }
+          ]
+        })
+      }
     },
-    [id, setRows, toast]
+    [id, setRows, toast, logRun, undoLogged]
   )
 
   const openNew = (s, e) =>

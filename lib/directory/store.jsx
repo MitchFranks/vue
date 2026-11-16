@@ -15,7 +15,7 @@ import { newId } from '@/lib/id'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { syncDirectoryStaff } from '@/lib/staffing/adapter'
 import { optionId, sameName, seedDirectory, toPlannerPerson } from './model'
-import { setDirectoryVendors } from './registry'
+import { setDirectoryStaff, setDirectoryVendors } from './registry'
 
 const STORAGE_KEY = scopedKey('vue-directory-v1')
 
@@ -58,6 +58,17 @@ export function DirectoryProvider({ children }) {
   useMemo(() => syncDirectoryStaff(state.staff.map((p) => toPlannerPerson(p, state.roles))), [state.staff, state.roles])
   // ...and the vendors Tasks tags, sorts and filters by.
   useMemo(() => setDirectoryVendors(state.vendors), [state.vendors])
+  // ...and the people tasks are assigned to (lib/assignees.js).
+  useMemo(
+    () =>
+      setDirectoryStaff(
+        state.staff.map((p) => {
+          const person = toPlannerPerson(p, state.roles)
+          return { id: p.id, name: person.name, first: p.firstName, initials: person.initials, roles: person.roles, inactive: person.inactive }
+        })
+      ),
+    [state.staff, state.roles]
+  )
 
   const update = useCallback((fn) => setState((s) => ({ ...s, ...fn(s) })), [setState])
 

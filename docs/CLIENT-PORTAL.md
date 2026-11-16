@@ -31,6 +31,10 @@ The guiding rule: anyone using it should know what each button does and what to 
 
 On the venue's side, unread changes come first as one banner: what changed (old value struck through, new value bold) and one **Mark as read** button. Below that are the portal's progress, with "Copy link to send" and "Preview portal", and the event details with the change history folded away.
 
+## Your day (run-of-show requests)
+
+Below the checklist, a **Your day** card opens `?view=day`: the couple's run of show, where they ask for changes and say what they expect. It is not a checklist step, because there is nothing to finish. Requests go to the event's Detail sheet for the venue to accept or decline; see "Requests from the couple" in `docs/EVENT-DETAIL-SHEET.md`.
+
 ## The four steps
 
 1. **Sign.** Every document for the event with `signer: 'couple'` shows up here.

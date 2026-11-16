@@ -14,10 +14,17 @@
 //             Completed tasks are the "Status" filter, not a button.
 //   The list  open tasks, then (when Status includes them) a Completed card.
 //
+// "Assigned to" is one of the filters, and /tasks?assignee=<staffId> opens the
+// page filtered to one person (a staff profile links here). Any task, written
+// or raised by the product, is edited in the same editor and reassigned
+// straight from its card.
+//
 // Sorts and filters live in lib/tasks.js.
 // ---------------------------------------------------------------------------
 
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { assigneeOptions, personFirst, UNASSIGNED } from '@/lib/assignees'
 import { useStore } from '@/lib/store'
 import { useDirectoryVendors } from '@/lib/directory/store'
 import {
@@ -47,13 +54,15 @@ export function TaskBoard() {
  */
 export function useTaskBoard() {
   const directoryVendors = useDirectoryVendors()
-  const { openTasks, completedTasks, manualTaskList, taskTypes, toggleManualTask, addManualTask, updateManualTask, toast } =
+  const { openTasks, completedTasks, manualTaskList, taskTypes, toggleManualTask, addManualTask, updateManualTask, updateTask, toast } =
     useStore()
 
   const [sort, setSort] = useState('due')
   const [direction, setDirection] = useState('asc')
-  const [filters, setFilters] = useState(EMPTY_TASK_FILTERS)
-  const [rows, setRows] = useState([])
+  // ?assignee=<staffId> opens the list filtered to one person.
+  const linked = useSearchParams().get('assignee')
+  const [filters, setFilters] = useState(() => (linked ? { ...EMPTY_TASK_FILTERS, assigneeIds: [linked] } : EMPTY_TASK_FILTERS))
+  const [rows, setRows] = useState(() => (linked ? ['assignee'] : []))
   const [editing, setEditing] = useState(null)
 
   // What needs the manager now, plus tasks that are not due yet.
@@ -87,6 +96,9 @@ export function useTaskBoard() {
       types: taskTypes.map((t) => mark({ value: t, label: t }, 'types', filters.types)),
       who: whoOptions(filters.who).map((o) => mark(o, 'who', filters.who)),
       vendors: vendorOptions(filters.vendorIds).map((o) => mark(o, 'vendorIds', filters.vendorIds)),
+      assignees: [...assigneeOptions(filters.assigneeIds), { value: UNASSIGNED, label: 'Unassigned' }].map((o) =>
+        mark(o, 'assigneeIds', filters.assigneeIds)
+      ),
       status: STATUS_MODES.map((m) => ({
         ...m,
         label: `${m.label} (${filterTasks(pool, { ...filters, status: m.value }).length})`
@@ -116,8 +128,28 @@ export function useTaskBoard() {
       setDirection(d)
     },
     editing,
-    // Only manual tasks are edited; find the record behind the card.
-    onEdit: (task) => setEditing(manualTaskList.find((r) => r.id === task.recordId)),
+    // A written task edits its record; a raised one edits a copy of its fields
+    // in the editor's shape, kept with the task it came from (`raised`).
+    onEdit: (task) =>
+      setEditing(
+        task.source === 'manual'
+          ? manualTaskList.find((r) => r.id === task.recordId)
+          : {
+              id: task.id,
+              raised: task,
+              title: task.title,
+              dueDate: task.dueDate,
+              dueTime: task.dueTime || '',
+              type: task.type,
+              detail: task.what || '',
+              eventId: task.eventId,
+              inquiryId: task.inquiryId,
+              assigneeId: task.assigneeId,
+              coupleIds: task.coupleIds,
+              contactIds: task.contactIds,
+              vendorIds: task.vendorIds
+            }
+      ),
     onNew: () => setEditing('new'),
     onCloseEditor: () => setEditing(null),
     // Ticking a manual task completes it; unticking a completed one reopens it.
@@ -127,11 +159,23 @@ export function useTaskBoard() {
         actions: [{ label: 'Undo', onClick: () => toggleManualTask(task.recordId) }]
       })
     },
+    // Hand any task to someone, from its card. Undo gives it back.
+    onAssign: (task, staffId) => {
+      const before = task.assigneeId ?? null
+      updateTask(task, { assigneeId: staffId })
+      toast(staffId ? `Assigned "${task.title}" to ${personFirst(staffId)}.` : `"${task.title}" is unassigned.`, 'done', {
+        small: staffId ? `It's on ${personFirst(staffId)}'s task list.` : undefined,
+        actions: [{ label: 'Undo', onClick: () => updateTask(task, { assigneeId: before }) }]
+      })
+    },
     // `editing` is a task record being edited, or 'new' while adding one.
     onSave: (patch) => {
       if (editing === 'new') {
         addManualTask(patch)
         toast(`Added "${patch.title}".`)
+      } else if (editing.raised) {
+        updateTask(editing.raised, patch)
+        toast(`Saved "${patch.title}".`)
       } else {
         updateManualTask(editing.id, patch)
         toast(`Saved "${patch.title}".`)
@@ -164,6 +208,7 @@ export function TaskBoardView({
   onNew,
   onCloseEditor,
   onToggle,
+  onAssign,
   onSave
 }) {
   const narrowing = activeFilterCount(filters)
@@ -217,7 +262,7 @@ export function TaskBoardView({
         <Card bodyClassName="px-0 py-0">
           <div className="divide-y divide-line">
             {shown.map((task, i) => (
-              <TaskCard key={task.id} task={task} first={i === 0} onToggle={onToggle} onEdit={onEdit} />
+              <TaskCard key={task.id} task={task} first={i === 0} onToggle={onToggle} onEdit={onEdit} onAssign={onAssign} />
             ))}
           </div>
         </Card>

@@ -6,6 +6,7 @@
 // answer here is the planner's own recordReply, so the event page and Tasks
 // update at once, and the toast offers Undo.
 
+import { myTasksHref } from '@/components/sheet/links'
 import { useState } from 'react'
 import { TODAY_KEY } from '@/lib/mock/events'
 import { Avatar, Breadcrumbs, Button, Card, EmptyState, Field, Icon, Modal, PageHeader, useConfirm } from '@/components/ui'
@@ -26,7 +27,7 @@ const STATUS_ORDER = { pending: 0, draft: 1, accepted: 2, backup: 3, declined: 4
 function StaffProfile({ id }) {
   const router = useRouter()
   const dir = useDirectory()
-  const { toast, manualTaskList } = useStore()
+  const { toast, manualTaskList, tasksAssignedTo } = useStore()
   const { state, hydrated, recordReply, openPhone } = useStaffing()
   const { confirm, dialog } = useConfirm()
   const [editingHours, setEditingHours] = useState(false)
@@ -41,7 +42,10 @@ function StaffProfile({ id }) {
   const credentials = WORLD.staffMap[id]?.credentials || []
   // Everything the planner has on file for this person, past and future, decides whether they can be deleted.
   const anyRequests = requestList(state).some((r) => r.staffId === id)
-  const onTasks = tasksNaming(manualTaskList, 'staff', id).length
+  // Tasks assigned to them also keep them from being deleted (lib/assignees.js).
+  const assigned = tasksAssignedTo(id)
+  const openAssigned = assigned.open
+  const onTasks = tasksNaming(manualTaskList, 'staff', id).length + assigned.open.length + assigned.done.length
   const signsIn = !!person.accountId
   const requests = requestList(state)
     .filter((r) => r.staffId === id && r.status !== 'cancelled' && WORLD.eventMap[r.eventId])
@@ -123,6 +127,25 @@ function StaffProfile({ id }) {
                   { label: 'Email', value: person.email, type: 'email' }
                 ]}
               />
+            </Card>
+
+            <Card title="Tasks" icon="list">
+              <p className="text-body text-ink">
+                {openAssigned.length
+                  ? `${openAssigned.length} open ${openAssigned.length === 1 ? 'task' : 'tasks'} assigned to ${first}`
+                  : `Nothing assigned to ${first} right now.`}
+                {openAssigned.some((t) => t.dueTone === 'urgent') && ' · some due today or overdue'}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button href={`/tasks?assignee=${encodeURIComponent(id)}`} size="sm">
+                  See in Tasks
+                </Button>
+                {/* Prototype: the list they open on their phone. */}
+                <Button href={myTasksHref(id)} variant="ghost" size="sm">
+                  Open {first}&apos;s list
+                  <Icon name="arrowRight" size={13} />
+                </Button>
+              </div>
             </Card>
 
             <Card title="Profile" icon="file">

@@ -14,6 +14,7 @@
 // TaskBoard.jsx) works across all of them.
 // ---------------------------------------------------------------------------
 
+import { Suspense } from 'react'
 import { Breadcrumbs, Button, Icon, PageHeader } from '@/components/ui'
 import { TaskBoard } from '@/components/tasks/TaskBoard'
 
@@ -30,6 +31,14 @@ export default function TasksPage() {
               Client inquiry form (prototype)
               <Icon name="arrowRight" size={14} />
             </Button>
+            <Button href="/tasks/team" variant="secondary" size="md">
+              <Icon name="users" size={14} />
+              Team
+            </Button>
+            <Button href="/tasks/templates" variant="secondary" size="md">
+              <Icon name="list" size={14} />
+              Planning templates
+            </Button>
             <Button href="/tasks/types" variant="secondary" size="md">
               <Icon name="settings" size={14} />
               Manage task types
@@ -37,7 +46,10 @@ export default function TasksPage() {
           </>
         }
       />
-      <TaskBoard />
+      {/* TaskBoard reads ?assignee=, which needs a Suspense boundary on a static export. */}
+      <Suspense fallback={null}>
+        <TaskBoard />
+      </Suspense>
     </div>
   )
 }
