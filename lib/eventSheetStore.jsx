@@ -20,9 +20,11 @@ import { newId } from '@/lib/id'
 import { events, venue } from '@/lib/mock/events'
 import { requestsOf, simNowIso, staffById } from '@/lib/staffing/derive'
 import { useStaffing } from '@/lib/staffing/store'
-import { cleanSheet, diffRun, diffSheet, mergeChanges, SHEET_ENTRY_SEED, SHEET_SEED, unseenBy } from './eventSheet.js'
+import { applyRequest, cleanSheet, diffRun, diffSheet, mergeChanges, REQUEST_SEED, SHEET_ENTRY_SEED, SHEET_SEED, unseenBy } from './eventSheet.js'
+import { useTimelineEdits } from './timelineEdits'
+import { sortRows } from './timeline/layout'
 
-const STORAGE_KEY = scopedKey('vue-event-sheet-v1')
+const STORAGE_KEY = scopedKey('vue-event-sheet-v3')
 
 const Ctx = createContext(null)
 
@@ -42,11 +44,15 @@ function seedState(planner) {
     const seenBy = seenAll ? Object.fromEntries(team.map((id) => [id, e.at])) : { ...e.seenBy }
     return { ...e, team, seenBy }
   })
-  return { values, entries }
+  // The couple's run-of-show requests from the client portal (lib/eventSheet.js).
+  const requests = REQUEST_SEED.filter((r) => kept.has(r.eventId)).map((r) => ({ ...r }))
+  return { values, entries, requests }
 }
 
 export function EventSheetProvider({ children }) {
   const { state: planner } = useStaffing()
+  // An accepted request changes the run of show, which lives in lib/timelineEdits.jsx.
+  const { rowsFor, setRows } = useTimelineEdits()
   const [state, setState] = useState(() => seedState(planner))
   const [hydrated, setHydrated] = useState(false)
 
@@ -197,6 +203,65 @@ export function EventSheetProvider({ children }) {
 
   const unseenFor = useCallback((eventId, staffId) => unseenBy(entriesFor(eventId), staffId), [entriesFor])
 
+  // ---- the couple's requests (client portal -> Detail sheet) ----
+
+  /** The couple asks for a run-of-show change. Returns the request's id. */
+  const submitRequest = useCallback(
+    (eventId, fields) => {
+      const s = stateRef.current
+      const r = { rowId: null, rowTitle: '', fromTime: '', toTime: '', title: '', note: '', ...fields, id: newId('rq'), eventId, at: now(), status: 'waiting', reply: '', decidedAt: null }
+      commit({ ...s, requests: [...(s.requests || []), r] })
+      return r.id
+    },
+    [commit, now]
+  )
+
+  /** The couple takes back a request the venue hasn't answered yet. */
+  const withdrawRequest = useCallback(
+    (id) => {
+      const s = stateRef.current
+      commit({ ...s, requests: (s.requests || []).filter((r) => !(r.id === id && r.status === 'waiting')) })
+    },
+    [commit]
+  )
+
+  /**
+   * The venue accepts. A move, removal or addition is applied to the run of
+   * show and logged as a change by the couple, with their note as the reason,
+   * so it reaches the staff. Returns { applied } (false for "something else",
+   * or an item that has gone since: the venue makes that change by hand).
+   */
+  const acceptRequest = useCallback(
+    (id) => {
+      const s = stateRef.current
+      const r = (s.requests || []).find((x) => x.id === id)
+      if (!r) return { applied: false }
+      commit({ ...s, requests: s.requests.map((x) => (x.id === id ? { ...x, status: 'accepted', decidedAt: now() } : x)) })
+      const before = rowsFor(r.eventId)
+      const next = applyRequest(before, r, newId(`${r.eventId}-r`))
+      if (!next) return { applied: false }
+      const sorted = sortRows(next)
+      setRows(r.eventId, sorted)
+      record(r.eventId, 'Run of show', diffRun(before, sorted), { by: { name: r.by, kind: 'couple' }, reason: r.note })
+      return { applied: true }
+    },
+    [commit, now, rowsFor, setRows, record]
+  )
+
+  /** The venue can't do it, and says why. */
+  const declineRequest = useCallback(
+    (id, reply) => {
+      const s = stateRef.current
+      commit({ ...s, requests: (s.requests || []).map((x) => (x.id === id ? { ...x, status: 'declined', reply, decidedAt: now() } : x)) })
+    },
+    [commit, now]
+  )
+
+  const requestsFor = useCallback(
+    (eventId) => (state.requests || []).filter((r) => r.eventId === eventId).sort((a, b) => (a.at < b.at ? 1 : -1)),
+    [state.requests]
+  )
+
   const reset = useCallback(() => setState(seedState(planner)), [planner])
 
   const value = useMemo(
@@ -212,9 +277,15 @@ export function EventSheetProvider({ children }) {
       undo,
       acknowledge,
       remind,
+      requests: state.requests || [],
+      requestsFor,
+      submitRequest,
+      withdrawRequest,
+      acceptRequest,
+      declineRequest,
       reset
     }),
-    [hydrated, state.entries, valuesFor, entriesFor, unseenFor, planner, saveFields, logRun, undo, acknowledge, remind, reset]
+    [hydrated, state.entries, state.requests, valuesFor, entriesFor, unseenFor, planner, saveFields, logRun, undo, acknowledge, remind, requestsFor, submitRequest, withdrawRequest, acceptRequest, declineRequest, reset]
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

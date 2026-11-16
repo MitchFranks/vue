@@ -28,6 +28,8 @@ import { RunEditor, SectionEditor } from '@/components/sheet/SheetEditors'
 import { SheetEssentials, SheetRunOfShow, SheetSections } from '@/components/sheet/SheetView'
 import { BookedVendors, serviceText } from '@/components/sheet/BookedVendors'
 import { dayOfHref } from '@/components/sheet/links'
+import { CoupleRequests } from '@/components/sheet/CoupleRequests'
+import { requestLine } from '@/lib/eventSheet'
 
 const SHOWN = 5
 
@@ -89,6 +91,20 @@ export default function EventSheetPage({ params }) {
       setRows(id, before)
       sheet.undo(handle)
     })
+  }
+
+  // The couple's requests from the client portal (CoupleRequests).
+  const acceptRequest = (r) => {
+    const { applied } = sheet.acceptRequest(r.id)
+    toast(
+      applied ? `Accepted: ${requestLine(r)}.` : `Accepted: ${requestLine(r)}. Make the change on the run of show yourself.`,
+      'done',
+      { small: applied ? `It's on the run of show and was sent to the ${team.length} staff working this event.` : 'The couple sees that you said yes.' }
+    )
+  }
+  const declineRequest = (r, reply) => {
+    sheet.declineRequest(r.id, reply)
+    toast(`Declined: ${requestLine(r)}. The couple sees your reply in their portal.`)
   }
 
   const remind = (entry, missingIds) => {
@@ -175,6 +191,8 @@ export default function EventSheetPage({ params }) {
 
       {/* ---- who knows: the change log and the staff view ---- */}
       <aside className="order-first space-y-4 lg:order-last lg:sticky lg:top-4">
+        <CoupleRequests requests={sheet.requestsFor(id)} onAccept={acceptRequest} onDecline={declineRequest} />
+
         <Card
           title="Changes"
           icon="refresh"

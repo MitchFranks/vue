@@ -38,6 +38,32 @@ One card for every source, in this reading order: due badge, then type · event 
 - **No checkbox.** Under **Action**, a second button of the same width, **Mark Done** (check icon), completes a manual task. Completing shows a toast with Undo. A manual task that needs a number (the catering guest count) has no Mark Done, because it is completed by entering the number. Messages, documents, payments and staffing spots have none either, since they finish where they live.
 - Completed tasks are muted and struck through, and the same slot reads **Reopen** (refresh icon) to bring one back.
 
+### 3b. Assigned to (delegation)
+
+From the venue manager interview: "helps me delegate and track responsibilities with my team ... who's responsible for each thing without having to constantly follow up."
+
+- Every task names one person from the staff directory, or **Unassigned**. The manager is a staff record too, shown as "(you)".
+- Any task, written or raised by the product, is assigned in the editor (**Assigned to**, defaulting to the manager) or straight from its card with an inline picker. Reassigning shows a toast with Undo.
+- Raised tasks (messages, open spots, documents, payments, inquiries, sheet changes) are edited in the same editor as written ones: name, due date and time, type, event, description, tags and assignee. The changes are kept by task id and laid over the raised task, so the message or spot itself is untouched. They are still finished where they live; on the assignee's list they link to Vue ("Finish it in Vue") instead of Mark done.
+- **Assigned to** is a filter property (multi-select, with Unassigned). `/tasks?assignee=<staffId>` opens Tasks filtered to one person; each staff profile has a Tasks card linking there.
+- **The assignee's view**: `/my-tasks?s=<staffId>`, public and phone first. Open tasks grouped Overdue, Today, This week, Later, each with **Mark done**; then the events they're working (with unread sheet changes); then Done recently with Reopen.
+- When a task is done, the card says who did it and when ("Done by Marisol · Sat 10:00 AM").
+
+### 3c. Team view
+
+- `/tasks/team` (the **Team** button on Tasks): one row per active person, the manager first, then an **Unassigned** row.
+- Each row shows open, overdue, due today and this week, what's next, and how many they finished this week.
+- A row opens Tasks filtered to that person; **Their list** opens their phone view.
+
+### 3d. Planning templates
+
+From the venue manager interview: "a centralized system that automatically organizes tasks ... see what's coming up, what still needs to be done."
+
+- `/tasks/templates` (the **Planning templates** button on Tasks). Two templates: **Wedding plan** (weddings) and **Event plan** (every other event type).
+- A step is: when (days before, on the day, or days after the event), what, task type, who usually does it (the manager, or a role), and an optional description.
+- Every event gets its template's steps as ordinary written tasks, dated from the event and assigned to the first active person in the role. They show on Tasks and the event's Tasks tab with the template's name next to the event, and are edited, reassigned and marked done like any other task.
+- Editing a step changes it on every event, except what was changed on a task itself. A new step only creates tasks due from today on. Deleting a step asks first, then removes its tasks from every event.
+
 ### 4. Toolbar (modelled on Notion)
 
 Above the list: the task count on the left, and on the right three small icon buttons followed by a filled **+ New** button.
@@ -48,7 +74,7 @@ Order: **Filter** (funnel), **Sort** (up/down arrows), **Search** (magnifier), *
 
 **Search.** The icon opens an inline box that filters by task name. It stays open while it has text. Escape clears and closes it.
 
-**Filter panel.** Rows read "Where / And · [property] · is any of · [value] · trash". "+ Add filter" adds a row and "Delete all filters" clears them. Properties are Task type, Due, Couple, Vendor and Status. A property can be used once. Changing a row's property clears its old value.
+**Filter panel.** Rows read "Where / And · [property] · is any of · [value] · trash". "+ Add filter" adds a row and "Delete all filters" clears them. Properties are Assigned to, Task type, Due, Couple, Vendor and Status. A property can be used once. Changing a row's property clears its old value.
 
 - **Status** is a filter, not a button: Open (default), Completed, Open and completed. Completed tasks live in the pool always, and Status decides whether they show. Open and completed tasks appear in separate cards.
 - **Due** is one choice: any time, overdue, today, this week, or on a date. "This week" is today plus six days. One choice means the options cannot contradict each other.

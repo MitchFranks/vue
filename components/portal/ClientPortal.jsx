@@ -11,6 +11,9 @@
 //            exactly what it does ("Pay $4,600").
 //   Done     what just happened, and the next step as the only button
 //            (?done=<step>).
+//   Your day the run of show, where the couple asks for changes and says
+//            what they expect (?view=day, PortalRunOfShow.jsx). Not a
+//            checklist step: there is nothing to finish, only to ask.
 // Real URLs, so the browser's Back button does what people expect.
 // Everything they do lands in the couple record (PortalRecord.jsx).
 // ---------------------------------------------------------------------------
@@ -32,6 +35,7 @@ import { PayStep } from './PortalPayments'
 import { DetailsStep } from './PortalDetails'
 import { MeetingStep } from './PortalMeeting'
 import { DoneScreen } from './PortalDone'
+import { RunOfShowCard, RunOfShowScreen } from './PortalRunOfShow'
 
 /** How a couple would say it: "Your event is in 7 days". */
 const whenText = (n) => (n === 0 ? 'Your event is today' : n === 1 ? 'Your event is tomorrow' : `Your event is in ${n} days`)
@@ -44,6 +48,7 @@ export function ClientPortal() {
   const coupleId = params.get('c')
   const step = STEP_ORDER.includes(params.get('step')) ? params.get('step') : null
   const done = STEP_ORDER.includes(params.get('done')) ? params.get('done') : null
+  const view = params.get('view') === 'day' ? 'day' : null
   const { venue } = useDirectory()
   const { hydrated, documentList, paymentsForEvent, portalFor } = useStore()
   const couple = coupleById(coupleId)
@@ -55,7 +60,7 @@ export function ClientPortal() {
   useEffect(() => reloadOnWorkspaceChange(), [])
 
   // A new screen: start at the top and move focus to its heading (which also announces it).
-  const screenKey = `${step}|${done}`
+  const screenKey = `${step}|${done}|${view}`
   const shown = useRef(screenKey)
   useEffect(() => {
     if (shown.current === screenKey) return
@@ -118,6 +123,7 @@ export function ClientPortal() {
   if (done) {
     return <DoneScreen {...ctx} frame={frame} doneId={done} result={lastDone?.id === done ? lastDone.result : null} title={lastDone?.id === done ? lastDone.title : null} steps={steps} onNext={(id) => go(id ? { step: id } : {})} />
   }
+  if (view === 'day' && event) return <RunOfShowScreen {...ctx} frame={frame} />
   if (step === 'sign') return <SignStep {...ctx} />
   if (step === 'pay') return <PayStep {...ctx} />
   if (step === 'details') return <DetailsStep {...ctx} />
@@ -202,6 +208,8 @@ export function ClientPortal() {
             ))}
           </ol>
         </nav>
+
+        <RunOfShowCard event={event} venue={venue} onOpen={() => go({ view: 'day' })} />
 
         <p className="text-small text-ink-muted">
           Questions? Call {venue.name}

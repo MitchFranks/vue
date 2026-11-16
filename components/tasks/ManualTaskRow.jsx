@@ -1,5 +1,6 @@
 'use client'
 
+import { personName } from '@/lib/assignees'
 import { cx } from '@/lib/cx'
 import { StatusBadge } from '@/components/ui'
 
@@ -23,7 +24,7 @@ export function ManualTaskRow({ task, onToggle }) {
           {task.title}
         </label>
         <p className="text-small text-ink-muted">{task.detail}</p>
-        <p className="text-small text-ink-muted">Owner: {task.owner}</p>
+        <p className="text-small text-ink-muted">Assigned to {personName(task.assigneeId)}</p>
       </div>
       <div className="shrink-0">
         {task.done ? (

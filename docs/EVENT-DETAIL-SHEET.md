@@ -63,11 +63,25 @@ The **team** is everyone confirmed (accepted) on the event in the Staffing Plann
 - **Tasks.** A change some of the staff haven't seen is a task of type **Event change**, for example "3 of 5 staff haven't seen: Cake cutting: 8:30 PM → 7:30 PM". It is urgent the day before and the day of the event. When everyone has seen it, the task moves to completed.
 - **The rest of the event screens.** The event's **Detail sheet** tab counts unseen changes. The **Activity log** lists every change first.
 
+## Requests from the couple
+
+The client portal's **Your day** screen (`/portal?c=<coupleId>&view=day`, the "Your day" card on the portal home) is where the venue captures the couple's expectations for the run of show.
+
+- **What the couple sees.** The day's moments (staffing blocks such as setup shifts are left out). Each has **Ask for a change**: a different time, take it out, or something else. **Add something to your day** asks for a new item.
+- **Every request says what they expect.** "What do you expect?" is required, so the venue hears the why, not just the what.
+- **On the venue's side.** Waiting requests are a **Client portal** task and sit at the top of the Detail sheet under **Requests from the couple**, with **Accept** and **Decline**.
+  - **Accept** applies a move, removal or addition to the run of show. It is logged as a change by the couple, with their note as the reason, so it reaches the staff like any other change. "Something else" is accepted as a promise; the venue makes it by hand.
+  - **Decline** needs a short reply.
+- **Back in the portal.** The answer shows under the item: Waiting for the venue, Accepted, or Not possible with the reply. A waiting request can be taken back.
+- **State.** `requests` in `lib/eventSheetStore.jsx` (`submitRequest`, `withdrawRequest`, `acceptRequest`, `declineRequest`); wording and `applyRequest` in `lib/eventSheet.js`.
+- **Sample data.** Emily Johnson has asked to add a grandparents' anniversary dance at 6:45 PM, waiting for an answer.
+
 ## Sample data
 
-- **The cake cutting.** The Johnson Wedding (today in the prototype) has a cake cutting moved from 8:30 PM to 7:30 PM. Theo and Marisol have seen it; Caleb, Priya and Nina haven't. A dietary change from the couple has been seen by everyone.
+- **One set of facts.** The Johnson Wedding's sheet and its client-portal record agree on every shared field: planner Rachel Adeyemi, the shellfish allergy at table 9, the grandmother's wheelchair, Juniper Photo Co. (leaves at 8:00 PM) and the sparkler send-off. The portal's key moments match the run of show: grand entrance 5:15 PM, first dance 5:45 PM, cake cutting 7:30 PM, send-off 10:45 PM.
+- **The cake cutting.** Emily moved it from 8:30 PM to 7:30 PM in the portal on Oct 9 (the portal record shows the change, already read). The manager put it on the sheet: Theo and Marisol have seen it; Caleb, Priya and Nina haven't. A menu change has been seen by everyone.
 - **Missing details.** The Shah–Patel Rehearsal Dinner is missing two key details: the day-of contact's phone and dietary needs.
-- **Run of show.** The Johnson run of show gained First dance (7:15 PM) and Cake cutting (7:30 PM). The run-of-show storage key moved to `v3` so testers see them.
+- **Saved data resets once.** The storage keys moved (`vue-run-of-show-v4`, `vue-event-sheet-v3`, `vue-lowfi-prototype-v11`) so testers start from the aligned data.
 
 ## How it connects to the client portal (step 2)
 

@@ -27,32 +27,13 @@ import { Alert, Avatar, Button, Card, Icon } from '@/components/ui'
 import { ChangeRow } from './ChangeLog'
 import { SheetEssentials, SheetRunOfShow, SheetSections } from './SheetView'
 import { BookedVendors, serviceText } from './BookedVendors'
-import { dayOfHref, sheetHref } from './links'
+import { dayOfHref, myTasksHref, sheetHref } from './links'
+import { StaffFrame, StaffPrototypeNote } from './StaffFrame'
+import { useStore } from '@/lib/store'
 
-function Frame({ children }) {
-  return (
-    <div className="flex min-h-dvh flex-col bg-canvas text-ink">
-      <header className="border-b border-line bg-surface">
-        <div className="mx-auto flex h-(--header-height) w-full max-w-form items-center justify-between gap-4 px-4">
-          <p className="text-title font-light text-ink">{venue.name}</p>
-          <p className="text-small text-ink-muted">Day-of sheet</p>
-        </div>
-      </header>
-      <main className="mx-auto w-full max-w-form flex-1 space-y-4 px-4 pt-6 pb-12">{children}</main>
-    </div>
-  )
-}
+const Frame = ({ children }) => <StaffFrame section="Day-of sheet">{children}</StaffFrame>
 
-function PrototypeNote({ eventId }) {
-  return (
-    <p className="text-label text-ink-muted">
-      Prototype: in a real build each person gets a private link by text. Everything here is saved in this browser only.{' '}
-      <Link href={sheetHref(eventId)} className="underline underline-offset-2 hover:text-ink">
-        Back to the venue&apos;s sheet
-      </Link>
-    </p>
-  )
-}
+const PrototypeNote = ({ eventId }) => <StaffPrototypeNote backHref={sheetHref(eventId)} backLabel="Back to the venue's sheet" />
 
 export function DayOfSheet() {
   const params = useSearchParams()
@@ -73,6 +54,7 @@ export function DayOfSheet() {
 
 function ForEvent({ event, staffId }) {
   const sheet = useEventSheet()
+  const { tasksAssignedTo } = useStore()
   const { rowsFor } = useTimelineEdits()
   const { state: planner } = useStaffing()
   // What they read when they tapped "Got it", kept highlighted for this visit.
@@ -138,6 +120,18 @@ function ForEvent({ event, staffId }) {
             <span className="font-medium">You: {shift.role}</span> · {dayLine(shift)}
           </p>
         )}
+        {(() => {
+          const mine = tasksAssignedTo(staffId).open
+          const here = mine.filter((t) => t.eventId === event.id).length
+          return (
+            mine.length > 0 && (
+              <Link href={myTasksHref(staffId)} className="mt-2 inline-flex items-center gap-1 text-small text-ink underline underline-offset-2">
+                <Icon name="list" size={14} />
+                {here ? `${here} task${here === 1 ? '' : 's'} for this event` : `${mine.length} open task${mine.length === 1 ? '' : 's'}`} · See your tasks
+              </Link>
+            )
+          )
+        })()}
       </div>
 
       {unseen.length > 0 ? (
