@@ -8,8 +8,13 @@
 
 import { Field, TextInput, Textarea } from '@/components/ui'
 import { FormSection, RecordForm, useRecordForm, Wide } from '@/components/records'
-import { blankDetails, cleanDetails, DETAIL_GROUPS, detailText, diffDetails, STEP_COPY, validateDetails } from '@/lib/portal'
+import { blankDetails, cleanDetails, DETAIL_FIELDS, DETAIL_GROUPS, detailText, diffDetails, STEP_COPY, validateDetails } from '@/lib/portal'
 import { useStore } from '@/lib/store'
+import { useEventSheet } from '@/lib/eventSheetStore'
+import { SHEET_FIELDS } from '@/lib/eventSheet'
+
+// The fields the portal and the Detail sheet share, by id.
+const SHARED_FIELDS = SHEET_FIELDS.map((f) => f.id).filter((id) => DETAIL_FIELDS.some((f) => f.id === id))
 
 /** The details, read-only, grouped as the form groups them. */
 export function DetailsSummary({ details }) {
@@ -36,6 +41,7 @@ export function DetailsSummary({ details }) {
 
 export function DetailsStep({ couple, event, record, by, venue, screen, complete, back }) {
   const { portalSaveDetails, toast } = useStore()
+  const { saveFields } = useEventSheet()
   const first = !record.details
   const form = useRecordForm(record.details || { ...blankDetails(), guestCount: event ? String(event.guests) : '' }, {
     idPrefix: 'details',
@@ -43,9 +49,24 @@ export function DetailsStep({ couple, event, record, by, venue, screen, complete
   })
   const { field } = form
 
+  // Send what the couple changed to the event's Detail sheet, logged as a
+  // change by the couple, so it reaches the staff. Only fields they changed
+  // (on a first save, the ones they filled in) are sent, so a blank in the
+  // portal never wipes what the venue already has.
+  const toSheet = (values) => {
+    if (!event) return
+    const before = record.details ? cleanDetails(record.details) : {}
+    const after = cleanDetails(values)
+    const patch = Object.fromEntries(
+      SHARED_FIELDS.filter((id) => (record.details ? after[id] !== before[id] : after[id])).map((id) => [id, after[id]])
+    )
+    if (Object.keys(patch).length) saveFields(event.id, 'Details from the couple', patch, { by: { name: by, kind: 'couple' } })
+  }
+
   const save = form.submit((values) => {
     if (first) {
       portalSaveDetails(couple.id, values, by)
+      toSheet(values)
       complete('details', `${venue.name} has your guest count, key times and day-of contact.`)
       return
     }
@@ -56,6 +77,7 @@ export function DetailsStep({ couple, event, record, by, venue, screen, complete
       return
     }
     portalSaveDetails(couple.id, values, by)
+    toSheet(values)
     complete('details', `${changes.length} ${changes.length === 1 ? 'change' : 'changes'} saved. ${venue.name} sees exactly what you changed.`, 'Changes saved')
   })
 

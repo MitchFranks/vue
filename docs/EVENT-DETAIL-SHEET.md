@@ -83,14 +83,15 @@ The client portal's **Your day** screen (`/portal?c=<coupleId>&view=day`, the "Y
 - **Missing details.** The Shah–Patel Rehearsal Dinner is missing two key details: the day-of contact's phone and dietary needs.
 - **Saved data resets once.** The storage keys moved (`vue-run-of-show-v4`, `vue-event-sheet-v3`, `vue-lowfi-prototype-v11`) so testers start from the aligned data.
 
-## How it connects to the client portal (step 2)
+## How it connects to the client portal
 
-The client portal (branch `client-portal`) collects the couple's details and logs their changes. Its field ids match this sheet's (`dayOfName`, `dayOfRole`, `dayOfPhone`, `dietary`, `accessibility`, `outsideVendors`, `notes`).
+The client portal collects the couple's details and logs their changes. Its field ids match this sheet's (`dayOfName`, `dayOfRole`, `dayOfPhone`, `dietary`, `accessibility`, `outsideVendors`, `notes`).
 
-When both are merged:
+- **Details reach the sheet.** When a couple saves their details in the portal (`DetailsStep` in `components/portal/PortalDetails.jsx`), the shared fields they changed go to this sheet through `saveFields`, as one change in the area **Details from the couple**, by the couple. It shows under Changes with "seen by" and Remind like any other change. Only what they changed is sent (on a first save, what they filled in), so a blank in the portal never wipes what the venue already has.
 
-1. A couple's portal save should call `saveFields(eventId, area, values, { by: { name, kind: 'couple' } })`, so the change lands on the sheet and reaches the staff.
-2. The portal's key moments (grand entrance, first dance, cake cutting, send-off) should become run-of-show rows, logged with `logRun`. That way they are not a second copy of the same times.
+Still to do:
+
+1. The portal's key moments (grand entrance, first dance, cake cutting, send-off) should become run-of-show rows, logged with `logRun`. That way they are not a second copy of the same times.
 
 ## Prototype limits
 
