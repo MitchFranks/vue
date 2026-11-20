@@ -30,6 +30,7 @@ import { daysOut, eventById } from '@/lib/mock/events'
 import { nextStep, portalSteps, STEP_COPY, STEP_ORDER } from '@/lib/portal'
 import { useStore } from '@/lib/store'
 import { cx } from '@/lib/cx'
+import { PHOTOS } from '@/lib/asset'
 import { SignStep } from './PortalAgreements'
 import { PayStep } from './PortalPayments'
 import { DetailsStep } from './PortalDetails'
@@ -131,6 +132,7 @@ export function ClientPortal() {
 
   const doneCount = steps.filter((s) => s.done).length
   return frame({
+    cover: PHOTOS.candles,
     title: `Hi, ${me.firstName}`,
     lead: event ? `${event.name} · ${event.date} · ${event.spaces}` : 'Your event details will appear here once it is booked.',
     above: other && (
@@ -160,7 +162,7 @@ export function ClientPortal() {
         {upNext ? (
           <div className="surface-card border-ink! px-4 py-5 sm:px-6">
             <p className="text-label font-medium text-accent">Up next</p>
-            <h2 className="mt-1 text-title font-light text-ink">{STEP_COPY[upNext.id].title}</h2>
+            <h2 className="mt-1 font-display text-[1.85rem] leading-[1.1] text-ink">{STEP_COPY[upNext.id].title}</h2>
             <p className="mt-1 text-body text-ink-muted">{upNext.status}. {STEP_COPY[upNext.id].lead}</p>
             <Button variant="primary" size="lg" className="mt-4 w-full sm:w-auto" onClick={() => go({ step: upNext.id })}>
               {STEP_COPY[upNext.id].start}
@@ -172,12 +174,16 @@ export function ClientPortal() {
             <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-status-clear-soft text-status-clear">
               <Icon name="check" size={22} />
             </span>
-            <h2 className="mt-3 text-title font-light text-ink">You&apos;re all set</h2>
+            <h2 className="mt-3 font-display text-[1.85rem] leading-[1.1] text-ink">You&apos;re all set</h2>
             <p className="mt-1 text-body text-ink-muted">
               {venue.name} has everything it needs from you. You can still view or change anything below.
             </p>
           </div>
         )}
+
+        {/* Changing something on the day is the other thing couples come here for,
+            so it sits right under "Up next", not below the checklist. */}
+        <RunOfShowCard event={event} venue={venue} onOpen={() => go({ view: 'day' })} />
 
         {/* The four steps. Each row opens its screen; done ones open to view or change. */}
         <nav aria-label="Your checklist" className="surface-card overflow-hidden">
@@ -208,8 +214,6 @@ export function ClientPortal() {
             ))}
           </ol>
         </nav>
-
-        <RunOfShowCard event={event} venue={venue} onOpen={() => go({ view: 'day' })} />
 
         <p className="text-small text-ink-muted">
           Questions? Call {venue.name}

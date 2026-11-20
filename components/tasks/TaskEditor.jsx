@@ -103,7 +103,7 @@ export function TaskEditor({ task, onClose, onSave }) {
       <form id="task-editor-form" onSubmit={save} noValidate className="space-y-4">
         {task?.raised && (
           <p className="rounded-sm bg-surface-sunken px-3 py-2 text-small text-ink-muted">
-            Vue raised this task. Your changes are kept with it; it is still finished where it lives (its Action button).
+            Vue raised this task. Your changes are kept with it; it is still finished where it lives (its main button on the card).
           </p>
         )}
 

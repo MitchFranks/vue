@@ -30,7 +30,7 @@ export function ToastProvider({ children }) {
     (message, tone = 'done', opts = {}) => {
       const id = newId('toast')
       setToasts((t) => [...t, { id, message, tone, actions: opts.actions, small: opts.small }])
-      setTimeout(() => dismissToast(id), opts.actions?.length ? 8000 : 4000)
+      setTimeout(() => dismissToast(id), opts.actions?.length ? 10000 : 4000)
     },
     [dismissToast]
   )

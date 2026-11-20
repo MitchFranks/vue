@@ -264,6 +264,10 @@ export function EventSheetProvider({ children }) {
 
   const reset = useCallback(() => setState(seedState(planner)), [planner])
 
+  // Undo (lib/undo.jsx): take the state before an action, put it back after.
+  const snapshot = useCallback(() => stateRef.current, [])
+  const restore = useCallback((saved) => commit(saved), [commit])
+
   const value = useMemo(
     () => ({
       hydrated,
@@ -283,9 +287,11 @@ export function EventSheetProvider({ children }) {
       withdrawRequest,
       acceptRequest,
       declineRequest,
-      reset
+      reset,
+      snapshot,
+      restore
     }),
-    [hydrated, state.entries, state.requests, valuesFor, entriesFor, unseenFor, planner, saveFields, logRun, undo, acknowledge, remind, requestsFor, submitRequest, withdrawRequest, acceptRequest, declineRequest, reset]
+    [snapshot, restore, hydrated, state.entries, state.requests, valuesFor, entriesFor, unseenFor, planner, saveFields, logRun, undo, acknowledge, remind, requestsFor, submitRequest, withdrawRequest, acceptRequest, declineRequest, reset]
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

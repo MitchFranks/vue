@@ -16,6 +16,7 @@ import { Button, Card, Icon, ProgressBar } from '@/components/ui'
 import { money } from '@/lib/mock/records'
 import { atLabel, changeLine, portalHref, portalSteps, stamp, STEP_COPY } from '@/lib/portal'
 import { useStore } from '@/lib/store'
+import { useUndoable } from '@/lib/undo'
 import { cx } from '@/lib/cx'
 import { DetailsSummary } from './PortalDetails'
 
@@ -41,6 +42,7 @@ function stepLine(step, { docs, plan, record }) {
 
 export function PortalRecord({ couple, event }) {
   const { documentList, paymentsForEvent, portalFor, markPortalSeen, toast } = useStore()
+  const undoable = useUndoable()
   const [copied, setCopied] = useState(false)
   const record = portalFor(couple.id)
   const docs = documentList.filter((d) => d.eventId === event?.id && d.signer === 'couple')
@@ -94,8 +96,7 @@ export function PortalRecord({ couple, event }) {
               variant="primary"
               size="sm"
               onClick={() => {
-                markPortalSeen(couple.id)
-                toast('Marked as read.')
+                undoable(() => markPortalSeen(couple.id), 'Marked as read.', { undone: 'Undone. It’s marked as new again.' })
               }}
             >
               <Icon name="check" size={13} />

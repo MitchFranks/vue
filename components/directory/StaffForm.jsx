@@ -5,7 +5,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useDirectory } from '@/lib/directory/store'
-import { useStore } from '@/lib/store'
+import { useUndoable } from '@/lib/undo'
 import { blankStaff, formToStaff, fullName, staffHref, STATUS_OPTIONS, staffToForm, validateStaff } from '@/lib/directory/model'
 import { Select, Textarea, TextInput } from '@/components/ui'
 import { CheckboxGroup, FormSection, RecordForm, useRecordForm, Wide } from '@/components/records'
@@ -15,7 +15,7 @@ import { OptionSelect, useResolveOption } from './OptionSelect'
 export function StaffForm({ person }) {
   const router = useRouter()
   const { roles, saveStaff } = useDirectory()
-  const { toast } = useStore()
+  const undoable = useUndoable()
   const resolveOption = useResolveOption()
   const form = useRecordForm(person ? staffToForm(person) : blankStaff(roles), {
     idPrefix: 'staff',
@@ -29,8 +29,10 @@ export function StaffForm({ person }) {
 
   const onValid = (v) => {
     const fields = formToStaff({ ...v, primaryRoleId: resolveOption('roles', v.primaryRoleId, v.primaryRoleIdCustom) })
-    const id = saveStaff(person?.id, fields)
-    toast(person ? `Saved ${fullName(fields)}.` : `Added ${fullName(fields)} to your staff.`)
+    // Undo takes an edit back, or takes a new person off the list again.
+    const id = undoable(() => saveStaff(person?.id, fields), person ? `Saved ${fullName(fields)}.` : `Added ${fullName(fields)} to your staff.`, {
+      onUndo: person ? undefined : () => router.push('/staff')
+    })
     router.push(staffHref(id))
   }
 

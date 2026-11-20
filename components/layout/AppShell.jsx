@@ -22,6 +22,9 @@ import { useDirectory } from '@/lib/directory/store'
 import { openSpots } from '@/lib/format'
 import { PrototypeNotice } from '@/components/onboarding/PrototypeNotice'
 import { PhoneDrawer } from '@/components/staffing/StaffPhone'
+import { HelpButton } from '@/components/help/HelpPanel'
+import { FindAnything } from '@/components/search/FindAnything'
+import { UpdatesBell, UpdatesWatcher } from '@/components/updates/Updates'
 import { AccountMenu } from './AccountMenu'
 import { AppToasts } from './AppToasts'
 import { activeHrefFor } from './nav'
@@ -61,8 +64,19 @@ export function AppShell({ children }) {
         onToggleNav={() => setNavOpen((v) => !v)}
         // The tester's goal is always one click away, and the prototype never
         // pretends to be real (VISIBILITY OF SYSTEM STATUS).
-        actions={<PrototypeNotice />}
+        // Finding things (user test v4): search anything, couples' updates, and
+        // Help's "Where do I…?", on every page.
+        search={<FindAnything />}
+        actions={
+          <>
+            <UpdatesBell />
+            <HelpButton />
+            <PrototypeNotice />
+          </>
+        }
       />
+      {/* A couple's request, signature or payment pops up the moment it arrives. */}
+      <UpdatesWatcher />
 
       <div className="flex">
         <Sidebar activeHref={activeHrefFor(pathname)} counts={navCounts(store)} open={navOpen} account={<AccountMenu />} />

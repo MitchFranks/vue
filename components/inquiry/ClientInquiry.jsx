@@ -18,6 +18,7 @@ import { aboutRows, blankInquiry, cleanInquiry, inquiryRows, kindOf, validateInq
 import { ACTIVE_ACCOUNT, reloadOnWorkspaceChange } from '@/lib/account/session'
 import { venue } from '@/lib/mock/events'
 import { useStore } from '@/lib/store'
+import { PHOTOS } from '@/lib/asset'
 import { Alert, Button, Card, Icon } from '@/components/ui'
 import { useRecordForm } from '@/components/records'
 import { INQUIRY_TITLE_ID, InquiryFrame } from './InquiryFrame'
@@ -89,6 +90,7 @@ export function ClientInquiry() {
     return (
       <InquiryFrame
         venueName={venueName}
+        cover={PHOTOS.exterior}
         title="How can we help?"
         lead={`Tell ${venueName} what you're planning. It takes about two minutes.`}
       >

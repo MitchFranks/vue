@@ -14,9 +14,10 @@ import { ContactInfo, DetailGrid, QueryRecord, RecordStatusBadge, RecordStatusCa
 import { AvailabilityEditor, AvailabilitySummary, availabilityIsValid } from '@/components/directory/Availability'
 import { RecordNotFound } from '@/components/directory/RecordNotFound'
 import { RequestStatus } from '@/components/staffing/StatusChip'
-import { availabilityStatusOf, fullName, initialsOf, optionName, staffEditHref, tasksNaming } from '@/lib/directory/model'
+import { availabilityStatusOf, fullName, initialsOf, optionName, staffEditHref, staffHref, tasksNaming } from '@/lib/directory/model'
 import { useDirectory } from '@/lib/directory/store'
 import { useStore } from '@/lib/store'
+import { useUndoable } from '@/lib/undo'
 import { WORLD } from '@/lib/staffing/adapter'
 import { awayDateText, dayLine, requestList } from '@/lib/staffing/derive'
 import { useStaffing } from '@/lib/staffing/store'
@@ -27,7 +28,8 @@ const STATUS_ORDER = { pending: 0, draft: 1, accepted: 2, backup: 3, declined: 4
 function StaffProfile({ id }) {
   const router = useRouter()
   const dir = useDirectory()
-  const { toast, manualTaskList, tasksAssignedTo } = useStore()
+  const { manualTaskList, tasksAssignedTo } = useStore()
+  const undoable = useUndoable()
   const { state, hydrated, recordReply, openPhone } = useStaffing()
   const { confirm, dialog } = useConfirm()
   const [editingHours, setEditingHours] = useState(false)
@@ -70,13 +72,15 @@ function StaffProfile({ id }) {
 
   const toggleStatus = () => {
     const status = person.status === 'inactive' ? 'active' : 'inactive'
-    dir.saveStaff(id, { status })
-    toast(status === 'active' ? `${name} is active again.` : `${name} is inactive and won't be suggested for new shifts.`)
+    undoable(() => dir.saveStaff(id, { status }), status === 'active' ? `${name} is active again.` : `${name} is inactive and won't be suggested for new shifts.`)
   }
 
   const remove = () => {
-    dir.deleteStaff(id)
-    toast(`Deleted ${name}.`)
+    // Undo brings them back with everything they had, and opens their profile again.
+    undoable(() => dir.deleteStaff(id), `Deleted ${name}.`, {
+      undone: `Undone. ${name} is back.`,
+      onUndo: () => router.push(staffHref(id))
+    })
     router.push('/staff')
   }
 
@@ -290,13 +294,12 @@ function StaffProfile({ id }) {
 /** Edit weekly hours without leaving the profile. */
 function HoursModal({ person, onClose }) {
   const { saveStaff } = useDirectory()
-  const { toast } = useStore()
+  const undoable = useUndoable()
   const [availability, setAvailability] = useState(person.availability)
   const valid = availabilityIsValid(availability)
 
   const save = () => {
-    saveStaff(person.id, { availability, availabilityStatus: availabilityStatusOf(availability) })
-    toast(`Saved ${person.firstName}'s weekly hours.`)
+    undoable(() => saveStaff(person.id, { availability, availabilityStatus: availabilityStatusOf(availability) }), `Saved ${person.firstName}'s weekly hours.`)
     onClose()
   }
 

@@ -17,7 +17,7 @@ export default function CouplesPage() {
       <Breadcrumbs items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Couples' }]} />
       <PageHeader
         title="Couples"
-        lead={`${couples.length} couples with an event on the books. Each has a client portal to sign, pay, send their details and book a meeting.`}
+        lead={`Your ${couples.length} couples. Click one to see what they have signed, paid and sent.`}
       />
 
       <Card bodyClassName="px-0 py-0">

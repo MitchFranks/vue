@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { daysOutLabel } from '@/lib/mock/events'
 import { openSpots } from '@/lib/format'
 import { Icon, StatusBadge } from '@/components/ui'
+import { eventThumb } from '@/lib/asset'
 
 /* -------------------------------------------------------------- EventCard -- */
 
@@ -12,8 +13,14 @@ export function EventCard({ event, coverage, taskCount = 0, guide = false }) {
     <Link
       href={`/events/${event.id}`}
       data-guide={guide ? 'events-first' : undefined}
-      className="block rounded-md border border-line bg-surface px-6 py-5 shadow-raised transition-colors duration-150 hover:border-line-strong"
+      className="group flex overflow-hidden rounded-md border border-line bg-surface shadow-raised transition-colors duration-150 hover:border-line-strong"
     >
+      {/* A cover photo, so events are told apart at a glance (lib/asset.js eventThumb). */}
+      <div aria-hidden="true" className="relative w-24 shrink-0 overflow-hidden bg-surface-sunken sm:w-28">
+        {/* eslint-disable-next-line @next/next/no-img-element -- static export: plain images, sized by CSS */}
+        <img src={eventThumb(event)} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-calm group-hover:scale-[1.05]" />
+      </div>
+      <div className="min-w-0 flex-1 px-5 py-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -49,6 +56,7 @@ export function EventCard({ event, coverage, taskCount = 0, guide = false }) {
             </StatusBadge>
           ))}
         <span className="ml-auto text-small text-ink-muted">{event.bookingStatus} · {daysOutLabel(event)}</span>
+      </div>
       </div>
     </Link>
   )

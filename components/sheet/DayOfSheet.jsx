@@ -44,7 +44,7 @@ export function DayOfSheet() {
   if (!event) {
     return (
       <Frame>
-        <h1 className="text-title font-light">This link doesn&apos;t match an event</h1>
+        <h1 className="font-display text-[1.85rem] leading-[1.1]">This link doesn&apos;t match an event</h1>
         <p className="text-ink-muted">Ask the venue manager to send it again.</p>
       </Frame>
     )
@@ -59,6 +59,8 @@ function ForEvent({ event, staffId }) {
   const { state: planner } = useStaffing()
   // What they read when they tapped "Got it", kept highlighted for this visit.
   const [justRead, setJustRead] = useState([])
+  // Got it can be taken back (a mis-tap): the changes go back to unread.
+  const [beforeGotIt, setBeforeGotIt] = useState(null)
 
   const team = sheet.teamOf(event.id)
   const person = team.includes(staffId) ? staffById(staffId) : null
@@ -66,7 +68,7 @@ function ForEvent({ event, staffId }) {
   if (!person) {
     return (
       <Frame>
-        <h1 className="text-title font-light">{event.name}</h1>
+        <h1 className="font-display text-[1.85rem] leading-[1.1]">{event.name}</h1>
         <p className="text-ink-muted">Who are you? Pick your name to open your sheet.</p>
         <Card bodyClassName="px-0 py-0">
           {team.length === 0 ? (
@@ -103,15 +105,21 @@ function ForEvent({ event, staffId }) {
   const ev = eventOf(planner, event.id)
 
   const gotIt = () => {
+    setBeforeGotIt(sheet.snapshot())
     setJustRead(unseen)
     sheet.acknowledge(event.id, staffId)
+  }
+  const undoGotIt = () => {
+    sheet.restore(beforeGotIt)
+    setBeforeGotIt(null)
+    setJustRead([])
   }
 
   return (
     <Frame>
       <div>
         <p className="text-small text-ink-muted">Hi {person.name.split(' ')[0]}</p>
-        <h1 className="text-title font-light text-balance">{event.name}</h1>
+        <h1 className="font-display text-[1.85rem] leading-[1.1] text-balance">{event.name}</h1>
         <p className="mt-1 text-ink-muted">
           {event.date} · {event.spaces}
         </p>
@@ -160,7 +168,17 @@ function ForEvent({ event, staffId }) {
           <p className="text-label text-ink-muted">Tapping Got it lets {venue.manager.split(' ')[0]} know you have read these.</p>
         </section>
       ) : justRead.length > 0 ? (
-        <Alert tone="done" title="Thanks, you're up to date">
+        <Alert
+          tone="done"
+          title="Thanks, you're up to date"
+          action={
+            beforeGotIt && (
+              <Button size="sm" onClick={undoGotIt}>
+                Undo
+              </Button>
+            )
+          }
+        >
           {venue.manager.split(' ')[0]} can see you have read the changes. They stay highlighted below.
         </Alert>
       ) : (

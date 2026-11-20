@@ -17,6 +17,7 @@
 
 import { useState } from 'react'
 import { useStore } from '@/lib/store'
+import { useUndoable } from '@/lib/undo'
 import { useDirectory } from '@/lib/directory/store'
 import { events, TODAY_KEY } from '@/lib/mock/events'
 import { blankStep, MANAGER_ROLE, roleAssignee, roleLabel, templateFor, whenLabel } from '@/lib/templates'
@@ -153,7 +154,8 @@ function TemplateCard({ template, all, taskTypes, roles, editing, setEditing, on
 }
 
 export default function PlanningTemplatesPage() {
-  const { templates, taskTypes, saveTemplateStep, deleteTemplateStep, toast } = useStore()
+  const { templates, taskTypes, saveTemplateStep, deleteTemplateStep } = useStore()
+  const undoable = useUndoable()
   const { roles } = useDirectory()
   const { confirm, dialog } = useConfirm()
   const [editing, setEditing] = useState(null) // { templateId, stepId | null (adding) }
@@ -161,22 +163,22 @@ export default function PlanningTemplatesPage() {
   const roleNames = roles.map((r) => r.name)
 
   const save = (template, step) => {
-    saveTemplateStep(template.id, step)
+    undoable(
+      () => saveTemplateStep(template.id, step),
+      step.id ? `Saved "${step.title}". Every upcoming event follows it.` : `Added "${step.title}" to the ${template.name.toLowerCase()}.`,
+      { small: step.id ? 'Tasks you changed on an event keep your changes.' : 'Events get it as a task from today on.' }
+    )
     setEditing(null)
-    toast(step.id ? `Saved "${step.title}". Every upcoming event follows it.` : `Added "${step.title}" to the ${template.name.toLowerCase()}.`, 'done', {
-      small: step.id ? 'Tasks you changed on an event keep your changes.' : 'Events get it as a task from today on.'
-    })
   }
 
   const remove = (template, step) =>
     confirm({
       title: `Delete “${step.title}”?`,
-      body: `Its task comes off every event using the ${template.name.toLowerCase()}, including ones already done. This can’t be undone.`,
+      body: `Its task comes off every event using the ${template.name.toLowerCase()}, including ones already done. You can undo it straight after.`,
       confirmLabel: 'Delete step',
       danger: true,
       onConfirm: () => {
-        deleteTemplateStep(template.id, step.id)
-        toast(`Deleted "${step.title}".`)
+        undoable(() => deleteTemplateStep(template.id, step.id), `Deleted "${step.title}".`, { undone: `Undone. "${step.title}" is back on every event.` })
       }
     })
 

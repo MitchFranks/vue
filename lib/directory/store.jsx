@@ -117,6 +117,9 @@ export function DirectoryProvider({ children }) {
         update((s) => ({ [kind]: [...s[kind], { id, name: name.trim() }] }))
         return id
       },
+      // Undo (lib/undo.jsx): take the state before an action, put it back after.
+      snapshot: () => stateRef.current,
+      restore: (saved) => setState(saved),
       reset: () => {
         try {
           window.localStorage.removeItem(STORAGE_KEY)

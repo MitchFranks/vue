@@ -87,7 +87,7 @@ function SignIn() {
         </form>
       </Card>
 
-      <Card title="Try the demo" icon="info" subtitle="A sample venue with weddings, staff and vendors already set up.">
+      <Card title="Try the demo" icon="info" subtitle="A sample venue with events, staff and vendors already set up.">
         <dl className="grid grid-cols-2 gap-3 sm:max-w-sm">
           <div>
             <dt className="text-small text-ink-muted">Username</dt>

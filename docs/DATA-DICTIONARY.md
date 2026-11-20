@@ -163,7 +163,7 @@ Edits made on the Tasks page are kept in `manualTaskEdits` in state and laid ove
 
 **Task sorts** (`sortTasks`): Due date (by date; on the same day, tasks with no time first, then by time) · Contact · Couple · Vendor · Task name, each ascending or descending. Tasks with nothing to sort on go last.
 
-**Task filters** (`filterTasks`): task name (text) · task types (several) · due (one of any time, overdue, today, this week, or on a date) · couples and contacts (several) · vendors (several) · plus *Show completed*, which adds completed tasks without narrowing. Several choices inside one filter are OR, filters together are AND.
+**Task filters** (`filterTasks`): search text (matches the task name, its description and its event) · task types (several) · due (one of any time, overdue, today, this week, or on a date) · couples and contacts (several) · vendors (several) · assigned to (several, or unassigned) · event (`eventIds`, the Event picker above the list) · status (open, completed, or both). Several choices inside one filter are OR, filters together are AND.
 
 Choices that cannot be combined are kept apart: a couple and one of its own partners exclude each other (`whoOptions`), "due" is a single choice so "this week" and "on a date" cannot clash, and any choice that would leave nothing to show is disabled with the reason.
 

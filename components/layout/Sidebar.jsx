@@ -59,6 +59,7 @@ function NavLink({ item, quiet, active, badge }) {
   return (
     <Link
       href={item.href}
+      title={item.hint}
       aria-current={active ? 'page' : undefined}
       className={cx(
         'flex h-9 items-center gap-3 rounded-sm px-3 text-small font-medium transition-colors duration-150',

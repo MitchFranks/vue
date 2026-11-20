@@ -11,6 +11,7 @@ import { fullName, optionName, validate } from '@/lib/directory/model'
 import { useDirectory } from '@/lib/directory/store'
 import { couples } from '@/lib/mock/records'
 import { useStore } from '@/lib/store'
+import { useUndoable } from '@/lib/undo'
 
 const TYPE_LABEL = { staff: 'Staff', vendor: 'Vendor', couple: 'Couple' }
 
@@ -28,7 +29,8 @@ function useRecipients() {
 /** `to` preselects a recipient ("staff:stf-4001"). */
 export function ComposeMessage({ to = '', onClose }) {
   const recipients = useRecipients()
-  const { sendMessage, toast } = useStore()
+  const { sendMessage } = useStore()
+  const undoable = useUndoable()
   const form = useRecordForm(
     { to: recipients.some((r) => r.key === to) ? to : '', subject: '', body: '' },
     { idPrefix: 'compose', validate: (v) => validate(v, { required: { to: 'Choose who this is for.', body: 'Write a message.' } }) }
@@ -37,8 +39,11 @@ export function ComposeMessage({ to = '', onClose }) {
   const recipient = recipients.find((r) => r.key === values.to)
 
   const send = form.submit((v) => {
-    sendMessage({ to: { type: recipient.type, id: recipient.id, name: recipient.name }, subject: v.subject.trim(), body: v.body.trim() })
-    toast(`Message sent to ${recipient.name}.`)
+    undoable(
+      () => sendMessage({ to: { type: recipient.type, id: recipient.id, name: recipient.name }, subject: v.subject.trim(), body: v.body.trim() }),
+      `Message sent to ${recipient.name}.`,
+      { undone: 'Undone. The message wasn’t sent.' }
+    )
     onClose()
   })
 

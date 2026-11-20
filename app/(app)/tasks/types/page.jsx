@@ -17,6 +17,7 @@
 
 import { useState } from 'react'
 import { useStore } from '@/lib/store'
+import { useUndoable } from '@/lib/undo'
 import { SYSTEM_TASK_TYPES, TASK_TYPE_MAX } from '@/lib/tasks'
 import { Breadcrumbs, Button, Card, Icon, Modal, PageHeader, Select, StatusBadge, TextInput } from '@/components/ui'
 
@@ -86,7 +87,8 @@ function TypeRow({ name, count, locked, editing, onEdit, onCancel, onRename, onD
 }
 
 export default function TaskTypesPage() {
-  const { taskTypes, manualTaskList, openTasks, addTaskType, renameTaskType, deleteTaskType, toast } = useStore()
+  const { taskTypes, manualTaskList, openTasks, addTaskType, renameTaskType, deleteTaskType } = useStore()
+  const undoable = useUndoable()
 
   const [name, setName] = useState('')
   const [addError, setAddError] = useState(null)
@@ -100,12 +102,9 @@ export default function TaskTypesPage() {
 
   function add(e) {
     e.preventDefault()
-    const err = addTaskType(name)
+    const err = undoable(() => addTaskType(name), `Added the type "${name.trim()}".`, { onlyIf: (e) => !e })
     setAddError(err)
-    if (!err) {
-      toast(`Added the type "${name.trim()}".`)
-      setName('')
-    }
+    if (!err) setName('')
   }
 
   function rename(from, to) {
@@ -113,11 +112,8 @@ export default function TaskTypesPage() {
       setEditing(null)
       return null
     }
-    const err = renameTaskType(from, to)
-    if (!err) {
-      setEditing(null)
-      toast(`Renamed "${from}" to "${to.trim()}".`)
-    }
+    const err = undoable(() => renameTaskType(from, to), `Renamed "${from}" to "${to.trim()}".`, { onlyIf: (e) => !e, undone: `Undone. It's "${from}" again.` })
+    if (!err) setEditing(null)
     return err
   }
 
@@ -128,8 +124,12 @@ export default function TaskTypesPage() {
 
   function confirmDelete() {
     const n = usage(deleting)
-    deleteTaskType(deleting, n ? moveTo : null)
-    toast(n ? `Deleted "${deleting}". ${n} ${n === 1 ? 'task moved' : 'tasks moved'} to "${moveTo}".` : `Deleted "${deleting}".`)
+    const gone = deleting
+    undoable(
+      () => deleteTaskType(gone, n ? moveTo : null),
+      n ? `Deleted "${gone}". ${n} ${n === 1 ? 'task moved' : 'tasks moved'} to "${moveTo}".` : `Deleted "${gone}".`,
+      { undone: `Undone. "${gone}" is back${n ? ', with its tasks' : ''}.` }
+    )
     setDeleting(null)
   }
 

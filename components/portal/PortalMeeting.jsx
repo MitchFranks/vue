@@ -10,11 +10,13 @@ import { Button, ChoiceCards, ChoicePills, Icon, TextInput, useConfirm } from '@
 import { addDaysKey, MEETING_KINDS, MEETING_TIMES, meetingKind, meetingWhen, STEP_COPY, validateMeeting } from '@/lib/portal'
 import { TODAY_KEY } from '@/lib/mock/events'
 import { useStore } from '@/lib/store'
+import { useUndoable } from '@/lib/undo'
 
 const KIND_ICON = { walkthrough: 'home', planning: 'list', call: 'phone' }
 
 export function MeetingStep({ couple, record, by, venue, screen, complete, back }) {
-  const { portalBookMeeting, portalCancelMeeting, toast } = useStore()
+  const { portalBookMeeting, portalCancelMeeting } = useStore()
+  const undoable = useUndoable()
   const { confirm, dialog } = useConfirm()
   const booked = record.meeting
   const [changing, setChanging] = useState(false)
@@ -58,8 +60,7 @@ export function MeetingStep({ couple, record, by, venue, screen, complete, back 
                   confirmLabel: 'Cancel meeting',
                   danger: true,
                   onConfirm: () => {
-                    portalCancelMeeting(couple.id)
-                    toast('Meeting cancelled.')
+                    undoable(() => portalCancelMeeting(couple.id), 'Meeting cancelled.', { undone: 'Undone. Your meeting is booked again.' })
                     back()
                   }
                 })

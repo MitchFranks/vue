@@ -9,6 +9,8 @@ import { useTimelineEdits } from '@/lib/timelineEdits'
 import { useEventSheet } from '@/lib/eventSheetStore'
 import { useDirectory } from '@/lib/directory/store'
 import { IS_SAMPLE_WORKSPACE } from '@/lib/account/session'
+import { clearSeenUpdates } from '@/components/updates/useCoupleUpdates'
+import { showFirstSteps } from '@/components/help/FirstSteps'
 
 export function usePrototypeReset() {
   const { reset: resetStore } = useStore()
@@ -34,6 +36,8 @@ export function usePrototypeReset() {
         resetDirectory()
         planner.reset({ undoable: false, notify: false })
         resetStore()
+        clearSeenUpdates()
+        showFirstSteps()
         // The demo starts over with its first-visit message; an own workspace just stays put.
         if (IS_SAMPLE_WORKSPACE) resetIntro('/')
       }

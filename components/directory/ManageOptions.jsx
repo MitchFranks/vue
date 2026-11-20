@@ -9,7 +9,7 @@
 
 import { useState } from 'react'
 import { useDirectory } from '@/lib/directory/store'
-import { useStore } from '@/lib/store'
+import { useUndoable } from '@/lib/undo'
 import { Button, Icon, Modal, TextInput } from '@/components/ui'
 
 const COPY = {
@@ -44,7 +44,7 @@ export function ManageOptionsButton({ kind }) {
 
 function ManageOptionsModal({ kind, onClose }) {
   const dir = useDirectory()
-  const { toast } = useStore()
+  const undoable = useUndoable()
   const copy = COPY[kind]
   const [draft, setDraft] = useState(() => dir[kind].map((o) => ({ ...o })))
   const [adding, setAdding] = useState('')
@@ -66,8 +66,7 @@ function ManageOptionsModal({ kind, onClose }) {
     const all = names(draft)
     if (all.some((n) => !n)) return setError(`Every ${copy.noun} needs a name.`)
     if (new Set(all).size !== all.length) return setError(`Two ${copy.noun} names are the same.`)
-    dir.saveOptions(kind, draft)
-    toast(`${copy.title} saved.`)
+    undoable(() => dir.saveOptions(kind, draft), `${copy.title} saved.`)
     onClose()
   }
 

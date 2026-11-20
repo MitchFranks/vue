@@ -26,6 +26,7 @@ import { useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { assigneeOptions, personFirst, UNASSIGNED } from '@/lib/assignees'
 import { useStore } from '@/lib/store'
+import { useUndoable } from '@/lib/undo'
 import { useDirectoryVendors } from '@/lib/directory/store'
 import {
   activeFilterCount,
@@ -36,9 +37,12 @@ import {
   sortTasks,
   vendorOptions,
   STATUS_MODES,
+  WEEK,
   whoOptions
 } from '@/lib/tasks'
-import { Button, Card, EmptyState } from '@/components/ui'
+import { Button, Card, EmptyState, Icon, Select } from '@/components/ui'
+import { events, TODAY_KEY } from '@/lib/mock/events'
+import { addDaysKey } from '@/lib/portal'
 import { TaskCard } from './TaskCard'
 import { TaskEditor } from './TaskEditor'
 import { TaskToolbar } from './TaskToolbar'
@@ -56,12 +60,20 @@ export function useTaskBoard() {
   const directoryVendors = useDirectoryVendors()
   const { openTasks, completedTasks, manualTaskList, taskTypes, toggleManualTask, addManualTask, updateManualTask, updateTask, toast } =
     useStore()
+  const undoable = useUndoable()
 
   const [sort, setSort] = useState('due')
   const [direction, setDirection] = useState('asc')
-  // ?assignee=<staffId> opens the list filtered to one person.
-  const linked = useSearchParams().get('assignee')
-  const [filters, setFilters] = useState(() => (linked ? { ...EMPTY_TASK_FILTERS, assigneeIds: [linked] } : EMPTY_TASK_FILTERS))
+  // ?assignee=<staffId> opens the list filtered to one person, ?event=<id>
+  // to one event, and ?q= with a search (the top bar's search box links here).
+  const params = useSearchParams()
+  const linked = params.get('assignee')
+  const [filters, setFilters] = useState(() => ({
+    ...EMPTY_TASK_FILTERS,
+    assigneeIds: linked ? [linked] : [],
+    eventIds: params.get('event') ? [params.get('event')] : [],
+    query: params.get('q') || ''
+  }))
   const [rows, setRows] = useState(() => (linked ? ['assignee'] : []))
   const [editing, setEditing] = useState(null)
 
@@ -112,7 +124,16 @@ export function useTaskBoard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- see the comment above: directoryVendors is read through the registry
   }, [pool, filters, taskTypes, directoryVendors])
 
+  // The two pickers above the list: whose to-dos, and which event.
+  const pickPerson = (id) => {
+    setFilters((f) => ({ ...f, assigneeIds: id ? [id] : [] }))
+    setRows((r) => (id ? (r.includes('assignee') ? r : [...r, 'assignee']) : r.filter((k) => k !== 'assignee')))
+  }
+  const pickEvent = (id) => setFilters((f) => ({ ...f, eventIds: id ? [id] : [] }))
+
   return {
+    pickPerson,
+    pickEvent,
     shown: sortTasks(matching.filter((t) => !t.done), sort, direction),
     shownDone: sortTasks(matching.filter((t) => t.done), sort, direction),
     openTotal: pool.filter((t) => !t.done).length,
@@ -171,14 +192,11 @@ export function useTaskBoard() {
     // `editing` is a task record being edited, or 'new' while adding one.
     onSave: (patch) => {
       if (editing === 'new') {
-        addManualTask(patch)
-        toast(`Added "${patch.title}".`)
+        undoable(() => addManualTask(patch), `Added "${patch.title}".`, { undone: `Undone. "${patch.title}" is gone.` })
       } else if (editing.raised) {
-        updateTask(editing.raised, patch)
-        toast(`Saved "${patch.title}".`)
+        undoable(() => updateTask(editing.raised, patch), `Saved "${patch.title}".`, { undone: 'Undone. Your edits are taken back.' })
       } else {
-        updateManualTask(editing.id, patch)
-        toast(`Saved "${patch.title}".`)
+        undoable(() => updateManualTask(editing.id, patch), `Saved "${patch.title}".`, { undone: 'Undone. Your edits are taken back.' })
       }
       setEditing(null)
     }
@@ -192,6 +210,8 @@ export function useTaskBoard() {
  *   editing            null, 'new', or the manual task record being edited
  */
 export function TaskBoardView({
+  pickPerson,
+  pickEvent,
   shown,
   shownDone,
   openTotal,
@@ -220,6 +240,9 @@ export function TaskBoardView({
 
   return (
     <div className="space-y-4">
+      {/* ---- The two questions people ask first: whose, and for which event ---- */}
+      {pickPerson && <QuickPicks filters={filters} onPerson={pickPerson} onEvent={pickEvent} />}
+
       {/* ---- Toolbar: count on the left; filter, sort and search on the right ---- */}
       <TaskToolbar
         filters={filters}
@@ -259,13 +282,27 @@ export function TaskBoardView({
           }
         />
       ) : shown.length === 0 ? null : (
-        <Card bodyClassName="px-0 py-0">
-          <div className="divide-y divide-line">
-            {shown.map((task, i) => (
-              <TaskCard key={task.id} task={task} first={i === 0} onToggle={onToggle} onEdit={onEdit} onAssign={onAssign} />
-            ))}
-          </div>
-        </Card>
+        <div className="space-y-5">
+          {/* Sorted by due date, the list is split by when: Overdue, Today, Tomorrow, This week, Later. */}
+          {(sort === 'due' ? dueGroups(shown, direction) : [{ id: 'all', label: null, tasks: shown }]).map((g, gi) => (
+            <section key={g.id} aria-label={g.label || 'Tasks'}>
+              {g.label && (
+                <h2 className="mb-2 flex items-center gap-2 text-body font-medium text-ink">
+                  {g.icon && <Icon name={g.icon} size={15} className={g.iconClass} />}
+                  {g.label}
+                  <span className="font-normal text-ink-muted">({g.tasks.length})</span>
+                </h2>
+              )}
+              <Card bodyClassName="px-0 py-0">
+                <div className="divide-y divide-line">
+                  {g.tasks.map((task, i) => (
+                    <TaskCard key={task.id} task={task} first={gi === 0 && i === 0} onToggle={onToggle} onEdit={onEdit} onAssign={onAssign} />
+                  ))}
+                </div>
+              </Card>
+            </section>
+          ))}
+        </div>
       )}
 
       {shownDone.length > 0 && (
@@ -285,6 +322,63 @@ export function TaskBoardView({
           onClose={onCloseEditor}
           onSave={onSave}
         />
+      )}
+    </div>
+  )
+}
+
+/** Split due-sorted tasks by when they are due. Empty groups are left out. */
+function dueGroups(tasks, direction) {
+  const tomorrow = addDaysKey(TODAY_KEY, 1)
+  const groups = [
+    { id: 'overdue', label: 'Overdue', icon: 'alert', iconClass: 'text-status-now', test: (d) => d < TODAY_KEY },
+    { id: 'today', label: 'Today', icon: 'alert', iconClass: 'text-status-now', test: (d) => d === TODAY_KEY },
+    { id: 'tomorrow', label: 'Tomorrow', icon: 'clock', iconClass: 'text-status-soon', test: (d) => d === tomorrow },
+    { id: 'week', label: 'Later this week', icon: 'clock', iconClass: 'text-status-soon', test: (d) => d > tomorrow && d <= WEEK.end },
+    { id: 'later', label: 'Later', icon: 'calendar', iconClass: 'text-ink-muted', test: (d) => d > WEEK.end }
+  ]
+  const out = groups.map((g) => ({ ...g, tasks: tasks.filter((t) => g.test(t.dueDate || TODAY_KEY)) })).filter((g) => g.tasks.length)
+  return direction === 'desc' ? out.reverse() : out
+}
+
+/** "Show to-dos for [person]" and "Event [event]": the two filters everyone needs, always in view. */
+function QuickPicks({ filters, onPerson, onEvent }) {
+  const person = filters.assigneeIds.length === 1 ? filters.assigneeIds[0] : filters.assigneeIds.length ? 'several' : ''
+  const event = filters.eventIds?.length === 1 ? filters.eventIds[0] : ''
+  return (
+    <div className="flex flex-wrap items-end gap-3 rounded-md border border-line bg-surface px-4 py-3 sm:px-5">
+      <Select
+        id="tasks-person"
+        label="Show to-dos for"
+        className="w-full sm:w-64"
+        value={person}
+        onChange={(e) => onPerson(e.target.value === 'several' ? filters.assigneeIds[0] : e.target.value)}
+        options={[
+          { value: '', label: 'Everyone' },
+          ...(person === 'several' ? [{ value: 'several', label: 'Several people (see filters)' }] : []),
+          ...assigneeOptions(filters.assigneeIds),
+          { value: UNASSIGNED, label: 'Nobody yet (unassigned)' }
+        ]}
+      />
+      <Select
+        id="tasks-event"
+        label="Event"
+        className="w-full sm:w-72"
+        value={event}
+        onChange={(e) => onEvent(e.target.value)}
+        options={[{ value: '', label: 'All events' }, ...events.map((ev) => ({ value: ev.id, label: `${ev.name} · ${ev.dateShort}` }))]}
+      />
+      {(person || event) && (
+        <Button
+          variant="ghost"
+          size="md"
+          onClick={() => {
+            onPerson('')
+            onEvent('')
+          }}
+        >
+          Show everything
+        </Button>
       )}
     </div>
   )

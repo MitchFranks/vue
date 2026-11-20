@@ -21,7 +21,7 @@ Everything the venue manager must act on is a **task**. A message to answer, an 
 ### 2. Task types
 
 - System types are locked: **Message, Payment, Sign Document, Staff**. The product assigns them.
-- Venue types are managed on a separate screen, `/tasks/types`, opened from a **Manage task types** button on the Tasks page. It supports add, rename and delete.
+- Venue types are managed on a separate screen, `/tasks/types`, opened from **More → Manage task types** on the Tasks page. It supports add, rename and delete.
 - Defaults: Couple follow-up, Other, Paperwork, Vendor coordination, Venue prep.
 - Names are unique (case-insensitive), at most 40 characters, and cannot reuse a built-in name.
 - Renaming moves tasks to the new name. Deleting asks which type the affected tasks should move to.
@@ -32,10 +32,10 @@ One card for every source, in this reading order: due badge, then type · event 
 
 - **Description:** show only the first two lines. If it is cut off, show a "Show more" link that expands it and becomes "Show less". No link when the text fits.
 - **No "Why" line.** It duplicated the description.
-- **Main button:** every task shows a button labelled **Action**, with the task name as screen-reader-only text. Do not guess the action per task.
+- **Main button:** names what it does, from the task's source (`lib/taskAction.js`): Answer request, Reply, Ask staff, Review and send, See replies, Open document, See agreement, See payment, Open inquiry, Open couple, Open to-do. The task name follows as screen-reader-only text. (User test v4 replaced the old generic "Action" label: testers didn't know what it would do.)
 - **No Hide feature** anywhere. Sort and filter replace it.
 - **Edit:** shown only on open manual tasks, to the left of the buttons.
-- **No checkbox.** Under **Action**, a second button of the same width, **Mark Done** (check icon), completes a manual task. Completing shows a toast with Undo. A manual task that needs a number (the catering guest count) has no Mark Done, because it is completed by entering the number. Messages, documents, payments and staffing spots have none either, since they finish where they live.
+- **No checkbox.** Under the main button, a second button of the same width, **Mark done** (check icon), completes a manual task. Completing shows a toast with Undo. A manual task that needs a number (the catering guest count) has no Mark done, because it is completed by entering the number. Messages, documents, payments and staffing spots have none either, since they finish where they live.
 - Completed tasks are muted and struck through, and the same slot reads **Reopen** (refresh icon) to bring one back.
 
 ### 3b. Assigned to (delegation)
@@ -46,12 +46,14 @@ From the venue manager interview: "helps me delegate and track responsibilities 
 - Any task, written or raised by the product, is assigned in the editor (**Assigned to**, defaulting to the manager) or straight from its card with an inline picker. Reassigning shows a toast with Undo.
 - Raised tasks (messages, open spots, documents, payments, inquiries, sheet changes) are edited in the same editor as written ones: name, due date and time, type, event, description, tags and assignee. The changes are kept by task id and laid over the raised task, so the message or spot itself is untouched. They are still finished where they live; on the assignee's list they link to Vue ("Finish it in Vue") instead of Mark done.
 - **Assigned to** is a filter property (multi-select, with Unassigned). `/tasks?assignee=<staffId>` opens Tasks filtered to one person; each staff profile has a Tasks card linking there.
+- Above the list, two pickers are always in view: **Show to-dos for** (a person, or Everyone) and **Event**. `/tasks?event=<eventId>` and `/tasks?q=<words>` open Tasks filtered the same way; search matches the name, the description and the event. Sorted by due date, the list is split under Overdue, Today, Tomorrow, Later this week and Later.
+- On the card, **Assigned to** is a labelled, bordered dropdown (not borderless text), so handing a to-do on is visible.
 - **The assignee's view**: `/my-tasks?s=<staffId>`, public and phone first. Open tasks grouped Overdue, Today, This week, Later, each with **Mark done**; then the events they're working (with unread sheet changes); then Done recently with Reopen.
 - When a task is done, the card says who did it and when ("Done by Marisol · Sat 10:00 AM").
 
 ### 3c. Team view
 
-- `/tasks/team` (the **Team** button on Tasks): one row per active person, the manager first, then an **Unassigned** row.
+- `/tasks/team`, **Who's doing what** (its own sidebar item, and a button on Tasks): one row per active person, the manager first, then a **Nobody yet** row. Each row leads with **open this week** (overdue, today and the next six days), then open in total. **See to-dos** opens the person's to-dos with an **Assigned to** picker on each; **Hand off** moves any or all of them to someone else at once (for someone out sick), with Undo.
 - Each row shows open, overdue, due today and this week, what's next, and how many they finished this week.
 - A row opens Tasks filtered to that person; **Their list** opens their phone view.
 
@@ -59,7 +61,7 @@ From the venue manager interview: "helps me delegate and track responsibilities 
 
 From the venue manager interview: "a centralized system that automatically organizes tasks ... see what's coming up, what still needs to be done."
 
-- `/tasks/templates` (the **Planning templates** button on Tasks). Two templates: **Wedding plan** (weddings) and **Event plan** (every other event type).
+- `/tasks/templates` (**More → Planning templates** on Tasks). Two templates: **Wedding plan** (weddings) and **Event plan** (every other event type).
 - A step is: when (days before, on the day, or days after the event), what, task type, who usually does it (the manager, or a role), and an optional description.
 - Every event gets its template's steps as ordinary written tasks, dated from the event and assigned to the first active person in the role. They show on Tasks and the event's Tasks tab with the template's name next to the event, and are edited, reassigned and marked done like any other task.
 - Editing a step changes it on every event, except what was changed on a task itself. A new step only creates tasks due from today on. Deleting a step asks first, then removes its tasks from every event.
@@ -120,8 +122,8 @@ Every card shows the event's own date next to the event name, so tasks for diffe
 6. Filter and sort chips appear under the count and each ✕ removes only its own.
 7. Click + New, submit empty: name, due date and event turn light red. Fill all three and click Save: the count goes up by one.
 8. A task with a very long description shows two lines and "Show more".
-9. Every task's button reads "Action", and manual tasks have "Mark Done" beneath it (no checkbox). No Hide button or "hidden" text exists anywhere.
-10. Mark Done removes a manual task from the open list and Undo restores it. A completed task (Status filter) shows Reopen.
+9. Every task's main button names its action (never "Action"), and manual tasks have "Mark done" beneath it (no checkbox). No Hide button or "hidden" text exists anywhere.
+10. Mark done removes a manual task from the open list and Undo restores it. A completed task (Status filter) shows Reopen.
 11. `/tasks/types`: adding a duplicate or a built-in name is refused. Deleting a type in use asks where its tasks go.
 
 ### 9. Working notes

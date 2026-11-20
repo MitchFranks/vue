@@ -11,7 +11,7 @@ import { FormSection, RecordForm, useRecordForm, Wide } from '@/components/recor
 import { fullName, trimStrings, validateVenue } from '@/lib/directory/model'
 import { VENUE_TYPES } from '@/lib/mock/directory'
 import { useDirectory } from '@/lib/directory/store'
-import { useStore } from '@/lib/store'
+import { useUndoable } from '@/lib/undo'
 
 // The address is nested in the record and flat in the form.
 const toForm = (venue) => ({ ...venue, ...venue.address })
@@ -22,7 +22,7 @@ const fromForm = (values) => {
 
 function VenueForm({ venue }) {
   const { staff, saveVenue } = useDirectory()
-  const { toast } = useStore()
+  const undoable = useUndoable()
   const form = useRecordForm(toForm(venue), { idPrefix: 'venue', validate: validateVenue })
   const { field } = form
   const contacts = staff
@@ -32,8 +32,7 @@ function VenueForm({ venue }) {
   return (
     <RecordForm
       onSubmit={form.submit((v) => {
-        saveVenue(fromForm(v))
-        toast('Venue profile saved.')
+        undoable(() => saveVenue(fromForm(v)), 'Venue profile saved.')
       })}
       submitLabel="Save venue profile"
       onCancel={form.dirty ? form.reset : undefined}

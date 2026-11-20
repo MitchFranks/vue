@@ -1,6 +1,7 @@
 'use client'
 
 import { Button, ClampedText, Icon, StatusBadge } from '@/components/ui'
+import { actionLabel } from '@/lib/taskAction'
 
 /* ---------------------------------------------------------- TaskRow --
  *
@@ -12,8 +13,8 @@ import { Button, ClampedText, Icon, StatusBadge } from '@/components/ui'
  * the first task in a list gets the filled ink button, so one action leads.
  * Lists of these sit in a container with `divide-y divide-line`.
  *
- * The button says "Action" for every task: which action a task needs is not
- * decided yet, so the row does not guess.
+ * The button names what it does ("Reply", "Answer request", "Ask staff"),
+ * from lib/taskAction.js, so nobody has to guess where it goes.
  */
 
 export function TaskRow({ task, compact = false, first = false, badge = false }) {
@@ -41,8 +42,8 @@ export function TaskRow({ task, compact = false, first = false, badge = false })
 
         <div className="flex shrink-0 items-center gap-2">
           <Button href={task.href} variant={first ? 'primary' : 'secondary'} size="sm">
-            Action
-            <span className="sr-only"> for {task.title}</span>
+            {actionLabel(task)}
+            <span className="sr-only">: {task.title}</span>
             <Icon name="arrowRight" size={14} />
           </Button>
         </div>
