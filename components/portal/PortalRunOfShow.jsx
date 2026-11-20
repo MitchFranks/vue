@@ -18,7 +18,7 @@ import { useEventSheet } from '@/lib/eventSheetStore'
 import { REQUEST_STATUS, requestLine } from '@/lib/eventSheet'
 import { useTimelineEdits } from '@/lib/timelineEdits'
 import { fromInputValue, toInputValue } from '@/lib/format'
-import { useStore } from '@/lib/store'
+import { useUndoable } from '@/lib/undo'
 import { Button, ChoiceCards, Icon, StatusBadge, Textarea, TextInput } from '@/components/ui'
 
 const KINDS = [
@@ -29,26 +29,30 @@ const KINDS = [
 
 const EXPECT_HINT = 'What should it look like on the day? The more you tell us, the better we get it right.'
 
-/** The card on the portal home that opens Your day. */
+/** The card on the portal home that opens Your day: see the plan, ask for a change. */
 export function RunOfShowCard({ event, venue, onOpen }) {
   const { requestsFor } = useEventSheet()
   if (!event) return null
-  const waiting = requestsFor(event.id).filter((r) => r.status === 'waiting').length
+  const requests = requestsFor(event.id)
+  const waiting = requests.filter((r) => r.status === 'waiting').length
+  const answered = requests.filter((r) => r.status !== 'waiting').length
   return (
     <div className="surface-card flex flex-wrap items-center gap-4 px-4 py-4 sm:px-6">
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-surface-sunken text-ink">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
         <Icon name="clock" size={18} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-ink">Your day</p>
+        <p className="font-medium text-ink">Your day’s schedule</p>
         <p className="text-small text-ink-muted">
           {waiting
-            ? `${waiting} ${waiting === 1 ? 'request' : 'requests'} waiting for ${venue.name}`
-            : 'See the plan for your day, and ask for any changes.'}
+            ? `${waiting} ${waiting === 1 ? 'request' : 'requests'} waiting for ${venue.name}. Their answer shows up there.`
+            : answered
+              ? `${venue.name} answered your ${answered === 1 ? 'request' : 'requests'}. See the plan, or ask for another change.`
+              : `See the plan for your day. Need a different time for something? Ask here and ${venue.name} answers.`}
         </p>
       </div>
       <Button variant="secondary" onClick={onOpen}>
-        See your day
+        See your day and ask for a change
         <Icon name="arrowRight" size={14} />
       </Button>
     </div>
@@ -129,7 +133,7 @@ function RequestForm({ row, onCancel, onSend }) {
 export function RunOfShowScreen({ event, by, venue, frame, back }) {
   const { requestsFor, submitRequest, withdrawRequest } = useEventSheet()
   const { rowsFor } = useTimelineEdits()
-  const { toast } = useStore()
+  const undoable = useUndoable()
   const [asking, setAsking] = useState(null) // a row id, 'add', or null
 
   // The moments of the day; staffing blocks (setup, service shifts) are the venue's.
@@ -140,13 +144,13 @@ export function RunOfShowScreen({ event, by, venue, frame, back }) {
   const added = requests.filter((r) => !r.rowId || !rows.some((x) => x.id === r.rowId))
 
   const send = (fields) => {
-    submitRequest(event.id, { ...fields, by })
+    undoable(() => submitRequest(event.id, { ...fields, by }), `Sent to ${venue.name}. They see it right away, and their answer will show up here.`, {
+      undone: 'Undone. Your request wasn’t sent.'
+    })
     setAsking(null)
-    toast(`Sent to ${venue.name}. Their answer will show up here.`)
   }
   const withdraw = (r) => {
-    withdrawRequest(r.id)
-    toast('Request taken back.')
+    undoable(() => withdrawRequest(r.id), 'Request taken back.', { undone: 'Undone. Your request is with the venue again.' })
   }
 
   return frame({
@@ -172,7 +176,8 @@ export function RunOfShowScreen({ event, by, venue, frame, back }) {
                   {r.note && <p className="mt-0.5 text-small text-ink-muted">{r.note}</p>}
                 </div>
                 {asking !== r.id && (
-                  <Button variant="ghost" size="sm" onClick={() => setAsking(r.id)}>
+                  <Button variant="secondary" size="sm" onClick={() => setAsking(r.id)}>
+                    <Icon name="pencil" size={13} />
                     Ask for a change
                     <span className="sr-only"> to {r.title}</span>
                   </Button>

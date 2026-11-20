@@ -27,7 +27,7 @@ import { newId } from '@/lib/id'
 import { useToast } from '@/lib/toasts'
 import { hourLabel, openSpots } from '@/lib/format'
 import { useTimelineVersion } from '@/lib/timelineEdits'
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { events, eventById, daysOut, daysOutLabel, TODAY_KEY, venue } from './mock/events.js'
 import { contacts, contactName, coupleById, documents, inquiries as seedInquiries, messages, money, payments, portalSeed, manualTasks } from './mock/records.js'
 import { addDaysKey, changeLine, cleanDetails, diffDetails, meetingKind, meetingWhen, portalNow, portalSignature, stamp } from './portal.js'
@@ -39,7 +39,7 @@ import { useEventSheet } from './eventSheetStore'
 import { managerId } from './assignees.js'
 import { DEFAULT_TEMPLATES, seedDoneTemplateIds, templateTasks } from './templates.js'
 import { useDirectory } from './directory/store'
-import { simNowIso } from './staffing/derive'
+import { dateLabel, simNowIso } from './staffing/derive'
 import { entryTitle, notSeenBy, requestLine } from './eventSheet.js'
 import { changed, coverage, requestList, rolesOf, staffById as plannerStaffById } from './staffing/derive'
 
@@ -148,13 +148,21 @@ function requestTask(r, event) {
     eventId: event.id,
     eventName: event.name,
     meta: 'Run of show request',
-    href: `/events/${event.id}/sheet`
+    href: `/events/${event.id}/sheet#requests`
   }
 }
 
 export function StoreProvider({ children }) {
   const [state, setState] = useState(initialState)
   const [hydrated, setHydrated] = useState(false)
+  // The latest state, so an action can be undone (lib/undo.jsx): snapshot()
+  // before it, restore() puts everything back.
+  const stateRef = useRef(state)
+  useEffect(() => {
+    stateRef.current = state
+  }, [state])
+  const snapshot = useCallback(() => stateRef.current, [])
+  const restore = useCallback((saved) => setState(saved), [])
   const { state: planner, setGuarantee } = useStaffing()
   // Template steps go to whoever holds a role, so they follow the directory.
   const { staff: directoryStaff } = useDirectory()
@@ -781,6 +789,31 @@ export function StoreProvider({ children }) {
       })
     }
 
+    // 4b. Agreements the couple was asked to sign by a date (user test v4:
+    //     "nothing flagged on the system that it was overdue"). It shows
+    //     from the sign-by date and is urgent once that has passed; it goes
+    //     the moment they sign in their portal.
+    for (const d of documentList) {
+      if (d.signer !== 'couple' || d.tone === 'done' || !d.signBy || d.signBy > TODAY_KEY) continue
+      const event = eventById(d.eventId)
+      const couple = event ? coupleById(event.coupleId) : null
+      items.push({
+        id: `couple-sign:${d.id}`,
+        source: 'couple-sign',
+        type: 'Sign Document',
+        dueDate: d.signBy,
+        ...eventTags(event),
+        tone: 'urgent',
+        title: `${couple?.firstNames || 'The couple'} haven't signed the ${d.name.charAt(0).toLowerCase()}${d.name.slice(1)}`,
+        what: `Sent ${d.updated} for their signature by ${dateLabel(d.signBy)}. Remind them, or call. It clears the moment they sign in their portal.`,
+        why: 'Until it is signed, what you agreed is not on paper.',
+        eventId: d.eventId,
+        eventName: event ? event.name : 'No event',
+        meta: 'Waiting on the couple',
+        href: `/events/${d.eventId}/documents`
+      })
+    }
+
     // 5. Client inquiries from the public form. Due the day they arrive: the
     //    confirmation screen promised a reply within one business day.
     for (const q of inquiryList) {
@@ -1043,6 +1076,8 @@ export function StoreProvider({ children }) {
   const value = useMemo(
     () => ({
       hydrated,
+      snapshot,
+      restore,
       // collections
       manualTaskList,
       messageList,
@@ -1097,6 +1132,8 @@ export function StoreProvider({ children }) {
     }),
     [
       hydrated,
+      snapshot,
+      restore,
       manualTaskList,
       messageList,
       state.sentMessages,

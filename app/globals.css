@@ -33,28 +33,31 @@
 :root {
   color-scheme: light;
 
-  --canvas: #f1f2f2;
-  --surface: #fafafa;
-  --surface-sunken: #e6e7e8;
-  --line: #dadcde;
-  --line-strong: #878b8f;
-  --ink: #1b1c1e;
-  --ink-muted: #55595e;
-  --on-ink: #fafafa;
+  /* Warm neutrals: ivory paper and soft linen lines instead of cool grey,
+     so the product feels welcoming without adding colour that means nothing. */
+  --canvas: #f4f1ec;
+  --surface: #fdfcfa;
+  --surface-sunken: #ece7df;
+  --line: #e1dbd1;
+  --line-strong: #8a8378;
+  --ink: #23201c;
+  --ink-muted: #5c564e;
+  --on-ink: #fdfcfa;
   --accent: #2f4a3e;
-  --on-accent: #fafafa;
+  --accent-soft: #e3ece6;
+  --on-accent: #fdfcfa;
 
   --status-now: #a8361a;
-  --status-now-soft: #f5e3db;
+  --status-now-soft: #f6e2d9;
   --status-soon: #7c5400;
-  --status-soon-soft: #f2e8d1;
+  --status-soon-soft: #f3e7cd;
   --status-clear: #2b5873;
   --status-clear-soft: #dfe9ef;
 
   --header-height: 3.5rem;
 
-  --shadow-raised-value: 0 1px 2px rgba(27, 28, 30, 0.05), 0 6px 20px rgba(27, 28, 30, 0.05);
-  --shadow-overlay-value: 0 2px 4px rgba(27, 28, 30, 0.06), 0 16px 48px rgba(27, 28, 30, 0.12);
+  --shadow-raised-value: 0 1px 2px rgba(48, 38, 24, 0.05), 0 6px 20px rgba(48, 38, 24, 0.05);
+  --shadow-overlay-value: 0 2px 4px rgba(48, 38, 24, 0.06), 0 16px 48px rgba(48, 38, 24, 0.14);
 }
 
 /* --- Raw tokens: dark (follows the OS setting) -------------------------- */
@@ -62,16 +65,17 @@
   :root {
     color-scheme: dark;
 
-    --canvas: #121314;
-    --surface: #1a1b1d;
-    --surface-sunken: #0c0d0e;
-    --line: #2b2d30;
-    --line-strong: #6b7075;
-    --ink: #ecedee;
-    --ink-muted: #9fa3a8;
-    --on-ink: #121314;
+    --canvas: #151311;
+    --surface: #1d1b18;
+    --surface-sunken: #0f0e0c;
+    --line: #2f2c28;
+    --line-strong: #736c62;
+    --ink: #efebe5;
+    --ink-muted: #a7a097;
+    --on-ink: #151311;
     --accent: #9cc1ae;
-    --on-accent: #121314;
+    --accent-soft: #1d2c25;
+    --on-accent: #151311;
 
     --status-now: #f0896a;
     --status-now-soft: #3a1f17;
@@ -96,6 +100,7 @@
   --color-ink-muted: var(--ink-muted);
   --color-on-ink: var(--on-ink);
   --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
   --color-on-accent: var(--on-accent);
   --color-status-now: var(--status-now);
   --color-status-now-soft: var(--status-now-soft);
@@ -106,6 +111,8 @@
 
   --font-sans: var(--font-geist-sans), 'Helvetica Neue', Arial, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, Menlo, monospace;
+  /* Display serif: page titles and the welcome page's headings only. */
+  --font-display: var(--font-instrument-serif), 'Iowan Old Style', Georgia, serif;
 
   --shadow-raised: var(--shadow-raised-value);
   --shadow-overlay: var(--shadow-overlay-value);
@@ -128,6 +135,13 @@
   --text-display: 40px;
   --text-display--line-height: 44px;
   --text-display--letter-spacing: -0.02em;
+  /* The welcome page's editorial sizes (serif), fluid between phone and desktop. */
+  --text-hero: clamp(3rem, 2rem + 4.6vw, 6.25rem);
+  --text-hero--line-height: 0.98;
+  --text-hero--letter-spacing: -0.02em;
+  --text-headline: clamp(2.25rem, 1.6rem + 2.6vw, 4rem);
+  --text-headline--line-height: 1.02;
+  --text-headline--letter-spacing: -0.015em;
   --text-title: 24px;
   --text-title--line-height: 30px;
   --text-title--letter-spacing: -0.01em;
@@ -294,5 +308,15 @@
   }
   50% {
     outline: 4px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+}
+
+/* A photo easing in from a slight zoom (sign-in page). */
+@keyframes vue-settle {
+  from {
+    transform: scale(1.06);
+  }
+  to {
+    transform: scale(1);
   }
 }

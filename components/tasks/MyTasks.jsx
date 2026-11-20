@@ -53,7 +53,7 @@ function WhoAreYou() {
   const people = directoryStaff().filter((p) => !p.inactive)
   return (
     <StaffFrame section="Your tasks">
-      <h1 className="text-title font-light">Your tasks</h1>
+      <h1 className="font-display text-[1.85rem] leading-[1.1]">Your tasks</h1>
       <p className="text-ink-muted">Who are you? Pick your name to open your list.</p>
       <Card bodyClassName="px-0 py-0">
         <ul className="divide-y divide-line">
@@ -129,16 +129,24 @@ function ForPerson({ staffId, person }) {
     .filter((e) => e.dateKey >= TODAY_KEY && sheet.teamOf(e.id).includes(staffId))
     .map((e) => ({ event: e, unseen: sheet.unseenFor(e.id, staffId).length }))
 
+  const [last, setLast] = useState(null)
   const toggle = (task) => {
     toggleManualTask(task.recordId, staffId)
+    setLast(task)
     setSaid(task.done ? `Reopened "${task.title}".` : `Done: "${task.title}". The venue manager can see it.`)
+  }
+  // Undo flips it straight back, so a mis-tap on a phone costs nothing.
+  const undoLast = () => {
+    toggleManualTask(last.recordId, staffId)
+    setSaid(`Undone. "${last.title}" is ${last.done ? 'done' : 'open'} again.`)
+    setLast(null)
   }
 
   return (
     <StaffFrame section="Your tasks">
       <div>
         <p className="text-small text-ink-muted">Hi {person.first}</p>
-        <h1 className="text-title font-light">Your tasks</h1>
+        <h1 className="font-display text-[1.85rem] leading-[1.1]">Your tasks</h1>
         <p className="mt-1 text-ink-muted">
           {open.length ? `${open.length} open` : 'Nothing open'}
           {open.some((t) => t.dueDate < TODAY_KEY) && ` · ${open.filter((t) => t.dueDate < TODAY_KEY).length} overdue`}
@@ -148,7 +156,19 @@ function ForPerson({ staffId, person }) {
       <p className="sr-only" aria-live="polite">
         {said}
       </p>
-      {said && <Alert tone="done" title={said} />}
+      {said && (
+        <Alert
+          tone="done"
+          title={said}
+          action={
+            last && (
+              <Button size="sm" onClick={undoLast}>
+                Undo
+              </Button>
+            )
+          }
+        />
+      )}
 
       {open.length === 0 ? (
         !said && <Alert tone="done" title="You're all caught up">

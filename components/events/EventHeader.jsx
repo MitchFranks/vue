@@ -16,17 +16,17 @@ import { usePathname } from 'next/navigation'
 import { taskSummaryLabel, useStore } from '@/lib/store'
 import { useStaffing } from '@/lib/staffing/store'
 import { useEventSheet } from '@/lib/eventSheetStore'
-import { notSeenBy } from '@/lib/eventSheet'
+import { notSeenBy, requestLine } from '@/lib/eventSheet'
 import { eventOf } from '@/lib/staffing/derive'
 import { openSpots } from '@/lib/format'
-import { Breadcrumbs, Field, Icon, PageHeader, StatusBadge, Tabs } from '@/components/ui'
+import { Breadcrumbs, Button, Field, Icon, PageHeader, StatusBadge, Tabs } from '@/components/ui'
 
 /** Works out the event's counts from the stores and the route, then draws EventHeaderView. */
 export function EventHeader({ event }) {
   const pathname = usePathname()
   const { coverageForEvent, tasksForEvent, manualTaskList, messageList, documentList, paymentsForEvent } = useStore()
   const { state: planner } = useStaffing()
-  const { entriesFor } = useEventSheet()
+  const { entriesFor, requestsFor } = useEventSheet()
 
   const eventTasks = tasksForEvent(event.id)
   const openTasks = manualTaskList.filter((t) => t.eventId === event.id && !t.done)
@@ -46,7 +46,9 @@ export function EventHeader({ event }) {
     guests: plannerEvent?.expectedGuests ?? event.guests,
     guarantee: plannerEvent?.guaranteedCount,
     // Sheet changes some of the staff haven't opened yet.
-    unseenChanges: entriesFor(event.id).filter((e) => notSeenBy(e).length > 0).length
+    unseenChanges: entriesFor(event.id).filter((e) => notSeenBy(e).length > 0).length,
+    // The couple's run-of-show requests still waiting for an answer.
+    waitingRequests: requestsFor(event.id).filter((r) => r.status === 'waiting')
   }
 
   return <EventHeaderView event={event} summary={summary} pathname={pathname} />
@@ -60,15 +62,22 @@ export function EventHeader({ event }) {
  *   pathname  picks the active tab
  */
 export function EventHeaderView({ event, summary, pathname = '' }) {
-  const { coverage, taskCount, taskLabel, anyUrgent, openTaskCount, urgentTask, unreplied, toSign, dueNow, guests, guarantee, unseenChanges } = summary
+  const { coverage, taskCount, taskLabel, anyUrgent, openTaskCount, urgentTask, unreplied, toSign, dueNow, guests, guarantee, unseenChanges, waitingRequests = [] } = summary
 
   // Counts only where there is something to act on; urgent only when it is.
   const base = `/events/${event.id}`
   const plannerHref = `/staffing/${event.id}`
   const tabs = [
     { id: 'overview', label: 'Overview', href: base, count: taskCount || null, tone: anyUrgent ? 'urgent' : null },
-    // The live detail sheet; the count is changes not every staff member has seen.
-    { id: 'sheet', label: 'Detail sheet', href: `${base}/sheet`, count: unseenChanges || null },
+    // The live detail sheet; the count is couple requests waiting for an
+    // answer plus changes not every staff member has seen.
+    {
+      id: 'sheet',
+      label: 'Detail sheet',
+      href: `${base}/sheet`,
+      count: waitingRequests.length + unseenChanges || null,
+      tone: waitingRequests.length ? 'urgent' : null
+    },
     {
       id: 'staffing',
       label: (
@@ -83,11 +92,12 @@ export function EventHeaderView({ event, summary, pathname = '' }) {
     },
     { id: 'timeline', label: 'Run of show', href: `${base}/timeline`, guide: 'tab-timeline' },
     { id: 'tasks', label: 'Tasks', href: `${base}/tasks`, count: openTaskCount || null, tone: urgentTask ? 'urgent' : null },
-    { id: 'vendors', label: 'Vendors', href: `${base}/vendors` },
     { id: 'payments', label: 'Payments', href: `${base}/payments`, count: dueNow || null },
-    { id: 'messages', label: 'Messages', href: `${base}/messages`, count: unreplied || null, tone: unreplied ? 'urgent' : null },
     { id: 'documents', label: 'Documents', href: `${base}/documents`, count: toSign || null },
-    { id: 'activity', label: 'Activity log', href: `${base}/activity` }
+    { id: 'messages', label: 'Messages', href: `${base}/messages`, count: unreplied || null, tone: unreplied ? 'urgent' : null },
+    // Used now and then, so they wait behind "More" (fewer choices at once).
+    { id: 'vendors', label: 'Vendors', href: `${base}/vendors`, more: true },
+    { id: 'activity', label: 'Activity log', href: `${base}/activity`, more: true }
   ]
 
   const active = tabs.slice(1).find((t) => pathname.startsWith(t.href))?.id || 'overview'
@@ -137,6 +147,25 @@ export function EventHeaderView({ event, summary, pathname = '' }) {
           <Field label="Spaces" value={event.spaces} />
         </dl>
       </PageHeader>
+
+      {/* A couple waiting on an answer is never hidden behind a tab (user test v4). */}
+      {waitingRequests.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-md border border-status-soon/40 bg-status-soon-soft px-4 py-3">
+          <Icon name="bell" size={16} className="text-status-soon" />
+          <p className="min-w-0 flex-1 text-small text-ink">
+            <span className="font-medium">
+              {waitingRequests.length === 1
+                ? `${waitingRequests[0].by.split(' ')[0]} asked: ${requestLine(waitingRequests[0])}.`
+                : `${waitingRequests.length} requests from the couple are waiting for your answer.`}
+            </span>{' '}
+            {waitingRequests.length === 1 && 'Waiting for your answer.'}
+          </p>
+          <Button href={`${base}/sheet#requests`} size="sm" variant="primary">
+            Review {waitingRequests.length === 1 ? 'request' : 'requests'}
+            <Icon name="arrowRight" size={13} />
+          </Button>
+        </div>
+      )}
 
       <Tabs label="Event sections" tabs={tabs} active={active} />
     </>

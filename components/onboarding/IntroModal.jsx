@@ -71,7 +71,7 @@ export function IntroModal({ onClose, onStartTour }) {
           </button>
         </div>
 
-        <h2 id="intro-title" className="mt-4 text-title font-light">
+        <h2 id="intro-title" className="mt-4 font-display text-[1.85rem] leading-[1.1]">
           Welcome to Vue
         </h2>
 
@@ -81,6 +81,16 @@ export function IntroModal({ onClose, onStartTour }) {
             venue managers. The people, weddings and numbers are made up, nothing you do is saved to a real system, and
             no real messages are sent. Some details are rough on purpose: we are testing the idea, not the polish.
           </p>
+
+          {/* User test v4: "a demo first, but with pointers where to find what to find". */}
+          <div className="flex gap-3 rounded-sm border border-line bg-accent-soft px-4 py-3">
+            <Icon name="help" size={18} className="mt-0.5 shrink-0 text-accent" />
+            <p>
+              <span className="font-medium">Can&apos;t find something?</span> At the top of every page, type a name in{' '}
+              <strong className="font-semibold">Search</strong>, open <strong className="font-semibold">Help</strong> for where
+              everyday jobs live, or check <strong className="font-semibold">Updates</strong> for anything a couple just did.
+            </p>
+          </div>
 
           <div className="rounded-sm border border-line-strong bg-surface-sunken px-4 py-3">
             <p className="text-label font-medium text-ink-muted">Your goal</p>

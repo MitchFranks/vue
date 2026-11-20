@@ -1,6 +1,6 @@
 'use client'
 
-// SCREEN — Inquiry (?id=). Where an Inquiry task's Action button goes: what
+// SCREEN — Inquiry (?id=). Where an Inquiry task's main button (Open inquiry) goes: what
 // the client asked for, how to reach them, and the one thing to do about it.
 // Inquiries are made in the browser, so this reads ?id= (QueryRecord) rather
 // than a pre-built route. There is no inquiry list: Tasks is the way in.

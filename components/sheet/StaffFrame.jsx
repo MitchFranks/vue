@@ -12,7 +12,7 @@ export function StaffFrame({ section, children }) {
     <div className="flex min-h-dvh flex-col bg-canvas text-ink">
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex h-(--header-height) w-full max-w-form items-center justify-between gap-4 px-4">
-          <p className="text-title font-light text-ink">{venue.name}</p>
+          <p className="font-display text-[1.85rem] leading-[1.1] text-ink">{venue.name}</p>
           <p className="text-small text-ink-muted">{section}</p>
         </div>
       </header>

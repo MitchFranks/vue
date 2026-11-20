@@ -57,7 +57,7 @@ export default function InboxPage() {
       <Breadcrumbs items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Messages' }]} />
       <PageHeader
         title="Messages"
-        lead="Couples, vendors and staff."
+        lead="Messages with couples, vendors and staff. “Needs reply” shows the ones waiting on you."
         actions={
           <Button variant="primary" onClick={() => setComposing(true)}>
             <Icon name="plus" size={14} />

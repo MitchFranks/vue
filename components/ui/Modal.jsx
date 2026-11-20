@@ -89,7 +89,7 @@ export function Modal({
       >
         <header className="flex items-start justify-between gap-3 border-b border-line px-6 py-4">
           <div className="min-w-0">
-            <h2 id={labelledBy} className="text-title font-light text-ink">
+            <h2 id={labelledBy} className="font-display text-[1.85rem] leading-[1.1] text-ink">
               {title}
             </h2>
             {subtitle && <p className="mt-0.5 text-small text-ink-muted">{subtitle}</p>}

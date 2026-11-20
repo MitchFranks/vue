@@ -11,7 +11,7 @@
 // makes that change by hand. Rules: lib/eventSheet.js.
 // ---------------------------------------------------------------------------
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { REQUEST_STATUS, requestLine } from '@/lib/eventSheet'
 import { stampLabel } from '@/lib/staffing/derive'
 import { Button, Card, Icon, StatusBadge, Textarea } from '@/components/ui'
@@ -77,6 +77,13 @@ function RequestItem({ r, onAccept, onDecline }) {
           <StatusBadge tone={status.tone} size="sm">
             {status.label}
           </StatusBadge>
+          {r.status === 'accepted' && (
+            <p className="text-small text-ink-muted">
+              {['move', 'remove', 'add'].includes(r.kind)
+                ? 'It’s on the run of show and was sent to the staff working this event. Under Changes, see who hasn’t seen it yet.'
+                : 'The couple sees that you said yes. Make the change yourself.'}
+            </p>
+          )}
           {r.reply && <p className="text-small text-ink-muted">Your reply: {r.reply}</p>}
         </div>
       )}
@@ -87,19 +94,29 @@ function RequestItem({ r, onAccept, onDecline }) {
 export function CoupleRequests({ requests, onAccept, onDecline }) {
   const waiting = requests.filter((r) => r.status === 'waiting')
   const answered = requests.filter((r) => r.status !== 'waiting').slice(0, 3)
-  if (!requests.length) return null
+  const ref = useRef(null)
+  const has = requests.length > 0
+  // Links from the bell, the dashboard and Tasks end in #requests. The card
+  // appears only once saved requests load, so scroll to it then.
+  useEffect(() => {
+    if (has && window.location.hash === '#requests') ref.current?.scrollIntoView({ block: 'start' })
+  }, [has])
+  if (!has) return null
   return (
-    <Card
-      title="Requests from the couple"
-      icon="heart"
-      subtitle={waiting.length ? `${waiting.length} waiting for your answer` : 'All answered'}
-      bodyClassName="px-0 py-0"
-    >
-      <div className="divide-y divide-line">
-        {[...waiting, ...answered].map((r) => (
-          <RequestItem key={r.id} r={r} onAccept={onAccept} onDecline={onDecline} />
-        ))}
-      </div>
-    </Card>
+    <div id="requests" ref={ref} className="scroll-mt-20">
+      <Card
+        title="Requests from the couple"
+        icon="heart"
+        subtitle={waiting.length ? `${waiting.length} waiting for your answer` : 'All answered'}
+        bodyClassName="px-0 py-0"
+      >
+        <div className="divide-y divide-line">
+          {[...waiting, ...answered].map((r) => (
+            // Keyed by status too, so an answer that is undone comes back as a fresh Accept / Decline.
+            <RequestItem key={`${r.id}:${r.status}`} r={r} onAccept={onAccept} onDecline={onDecline} />
+          ))}
+        </div>
+      </Card>
+    </div>
   )
 }

@@ -9,6 +9,7 @@
 import { personName } from '@/lib/assignees'
 import { use, useState } from 'react'
 import { useStore } from '@/lib/store'
+import { useUndoable } from '@/lib/undo'
 import { useStaffing } from '@/lib/staffing/store'
 import { eventOf } from '@/lib/staffing/derive'
 import { eventById } from '@/lib/mock/events'
@@ -72,22 +73,24 @@ function GuestCountTask({ task, expected, onSubmit }) {
 
 export default function TasksPage({ params }) {
   const { id } = use(params)
-  const { manualTaskList, toggleManualTask, submitGuestCount, toast } = useStore()
-  const { state: planner } = useStaffing()
+  const { manualTaskList, toggleManualTask, submitGuestCount } = useStore()
+  const { state: planner, setGuarantee } = useStaffing()
   const plannerEvent = eventOf(planner, id)
+  const undoable = useUndoable()
   const tasks = manualTaskList.filter((t) => t.eventId === id)
   const open = tasks.filter((t) => !t.done)
   const done = tasks.filter((t) => t.done)
 
   function handleToggle(task) {
-    toggleManualTask(task.id)
-    toast(task.done ? `Reopened "${task.title}".` : `Completed "${task.title}".`)
+    undoable(() => toggleManualTask(task.id), task.done ? `Reopened "${task.title}".` : `Completed "${task.title}".`)
   }
 
   function sendCount(task, n) {
-    submitGuestCount(task.id, id, n)
-    toast(`Sent a guarantee of ${n} guests to catering.`, 'done', {
-      small: 'The event header and the Staffing Planner now use this number.'
+    // The number lives in the Staffing Planner, so Undo puts the old one back there too.
+    const previous = plannerEvent?.guaranteedCount ?? null
+    undoable(() => submitGuestCount(task.id, id, n), `Sent a guarantee of ${n} guests to catering.`, {
+      small: 'The event header and the Staffing Planner now use this number.',
+      onUndo: () => setGuarantee(id, previous)
     })
   }
 

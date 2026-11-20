@@ -65,7 +65,7 @@ export function GuidedTour({ step, total, title, body, onBack, onNext, onExit })
           </button>
         </div>
 
-        <h2 id="tour-title" className="mt-4 text-title font-light" tabIndex={-1} data-autofocus>
+        <h2 id="tour-title" className="mt-4 font-display text-[1.85rem] leading-[1.1]" tabIndex={-1} data-autofocus>
           {title}
         </h2>
         <p id="tour-body" className="mt-3 text-body leading-relaxed text-ink">

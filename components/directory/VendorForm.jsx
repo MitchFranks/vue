@@ -4,7 +4,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useDirectory } from '@/lib/directory/store'
-import { useStore } from '@/lib/store'
+import { useUndoable } from '@/lib/undo'
 import { blankVendor, STATUS_OPTIONS, trimStrings, validateVendor, vendorHref } from '@/lib/directory/model'
 import { Select, Textarea, TextInput } from '@/components/ui'
 import { FormSection, RecordForm, useRecordForm, Wide } from '@/components/records'
@@ -13,7 +13,7 @@ import { OptionSelect, useResolveOption } from './OptionSelect'
 export function VendorForm({ vendor }) {
   const router = useRouter()
   const { categories, saveVendor } = useDirectory()
-  const { toast } = useStore()
+  const undoable = useUndoable()
   const resolveOption = useResolveOption()
   const form = useRecordForm(vendor || blankVendor(categories), { idPrefix: 'vendor', validate: validateVendor })
   const { field } = form
@@ -21,8 +21,9 @@ export function VendorForm({ vendor }) {
   const onValid = (v) => {
     const { id: _id, venueId: _venue, createdAt: _created, updatedAt: _updated, categoryIdCustom, ...fields } = trimStrings(v)
     fields.categoryId = resolveOption('categories', fields.categoryId, categoryIdCustom)
-    const id = saveVendor(vendor?.id, fields)
-    toast(vendor ? `Saved ${fields.name}.` : `Added ${fields.name} to your vendors.`)
+    const id = undoable(() => saveVendor(vendor?.id, fields), vendor ? `Saved ${fields.name}.` : `Added ${fields.name} to your vendors.`, {
+      onUndo: vendor ? undefined : () => router.push('/vendors')
+    })
     router.push(vendorHref(id))
   }
 

@@ -35,7 +35,7 @@ export default function EventsPage() {
       <Breadcrumbs items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Events' }]} />
       <PageHeader
         title="Events"
-        lead="Weddings and the events around them."
+        lead="Every event at your venue."
         actions={
           <Button href="/events/new" variant="primary" size="md" data-guide="new-event">
             <Icon name="plus" size={14} />

@@ -28,7 +28,7 @@ export function RecordStatusCard({ noun, name, status, onToggleStatus, onDelete,
             onClick={() =>
               confirm({
                 title: `Delete ${name}?`,
-                body: `This removes the ${noun} from the venue for good. To keep their details, mark them inactive instead.`,
+                body: `This removes the ${noun} from the venue. You can undo it straight after. To keep their details for later, mark them inactive instead.`,
                 confirmLabel: `Delete ${noun}`,
                 danger: true,
                 onConfirm: onDelete

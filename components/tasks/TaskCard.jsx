@@ -5,6 +5,10 @@
 // a message to answer, an open spot to fill, a document to sign or a task
 // someone wrote, so they all share this card.
 //
+// User test v4: the main button names what it does ("Reply", "Answer
+// request", from lib/taskAction.js) instead of "Action"; "Assigned to" is a
+// labelled dropdown that looks like one; Edit is a real button.
+//
 // Reads in the same order everywhere: how soon -> what kind of task, which
 // event and its date -> the name -> description -> who it is for -> what to do. Couples,
 // single contacts and vendors show as tags so a sort by any of them is easy to
@@ -12,10 +16,9 @@
 //
 // Every open task can be edited and reassigned here, whether the venue wrote
 // it or the product raised it. Only a written task is marked done or reopened
-// here (Mark Done under Action, no checkbox). The others are finished where they live (reply, fill the spot,
-// sign, record the payment). The main button says "Action" for every task,
-// since what the action is has not been decided. Completed tasks of
-// every source show here too, under "Show completed".
+// here (Mark done under the main button, no checkbox). The others are finished
+// where they live (reply, fill the spot, sign, record the payment). Completed
+// tasks of every source show here too, under the Status filter.
 //
 // WHO HAS IT. Every card says who is responsible, and any open task can be
 // handed to someone straight from the card (or in the editor). Once a written
@@ -30,6 +33,7 @@ import { directoryVendorById as vendorById } from '@/lib/directory/registry'
 import { Avatar, Button, Icon, StatusBadge } from '@/components/ui'
 import { assigneeOptions, managerId, personById, personFirst } from '@/lib/assignees'
 import { stampLabel } from '@/lib/staffing/derive'
+import { actionLabel } from '@/lib/taskAction'
 
 function Tag({ icon, children }) {
   return (
@@ -67,20 +71,27 @@ export function TaskCard({ task, ...rest }) {
   )
 }
 
-/** Who has the task. Any open task can be handed to someone from here. */
+/**
+ * Who has the task. Any open task can be handed to someone from here: a
+ * labelled dropdown that looks like one (user test v4: the old borderless
+ * picker read as plain text, so nobody found how to hand a to-do on).
+ */
 function Assignee({ task, assignee, choices, onAssign, doneBy }) {
   if (doneBy) return <p className="text-small text-ink-muted">{doneBy}</p>
   const canAssign = !task.done && onAssign
   return (
-    <div className="flex items-center gap-2 text-small">
-      {assignee ? <Avatar initials={assignee.initials} size="sm" /> : <Icon name="user" size={14} className="text-ink-muted" />}
+    <div className="flex flex-wrap items-center gap-2 text-small">
+      <span className="text-ink-muted">Assigned to</span>
       {canAssign ? (
-        <label className="flex min-w-0 items-center gap-1 text-ink-muted">
-          <span className="sr-only">Assigned to</span>
+        <label className="relative inline-flex min-w-0 items-center">
+          <span className="sr-only">Assigned to (choose someone to hand it to)</span>
+          <span className="pointer-events-none absolute left-1.5">
+            {assignee ? <Avatar initials={assignee.initials} size="sm" /> : <Icon name="user" size={14} className="ml-1 text-ink-muted" />}
+          </span>
           <select
             value={task.assigneeId || ''}
             onChange={(e) => onAssign(task, e.target.value || null)}
-            className="min-w-0 max-w-56 cursor-pointer truncate rounded-sm border border-transparent bg-transparent py-0.5 pr-1 text-small text-ink hover:border-line-strong focus:border-accent"
+            className="h-8 min-w-0 max-w-64 cursor-pointer appearance-none truncate rounded-sm border border-line-strong bg-surface py-0 pr-8 pl-9 text-small font-medium text-ink hover:bg-surface-sunken focus:border-accent"
           >
             <option value="">Unassigned</option>
             {choices.map((o) => (
@@ -89,9 +100,13 @@ function Assignee({ task, assignee, choices, onAssign, doneBy }) {
               </option>
             ))}
           </select>
+          <Icon name="chevronDown" size={14} className="pointer-events-none absolute right-2.5 text-ink-muted" />
         </label>
       ) : (
-        <span className={assignee ? 'text-ink' : 'text-ink-muted'}>{assignee ? assignee.name : 'Unassigned'}</span>
+        <span className={cx('inline-flex items-center gap-2', assignee ? 'text-ink' : 'text-ink-muted')}>
+          {assignee && <Avatar initials={assignee.initials} size="sm" />}
+          {assignee ? assignee.name : 'Unassigned'}
+        </span>
       )}
     </div>
   )
@@ -148,27 +163,27 @@ export function TaskCardView({ task, eventDate, tags = [], assignee = null, assi
             </div>
           </div>
 
-          <div className="flex shrink-0 items-start gap-2">
-            {!task.done && onEdit && (
-              <Button variant="ghost" size="sm" onClick={() => onEdit(task)}>
-                Edit
+          {/* One column of same-width buttons: what to do, then Mark done, then Edit. */}
+          <div className="flex shrink-0 flex-row flex-wrap gap-2 sm:w-44 sm:flex-col">
+            <Button href={task.href} variant={first ? 'primary' : 'secondary'} size="sm" className="sm:w-full">
+              {actionLabel(task)}
+              <span className="sr-only">: {task.title}</span>
+              <Icon name="arrowRight" size={14} />
+            </Button>
+            {canTick && (
+              <Button variant="secondary" size="sm" className="sm:w-full" onClick={() => onToggle(task)}>
+                <Icon name={task.done ? 'refresh' : 'check'} size={14} />
+                {task.done ? 'Reopen' : 'Mark done'}
+                <span className="sr-only">: {task.title}</span>
               </Button>
             )}
-            {/* The two buttons are one width, Action above Mark Done. */}
-            <div className="flex flex-col gap-2">
-              <Button href={task.href} variant={first ? 'primary' : 'secondary'} size="sm">
-                Action
-                <span className="sr-only"> for {task.title}</span>
-                <Icon name="arrowRight" size={14} />
+            {!task.done && onEdit && (
+              <Button variant="ghost" size="sm" className="sm:w-full" onClick={() => onEdit(task)}>
+                <Icon name="pencil" size={14} />
+                Edit details
+                <span className="sr-only">: {task.title}</span>
               </Button>
-              {canTick && (
-                <Button variant="secondary" size="sm" onClick={() => onToggle(task)}>
-                  {task.done ? 'Reopen' : 'Mark Done'}
-                  <span className="sr-only"> {task.title}</span>
-                  <Icon name={task.done ? 'refresh' : 'check'} size={14} />
-                </Button>
-              )}
-            </div>
+            )}
           </div>
         </div>
       </div>

@@ -6,17 +6,19 @@
 
 import { useRouter } from 'next/navigation'
 import { useStore } from '@/lib/store'
+import { useUndoable } from '@/lib/undo'
 import { events } from '@/lib/mock/events'
 import { Breadcrumbs, Button, Card, EmptyState, Field, ListRow, PageHeader, StatusBadge } from '@/components/ui'
 import { ContactInfo, DetailGrid, QueryRecord, RecordStatusBadge, RecordStatusCard } from '@/components/records'
 import { RecordNotFound } from '@/components/directory/RecordNotFound'
-import { optionName, tasksNaming, vendorEditHref } from '@/lib/directory/model'
+import { optionName, tasksNaming, vendorEditHref, vendorHref } from '@/lib/directory/model'
 import { useDirectory } from '@/lib/directory/store'
 
 function VendorProfile({ id }) {
   const router = useRouter()
   const dir = useDirectory()
-  const { messageList, toast, manualTaskList } = useStore()
+  const { messageList, manualTaskList } = useStore()
+  const undoable = useUndoable()
   const vendor = dir.vendorById(id)
 
   if (!dir.hydrated) return null
@@ -30,13 +32,15 @@ function VendorProfile({ id }) {
 
   const toggleStatus = () => {
     const status = vendor.status === 'inactive' ? 'active' : 'inactive'
-    dir.saveVendor(id, { status })
-    toast(status === 'active' ? `${vendor.name} is active again.` : `${vendor.name} is inactive.`)
+    undoable(() => dir.saveVendor(id, { status }), status === 'active' ? `${vendor.name} is active again.` : `${vendor.name} is inactive.`)
   }
 
   const remove = () => {
-    dir.deleteVendor(id)
-    toast(`Deleted ${vendor.name}.`)
+    const name = vendor.name
+    undoable(() => dir.deleteVendor(id), `Deleted ${name}.`, {
+      undone: `Undone. ${name} is back, with their bookings.`,
+      onUndo: () => router.push(vendorHref(id))
+    })
     router.push('/vendors')
   }
 

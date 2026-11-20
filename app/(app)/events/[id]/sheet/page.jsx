@@ -30,6 +30,7 @@ import { BookedVendors, serviceText } from '@/components/sheet/BookedVendors'
 import { dayOfHref } from '@/components/sheet/links'
 import { CoupleRequests } from '@/components/sheet/CoupleRequests'
 import { requestLine } from '@/lib/eventSheet'
+import { useUndoable } from '@/lib/undo'
 
 const SHOWN = 5
 
@@ -37,6 +38,7 @@ export default function EventSheetPage({ params }) {
   const { id } = use(params)
   const event = events.find((e) => e.id === id)
   const { toast } = useStore()
+  const undoable = useUndoable()
   const sheet = useEventSheet()
   const { rowsFor, setRows } = useTimelineEdits()
   const { state: planner } = useStaffing()
@@ -93,26 +95,29 @@ export default function EventSheetPage({ params }) {
     })
   }
 
-  // The couple's requests from the client portal (CoupleRequests).
-  const acceptRequest = (r) => {
-    const { applied } = sheet.acceptRequest(r.id)
-    toast(
-      applied ? `Accepted: ${requestLine(r)}.` : `Accepted: ${requestLine(r)}. Make the change on the run of show yourself.`,
-      'done',
-      { small: applied ? `It's on the run of show and was sent to the ${team.length} staff working this event.` : 'The couple sees that you said yes.' }
+  // The couple's requests from the client portal (CoupleRequests). Each
+  // answer can be undone: the request goes back to waiting, and an accepted
+  // change comes off the run of show and the staff's list again.
+  const acceptRequest = (r) =>
+    undoable(
+      () => sheet.acceptRequest(r.id),
+      ({ applied }) => (applied ? `Accepted: ${requestLine(r)}.` : `Accepted: ${requestLine(r)}. Make the change on the run of show yourself.`),
+      {
+        eventId: id,
+        small: `It's on the run of show and was sent to the ${team.length} staff working this event.`,
+        undone: 'Undone. The request is waiting for your answer again.'
+      }
     )
-  }
-  const declineRequest = (r, reply) => {
-    sheet.declineRequest(r.id, reply)
-    toast(`Declined: ${requestLine(r)}. The couple sees your reply in their portal.`)
-  }
-
-  const remind = (entry, missingIds) => {
-    sheet.remind(entry.id)
-    toast(`Texted ${nameList(missingIds)} the change again.`, 'done', {
-      small: 'In this prototype nobody is texted. Open their day-of page to read it as them.'
+  const declineRequest = (r, reply) =>
+    undoable(() => sheet.declineRequest(r.id, reply), `Declined: ${requestLine(r)}. The couple sees your reply in their portal.`, {
+      undone: 'Undone. The request is waiting for your answer again.'
     })
-  }
+
+  const remind = (entry, missingIds) =>
+    undoable(() => sheet.remind(entry.id), `Texted ${nameList(missingIds)} the change again.`, {
+      small: 'In this prototype nobody is texted. Open their day-of page to read it as them.',
+      undone: 'Undone. The reminder wasn’t sent.'
+    })
 
   const editButton = (key, label = 'Edit') =>
     editing === key ? null : (

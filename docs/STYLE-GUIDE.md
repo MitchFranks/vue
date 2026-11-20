@@ -31,15 +31,16 @@ a labelled placeholder instead.
 
 | Token | Light | Dark | Used for |
 |---|---|---|---|
-| `canvas` | `#F1F2F2` | `#121314` | Page background. Cool stone grey, never pure white or black |
-| `surface` | `#FAFAFA` | `#1A1B1D` | Cards, panels, inputs, modals |
-| `surface-sunken` | `#E6E7E8` | `#0C0D0E` | Wells: table headers, selected nav row, chips, empty fills |
-| `line` | `#DADCDE` | `#2B2D30` | Hairlines between rows and around cards (decorative) |
-| `line-strong` | `#878B8F` | `#6B7075` | Borders of inputs, checkboxes and secondary buttons (3:1) |
-| `ink` | `#1B1C1E` | `#ECEDEE` | Text and icons; the fill of primary buttons |
-| `ink-muted` | `#55595E` | `#9FA3A8` | Secondary text: labels, metadata, helper text (5.6:1+) |
-| `on-ink` | `#FAFAFA` | `#121314` | Text on an ink fill |
+| `canvas` | `#F4F1EC` | `#151311` | Page background. Warm ivory, never pure white or black |
+| `surface` | `#FDFCFA` | `#1D1B18` | Cards, panels, inputs, modals |
+| `surface-sunken` | `#ECE7DF` | `#0F0E0C` | Wells: table headers, selected nav row, chips, empty fills |
+| `line` | `#E1DBD1` | `#2F2C28` | Hairlines between rows and around cards (decorative) |
+| `line-strong` | `#8A8378` | `#736C62` | Borders of inputs, checkboxes and secondary buttons (3:1) |
+| `ink` | `#23201C` | `#EFEBE5` | Text and icons; the fill of primary buttons |
+| `ink-muted` | `#5C564E` | `#A7A097` | Secondary text: labels, metadata, helper text (5.6:1+) |
+| `on-ink` | `#FDFCFA` | `#151311` | Text on an ink fill |
 | `accent` (Laurel) | `#2F4A3E` | `#9CC1AE` | Focus rings, selection, links, the "now" marker. Never a button fill |
+| `accent-soft` | `#E3ECE6` | `#1D2C25` | Quiet Laurel wells: icon circles, Help's step numbers |
 | `status-now` / `-soft` | `#A8361A` / `#F5E3DB` | `#F0896A` / `#3A1F17` | Act today: open spots, overdue, can't make it |
 | `status-soon` / `-soft` | `#7C5400` / `#F2E8D1` | `#DDB25A` / `#33280F` | Coming up this week, needs a look |
 | `status-clear` / `-soft` | `#2B5873` / `#DFE9EF` | `#8DBAD3` / `#172833` | Handled: confirmed, staffed, paid, signed |
@@ -62,13 +63,19 @@ Every text token holds at least 4.5:1 on the grounds it is used on, in both them
 
 ## 3. Typography
 
-One family: **Geist** for all UI text and **Geist Mono** for numbers that need to align (times,
-money, counts in tables). Loaded with the `geist` package, so builds do not depend on Google Fonts.
+**Geist** for all UI text, **Geist Mono** for numbers that need to align (times, money, counts in
+tables), and **Instrument Serif** (`font-display`) for large display headings only: page titles
+(`PageHeader`, modal and portal titles), the sign-in page and the welcome page. The serif is the
+hospitality half of the voice; it never appears at body size or in controls. All three are
+self-hosted (the `geist` package and `app/fonts/`), so builds do not depend on Google Fonts.
 Weights 300, 400 and 500 only: **Vue never uses bold.**
 
 | Style | Utility | Size / line | Weight | Used for |
 |---|---|---|---|---|
-| Display | `text-display` | 40 / 44 | 300 | The one anchor fact per screen (`PageHeader` title) |
+| Hero (welcome) | `font-display text-hero` | 48–100 fluid | 400 serif | The welcome page's one headline |
+| Headline (welcome) | `font-display text-headline` | 36–64 fluid | 400 serif | Welcome page section headings |
+| Page title | `font-display` | 34 / 46 | 400 serif | The one anchor per screen (`PageHeader` title) |
+| Display | `text-display` | 40 / 44 | 300 | Large numbers (an amount due) |
 | Title | `text-title` | 24 / 30 | 300–400 | Modal titles, page titles on small screens |
 | Heading | `text-heading` | 16 / 22 | 500 | Card titles, list item titles, leads |
 | Body | `text-body` | 14 / 20 | 400 | Default UI text |
@@ -145,7 +152,7 @@ icon for navigation):
 
 Status icons have fixed jobs: `alert` act now, `clock` coming up, `check` handled.
 
-**No logo yet.** The name "Vue" is set in Geist Light wherever a mark would go.
+**No logo yet.** The name "Vue" is set in Instrument Serif wherever a mark would go.
 
 ---
 

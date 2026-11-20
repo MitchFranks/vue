@@ -16,12 +16,13 @@ export function PrototypeNotice() {
   const { showIntro } = useOnboarding()
   return (
     <>
-      <Button variant="secondary" size="md" onClick={showIntro}>
-        <Icon name="info" size={14} className="hidden text-accent sm:block" />
-        Your goal
+      {/* On phones the bar also holds Search, Updates and Help, so this shrinks to its icon. */}
+      <Button variant="secondary" size="md" onClick={showIntro} className="px-2.5 sm:px-4" aria-label="Your goal">
+        <Icon name="info" size={16} className="text-accent" />
+        <span className="hidden sm:inline">Your goal</span>
       </Button>
-      {/* Never wraps; on phones it shortens so the bar fits at 320px. */}
-      <span className="inline-flex h-6 items-center whitespace-nowrap rounded-full bg-surface-sunken px-2.5 text-label font-medium text-ink-muted">
+      {/* Never wraps; hidden on phones so the bar fits at 320px. */}
+      <span className="hidden h-6 items-center whitespace-nowrap rounded-full bg-surface-sunken px-2.5 text-label font-medium text-ink-muted md:inline-flex">
         <span className="sm:hidden">Prototype</span>
         <span className="hidden sm:inline">Early prototype</span>
       </span>

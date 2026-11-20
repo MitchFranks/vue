@@ -130,12 +130,23 @@ export default function RunOfShowPage({ params }) {
   const askReset = () =>
     confirm({
       title: 'Reset the run of show?',
-      body: 'Every change to this event’s run of show goes back to the sample data, including blocks you added or deleted. This can’t be undone.',
+      body: 'Every change to this event’s run of show goes back to the sample data, including blocks you added or deleted. You can undo it straight after.',
       confirmLabel: 'Reset to sample',
       danger: true,
       onConfirm: () => {
+        const before = rowsFor(id)
         resetEvent(id)
-        toast('The run of show is back to the sample data.')
+        toast('The run of show is back to the sample data.', 'done', {
+          actions: [
+            {
+              label: 'Undo',
+              onClick: () => {
+                setRows(id, before)
+                toast('Undone. Your run of show is back.')
+              }
+            }
+          ]
+        })
       }
     })
 

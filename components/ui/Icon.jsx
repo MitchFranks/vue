@@ -10,7 +10,8 @@ import { cx } from '@/lib/cx'
 // Navigation icons, one per destination (do not reuse across destinations):
 //   inbox Tasks · users Staffing Planner · home Dashboard · list Events ·
 //   user Staff Directory · calendar Calendar · mail Messages · heart Couples ·
-//   truck Vendors · settings Settings · menu the mobile nav toggle.
+//   truck Vendors · settings Settings · menu the mobile nav toggle ·
+//   team Who's doing what · bell Updates · help Help.
 
 const PATHS = {
   alert: <path d="M12 3.6 2.8 19.6h18.4L12 3.6Zm0 5.8v4.4m0 3h.01" />,
@@ -121,7 +122,26 @@ const PATHS = {
       <rect x="6.5" y="2.8" width="11" height="18.4" rx="1.5" />
       <path d="M11 18h2" />
     </>
-  )
+  ),
+  // Updates from couples (the top bar's bell).
+  bell: <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2H4.5Zm4 2.5a2 2 0 0 0 4 0" />,
+  // Help: "Where do I find…?"
+  help: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.6m0 3h.01" />
+    </>
+  ),
+  // Who's doing what (Team tasks).
+  team: (
+    <>
+      <circle cx="8" cy="8" r="3" />
+      <circle cx="16.5" cy="9.5" r="2.5" />
+      <path d="M2.5 19v-.5A4.5 4.5 0 0 1 7 14h2a4.5 4.5 0 0 1 4.5 4.5v.5M14 14.3a4 4 0 0 1 1.5-.3h1a4 4 0 0 1 4 4v1" />
+    </>
+  ),
+  pencil: <path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17Zm10-12 3 3" />,
+  handoff: <path d="M4 12h12m-4-5 5 5-5 5M20 5v14" />
 }
 
 export function Icon({ name, size = 16, className = '' }) {

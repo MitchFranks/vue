@@ -11,6 +11,7 @@
 import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useStore } from '@/lib/store'
+import { useUndoable } from '@/lib/undo'
 import { eventById } from '@/lib/mock/events'
 import { messageById } from '@/lib/mock/records'
 import { Alert, Avatar, Breadcrumbs, Button, Card, EmptyState, Field, Icon, PageHeader, StatusBadge, Textarea } from '@/components/ui'
@@ -18,7 +19,8 @@ import { Alert, Avatar, Breadcrumbs, Button, Card, EmptyState, Field, Icon, Page
 export default function MessageDetailPage({ params }) {
   const { id } = use(params)
   const base = messageById(id)
-  const { messageList, markReplied, markRead, toast } = useStore()
+  const { messageList, markReplied, markRead } = useStore()
+  const undoable = useUndoable()
   const live = messageList.find((m) => m.id === id)
   const [draft, setDraft] = useState(base?.suggestedReply || '')
   const [error, setError] = useState('')
@@ -37,8 +39,7 @@ export default function MessageDetailPage({ params }) {
       setError('Write something before sending.')
       return
     }
-    markReplied(base.id)
-    toast(`Reply sent to ${base.from}.`)
+    undoable(() => markReplied(base.id), `Reply sent to ${base.from}.`, { undone: 'Undone. The reply wasn’t sent.' })
   }
 
   return (

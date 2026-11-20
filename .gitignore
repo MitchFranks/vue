@@ -11,3 +11,6 @@ yarn-error.log*
 next-env.d.ts
 *.tsbuildinfo
 dist
+
+# Survey exports: they hold participants' Prolific IDs. Keep them out of the repo.
+survey_info/

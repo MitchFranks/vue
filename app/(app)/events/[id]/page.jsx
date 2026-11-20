@@ -2,14 +2,17 @@
 
 // SCREEN 5 — Event Overview.
 //
-// The same queue as the Tasks page, scoped to this one event: what to do
-// first, and what is coming up, for this wedding only.
+// Where the couple stands (signed, paid, overdue, waiting on you), then the
+// same queue as the Tasks page, scoped to this one event: what to do first,
+// and what is coming up, for this wedding only.
 
 import { use, useState } from 'react'
 import { useStore } from '@/lib/store'
 import { Button, EmptyState, FilterChip, FilterGroup, Icon } from '@/components/ui'
 import { TaskRow } from '@/components/tasks/TaskRow'
 import { openSpots } from '@/lib/format'
+import { eventById } from '@/lib/mock/events'
+import { CoupleStanding } from '@/components/events/CoupleStanding'
 
 const SOURCES = [
   { id: 'all', label: 'Everything' },
@@ -27,13 +30,17 @@ export default function EventOverviewPage({ params }) {
 
   const all = tasksForEvent(id)
   const coverage = coverageForEvent(id)
-  const filtered = all.filter((a) => source === 'all' || a.source === source)
+  const event = eventById(id)
+  // An agreement the couple hasn't signed sits with the event's documents.
+  const sourceOf = (a) => (a.source === 'couple-sign' ? 'document' : a.source)
+  const filtered = all.filter((a) => source === 'all' || sourceOf(a) === source)
   const urgent = filtered.filter((a) => a.tone === 'urgent')
   const rest = filtered.filter((a) => a.tone !== 'urgent')
 
   if (all.length === 0) {
     return (
-      <div>
+      <div className="space-y-6">
+        {event && <CoupleStanding event={event} />}
         {coverage.complete ? (
           <EmptyState
             title="All caught up"
@@ -59,10 +66,17 @@ export default function EventOverviewPage({ params }) {
 
   return (
     <div>
+      {event && (
+        <div className="mb-6">
+          <CoupleStanding event={event} />
+        </div>
+      )}
+
+      <h2 className="mb-3 text-heading font-medium text-ink">To do for this event</h2>
       <div className="mb-4">
         <FilterGroup label="Show">
           {SOURCES.map((k) => {
-            const n = k.id === 'all' ? all.length : all.filter((a) => a.source === k.id).length
+            const n = k.id === 'all' ? all.length : all.filter((a) => sourceOf(a) === k.id).length
             if (k.id !== 'all' && n === 0) return null
             return (
               <FilterChip key={k.id} pressed={source === k.id} count={n} onClick={() => setSource(k.id)}>

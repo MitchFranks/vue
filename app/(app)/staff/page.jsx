@@ -46,7 +46,7 @@ export default function StaffDirectoryPage() {
       <Breadcrumbs items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Staff Directory' }]} />
       <PageHeader
         title="Staff directory"
-        lead="Everyone who works here and how to reach them. Open a person for their profile, weekly hours and the events they've been asked to work."
+        lead="Everyone who works here. Click a person to see their details, hours and events."
         actions={
           <>
             <Button href="/staffing/team" variant="secondary" size="md" data-guide="view-availability">

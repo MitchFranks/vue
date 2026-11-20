@@ -427,7 +427,7 @@ export function TaskToolbar({
 
         <Button variant="primary" size="sm" className="ml-1" onClick={onNew}>
           <Icon name="plus" size={14} />
-          New
+          New task
         </Button>
 
         {openPanel === 'filter' && (
